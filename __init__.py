@@ -8,3 +8,4 @@ from .modeling import (
 )
 from .factory import from_file, from_pyfrac
 from .io import save_vtp, save_voxel
+from .optics import solve_optics, SimulationConfig  # noqa: F401

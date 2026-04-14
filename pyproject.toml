@@ -8,10 +8,11 @@ dependencies = [
     "manifold3d",
     "pint",
     "scipy",
+    "pyjulia",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "matplotlib"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
