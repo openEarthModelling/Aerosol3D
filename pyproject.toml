@@ -19,7 +19,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["aerosol3d*", "core*", "physics*", "factory*", "io*", "modeling*", "tests*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
