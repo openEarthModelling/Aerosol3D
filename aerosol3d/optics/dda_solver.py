@@ -10,20 +10,27 @@ logger = logging.getLogger(__name__)
 
 
 def _apply_radiative_correction(alpha0, k):
-    """Apply radiative reaction correction to Clausius-Mossotti polarizability.
+    """Apply radiative reaction correction and normalize for Julia convention.
 
-    Formula: alpha = alpha0 / (1 - (2/3) * i * k^3 * alpha0)
+    Matches Julia's Alphas.alpha_radiative:
+        alpha_dimless = (k^3 / (4*pi)) * alpha0 / (1 - i*k^3/(6*pi) * alpha0)
+
+    The output is dimensionless (units of k^3 * volume), which is what the
+    Julia DDA solver expects.
 
     Args:
-        alpha0: Clausius-Mossotti polarizability (scalar or array, complex).
+        alpha0: Clausius-Mossotti polarizability in volume units (scalar or array, complex).
         k: Wavenumber (scalar, float).
 
     Returns:
-        Corrected polarizability with same shape as alpha0, dtype complex128.
+        Dimensionless polarizability with same shape as alpha0, dtype complex128.
     """
     alpha0 = np.asarray(alpha0, dtype=np.complex128)
-    correction = 1.0 - (2.0 / 3.0) * 1j * k ** 3 * alpha0
-    return alpha0 / correction
+    k3 = k ** 3
+    # Radiative-corrected polarizability in volume units
+    alpha_rad = alpha0 / (1.0 - 1j * k3 / (6.0 * np.pi) * alpha0)
+    # Normalize to dimensionless (matching Julia convention)
+    return (k3 / (4.0 * np.pi)) * alpha_rad
 
 
 def _extract_dipoles(grid, config, material_map):
@@ -81,3 +88,127 @@ def _compute_near_field_intensity(grid, phi_inc):
     intensity[mask] = np.sum(np.abs(phi_inc) ** 2, axis=1)
     grid.cell_data["E_intensity"] = intensity
     return grid
+
+
+def solve_optics(
+    particle,
+    config: SimulationConfig,
+    voxel_size: float,
+    compute_near_field: bool = True,
+) -> "OpticalResult":
+    """Main entry: aerosol particle -> DDA optical result.
+
+    Args:
+        particle: AerosolParticle instance with .blocks.
+        config: SimulationConfig with wavelength, polarization, etc.
+        voxel_size: Side length of each voxel (same unit as particle).
+        compute_near_field: If True, attach |E|^2 to voxel grid.
+
+    Returns:
+        OpticalResult with cross_sections, voxel_grid, and validity.
+    """
+    from .datastructs import CrossSections, OpticalResult
+    from .bridge import (
+        solve_dda, compute_cross_sections, compute_asymmetry_parameter
+    )
+
+    # Step 1: Build material map from particle blocks
+    material_map = {}
+    for block_name, block_mesh in particle.blocks.items():
+        if block_mesh is None:
+            continue
+        mat_id = int(block_mesh.field_data["material_id"][0])
+        if mat_id in material_map:
+            continue
+        ri_n = float(np.mean(block_mesh.cell_data["ri_n"]))
+        ri_k = float(np.mean(block_mesh.cell_data["ri_k"]))
+        material_map[mat_id] = type("Mat", (), {
+            "refractive_index": complex(ri_n, ri_k),
+        })()
+
+    # Step 2: Voxelize
+    from aerosol3d.geometry.voxelize import voxelize_with_materials
+    grid = voxelize_with_materials(particle, voxel_size)
+
+    # Step 3: Update config dipole_spacing
+    config.dipole_spacing = voxel_size
+
+    # Step 4: Validity check
+    m_max = max(abs(mat.refractive_index) for mat in material_map.values())
+    validity = config.validity_check(m_max)
+    if not validity["valid"]:
+        logger.warning(
+            "DDA convergence criterion violated: |m|*k*d = %.3f (should be < 1). "
+            "Results may be inaccurate.",
+            validity["m_k_d"],
+        )
+
+    # Step 5: Extract dipoles
+    positions, alpha_e = _extract_dipoles(grid, config, material_map)
+
+    if len(positions) == 0:
+        # Return a zero-result with validity info rather than crashing
+        n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
+        volume = n_filled * voxel_size ** 3
+        r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0) if volume > 0 else 0.0
+        geo_cs = np.pi * r_eff ** 2 if r_eff > 0 else 0.0
+        cross_sections = CrossSections(
+            wavelength=config.wavelength,
+            C_ext=0.0, C_sca=0.0, C_abs=0.0,
+            Q_ext=0.0, Q_sca=0.0, Q_abs=0.0,
+            SSA=0.0, g=0.0, r_eff=r_eff,
+        )
+        return OpticalResult(
+            config=config,
+            cross_sections=cross_sections,
+            voxel_grid=grid,
+            n_dipoles=0,
+            validity=validity,
+        )
+
+    # Step 6: DDA solve
+    dda_result = solve_dda(positions, alpha_e, config)
+
+    # Step 7: Cross sections (Julia returns in knorm^{-2} = nm^2)
+    cs_raw = compute_cross_sections(positions, alpha_e, dda_result, config)
+    C_ext = float(cs_raw[0])
+    C_abs = float(cs_raw[1])
+    C_sca = float(cs_raw[2])
+
+    # Step 8: Equivalent volume sphere radius
+    n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
+    volume = n_filled * voxel_size ** 3
+    r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0)
+    geo_cs = np.pi * r_eff ** 2
+
+    # Step 9: Efficiency factors
+    Q_ext = C_ext / geo_cs if geo_cs > 0 else 0.0
+    Q_sca = C_sca / geo_cs if geo_cs > 0 else 0.0
+    Q_abs = C_abs / geo_cs if geo_cs > 0 else 0.0
+
+    # Step 10: SSA
+    SSA = C_sca / C_ext if C_ext > 0 else 0.0
+
+    # Step 11: Asymmetry parameter g
+    g = compute_asymmetry_parameter(
+        positions, alpha_e, dda_result, config, C_sca=C_sca
+    )
+
+    cross_sections = CrossSections(
+        wavelength=config.wavelength,
+        C_ext=C_ext, C_sca=C_sca, C_abs=C_abs,
+        Q_ext=Q_ext, Q_sca=Q_sca, Q_abs=Q_abs,
+        SSA=SSA, g=g, r_eff=r_eff,
+    )
+
+    # Step 12: Near-field (optional)
+    if compute_near_field:
+        _compute_near_field_intensity(grid, dda_result["phi_inc"])
+
+    return OpticalResult(
+        config=config,
+        cross_sections=cross_sections,
+        voxel_grid=grid,
+        n_dipoles=len(positions),
+        validity=validity,
+    )

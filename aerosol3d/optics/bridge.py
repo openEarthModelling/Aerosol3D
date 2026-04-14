@@ -110,7 +110,7 @@ def compute_cross_sections(
 
     Returns:
         (3,) float64 array: [C_ext, C_abs, C_sca].
-        Values are in units of 1/k^2 (dimensionless).
+        Values are in units of knorm^{-2} (same length unit as input positions).
     """
     _ensure_julia()
     from julia import CoupledElectricMagneticDipoles as CEMD
