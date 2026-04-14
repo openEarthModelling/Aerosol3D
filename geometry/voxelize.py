@@ -21,7 +21,7 @@ def voxelize_with_materials(particle, voxel_size: float) -> pv.ImageData:
 
     dims = np.ceil(extent / voxel_size).astype(int) + 1
 
-    grid = pv.ImageData(dimensions=dims, spacing=voxel_size, origin=origin)
+    grid = pv.ImageData(dimensions=dims, spacing=[voxel_size] * 3, origin=origin)
 
     material_grid = np.zeros(grid.n_cells, dtype=np.int32)
 
