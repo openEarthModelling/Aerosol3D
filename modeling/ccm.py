@@ -20,7 +20,7 @@ def apply_ccm_coating(particle, target_f_bc: float, material) -> object:
     if not 0 < target_f_bc < 1:
         raise ValueError("target_f_bc must be between 0 and 1 (exclusive).")
 
-    from aerosol3d.core.particle_new import MixingState
+    from aerosol3d.core.particle import MixingState
 
     core_mesh = particle.combined
     scale = (1.0 / target_f_bc) ** (1.0 / 3.0)

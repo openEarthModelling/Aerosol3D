@@ -1,64 +1,70 @@
-from typing import List, Optional, Union
 from enum import Enum, auto
-from aerosol3d.core.component import Component
+from typing import Dict, Optional
+
+import numpy as np
+import pyvista as pv
+
 
 class MixingState(Enum):
-    """Enumeration of possible mixing states for an aerosol particle."""
-    INTERNAL = auto()      # Internally mixed (components combined within a single particle)
-    EXTERNAL = auto()      # Externally mixed (physically separate entities)
-    COATED = auto()        # Core-shell configuration
-    AGGREGATED = auto()    # Fractal aggregate configuration
+    INTERNAL = auto()
+    EXTERNAL = auto()
+    COATED = auto()
+    AGGREGATED = auto()
+
 
 class AerosolParticle:
-    """
-    Class representing an aerosol particle composed of multiple components.
-    
-    This class maintains a list of Component objects and provides methods
-    to manage their relationship and overall particle state.
-    """
-    
-    def __init__(
-        self,
-        name: str = "AerosolParticle",
-        mixing_state: MixingState = MixingState.INTERNAL
-    ):
-        """
-        Initialize an AerosolParticle.
+    """Aerosol particle container backed by pv.MultiBlock.
 
-        Args:
-            name: Identifiable name for the particle.
-            mixing_state: Mixing state of the components (default is internal).
-        """
+    Each block represents a geometric component (core, coating, etc.)
+    tagged with material properties via cell_data and field_data.
+    """
+
+    def __init__(self, name: str = "AerosolParticle",
+                 mixing_state: MixingState = MixingState.INTERNAL,
+                 unit: str = "nm"):
         self.name = name
         self.mixing_state = mixing_state
-        self._components: List[Component] = []
-
-    def add_component(self, component: Component) -> None:
-        """Add a geometric component to the particle."""
-        if not isinstance(component, Component):
-            raise TypeError("Expected an instance of Component.")
-        self._components.append(component)
+        self.unit = unit
+        self._blocks: Dict[str, pv.PolyData] = {}
 
     @property
-    def components(self) -> List[Component]:
-        """Return the list of components composing the particle."""
-        return self._components
+    def blocks(self) -> Dict[str, pv.PolyData]:
+        return self._blocks
 
-    def set_mixing_state(self, state: MixingState) -> None:
-        """Set the mixing state of the particle."""
-        self.mixing_state = state
+    def add_mesh(self, name: str, mesh: pv.PolyData, material) -> None:
+        """Add a geometric component with material tagging."""
+        mesh = mesh.copy()
+        mesh.cell_data["material_id"] = np.full(
+            mesh.n_cells, material.id, dtype=np.int32)
+        mesh.cell_data["ri_n"] = np.full(
+            mesh.n_cells, material.refractive_index.real)
+        mesh.cell_data["ri_k"] = np.full(
+            mesh.n_cells, material.refractive_index.imag)
+        mesh.field_data["role"] = [name]
+        mesh.field_data["material_name"] = [material.name]
+        mesh.field_data["material_id"] = [material.id]
+        self._blocks[name] = mesh
 
-    def __len__(self) -> int:
-        """Return the number of components in the particle."""
-        return len(self._components)
+    @property
+    def combined(self) -> pv.PolyData:
+        """Merge all blocks into a single PolyData."""
+        meshes = [b for b in self._blocks.values() if b is not None]
+        if not meshes:
+            raise ValueError("No blocks to combine.")
+        result = meshes[0].copy()
+        for m in meshes[1:]:
+            result = result + m
+        return result
+
+    def save(self, filename: str) -> None:
+        """Export to .vtmb or .vtp."""
+        if filename.endswith(".vtmb"):
+            mb = pv.MultiBlock(self._blocks)
+            mb.save(filename)
+        else:
+            self.combined.save(filename)
 
     def __repr__(self) -> str:
-        return (f"AerosolParticle(name={self.name}, "
-                f"components={len(self)}, mixing_state={self.mixing_state.name})")
-
-    def summary(self) -> str:
-        """Generate a technical summary of the particle composition."""
-        lines = [f"Aerosol Particle: {self.name}", f"Mixing State: {self.mixing_state.name}"]
-        for i, comp in enumerate(self._components):
-            lines.append(f"  [{i}] {comp}")
-        return "\n".join(lines)
+        return (f"AerosolParticle(name={self.name!r}, "
+                f"blocks={len(self._blocks)}, "
+                f"mixing_state={self.mixing_state.name})")

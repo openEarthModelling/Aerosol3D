@@ -83,7 +83,7 @@ def apply_distance_coating(particle, thickness: float, material) -> object:
     if thickness <= 0:
         raise ValueError("Coating thickness must be positive.")
 
-    from aerosol3d.core.particle_new import MixingState
+    from aerosol3d.core.particle import MixingState
 
     core_mesh = particle.combined
     try:

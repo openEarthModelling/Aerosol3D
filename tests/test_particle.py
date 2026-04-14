@@ -5,14 +5,14 @@ import pytest
 
 class TestAerosolParticle:
     def test_create_empty(self):
-        from aerosol3d.core.particle_new import AerosolParticle, MixingState
+        from aerosol3d.core.particle import AerosolParticle, MixingState
         p = AerosolParticle(name="test", unit="nm")
         assert p.name == "test"
         assert p.unit == "nm"
         assert p.mixing_state == MixingState.INTERNAL
 
     def test_add_mesh(self, soot_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         p = AerosolParticle(name="test", unit="nm")
         mesh = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -21,7 +21,7 @@ class TestAerosolParticle:
         assert "core" in p.blocks
 
     def test_add_mesh_tags_cell_data(self, soot_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         p = AerosolParticle(name="test", unit="nm")
         mesh = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -32,7 +32,7 @@ class TestAerosolParticle:
         assert "ri_k" in block.cell_data
 
     def test_add_mesh_tags_field_data(self, soot_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         p = AerosolParticle(name="test", unit="nm")
         mesh = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -42,7 +42,7 @@ class TestAerosolParticle:
         assert block.field_data["material_name"] == ["soot"]
 
     def test_combined(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -54,7 +54,7 @@ class TestAerosolParticle:
         assert combined.n_cells > 0
 
     def test_save_vtp(self, soot_material, tmp_path):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         p = AerosolParticle(name="test", unit="nm")
         mesh = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -64,7 +64,7 @@ class TestAerosolParticle:
         assert __import__("os").path.exists(filepath)
 
     def test_from_aggregate(self, soot_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.core.aggregate import FractalAggregate
         centers = np.random.default_rng(42).random((5, 3)) * 100
         radii = np.full(5, 10.0)

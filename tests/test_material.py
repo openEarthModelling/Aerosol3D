@@ -11,14 +11,14 @@ class TestMaterial:
 
     def test_auto_increment_id(self):
         from aerosol3d.core.material import Material
-        Material._next_id = 0  # reset for testing
+        Material._next_id = 1  # reset for testing (id=0 reserved for void)
         m1 = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
         m2 = Material(name="sulfate", refractive_index=complex(1.4, 0.0), density=1.8)
-        assert m1.id == 0
-        assert m2.id == 1
+        assert m1.id == 1
+        assert m2.id == 2
 
     def test_repr(self):
         from aerosol3d.core.material import Material
-        Material._next_id = 0
+        Material._next_id = 1
         m = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
         assert "soot" in repr(m)

@@ -4,7 +4,7 @@ import pytest
 
 class TestCAMCoating:
     def test_coating_added(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         from aerosol3d.modeling.cam import apply_cam_coating
 
@@ -17,7 +17,7 @@ class TestCAMCoating:
         assert result.mixing_state.name == "COATED"
 
     def test_envelope_radius(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         from aerosol3d.modeling.cam import apply_cam_coating
 
@@ -33,7 +33,7 @@ class TestCAMCoating:
         assert abs(max_dim / 2 - expected_R) / expected_R < 0.1
 
     def test_f_bc_validation(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         from aerosol3d.modeling.cam import apply_cam_coating
 

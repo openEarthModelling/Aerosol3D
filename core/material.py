@@ -1,7 +1,7 @@
 class Material:
     """Material properties for an aerosol component."""
 
-    _next_id: int = 0
+    _next_id: int = 1
 
     def __init__(self, name: str, refractive_index: complex, density: float):
         self.name = name

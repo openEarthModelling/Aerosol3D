@@ -6,7 +6,7 @@ import pytest
 
 class TestExporter:
     def test_save_vtp(self, soot_material, tmp_path):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         from aerosol3d.io.exporter import save_vtp
 
@@ -21,7 +21,7 @@ class TestExporter:
         assert loaded.n_points > 0
 
     def test_save_voxel(self, soot_material, tmp_path):
-        from aerosol3d.core.particle_new import AerosolParticle
+        from aerosol3d.core.particle import AerosolParticle
         from aerosol3d.geometry.primitives import create_sphere
         from aerosol3d.io.exporter import save_voxel
 
