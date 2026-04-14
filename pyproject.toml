@@ -1,0 +1,25 @@
+[project]
+name = "aerosol3d"
+version = "0.2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pyvista>=0.44",
+    "manifold3d",
+    "pint",
+    "scipy",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aerosol3d*", "core*", "physics*", "factory*", "io*", "modeling*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
