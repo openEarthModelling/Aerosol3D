@@ -1,7 +1,11 @@
+import logging
+
 import numpy as np
 
 from aerosol3d.core.aggregate import FractalAggregate
 from aerosol3d.physics.units import Q_
+
+logger = logging.getLogger(__name__)
 
 
 def from_pyfrac(aggregate_obj, material, target_unit: str = "nm") -> FractalAggregate:
@@ -25,7 +29,7 @@ def from_pyfrac(aggregate_obj, material, target_unit: str = "nm") -> FractalAggr
             centers = centers * factor
             radii = radii * factor
         except Exception:
-            pass
+            logger.warning("Unit conversion failed: %s -> %s", source_unit, target_unit)
 
     return FractalAggregate(
         centers=centers, radii=radii, material=material, unit=target_unit

@@ -1,7 +1,11 @@
 """Distance coating using boolean operations (Kahnert 2017 onion model)."""
 
+import logging
+
 import numpy as np
 import pyvista as pv
+
+logger = logging.getLogger(__name__)
 
 from aerosol3d.geometry.boolean import safe_difference
 from aerosol3d.geometry.primitives import create_sphere
@@ -56,13 +60,14 @@ def _voxel_fallback_coating(core_mesh: pv.PolyData, thickness: float) -> pv.Poly
     coating_field[(dilated_flat == 1) & (mask == 0)] = 1.0
 
     grid.cell_data["coating"] = coating_field
-    coating = grid.contour(isosurfaces=[0.5], scalars="coating")
+    grid_point = grid.cell_data_to_point_data()
+    coating = grid_point.contour(isosurfaces=[0.5], scalars="coating")
     if coating.n_cells > 0:
         coating = coating.smooth(n_iter=20)
     return coating
 
 
-def apply_distance_coating(particle, thickness: float, material) -> object:
+def apply_distance_coating(particle, thickness: float, material):
     """Apply onion-model coating via boolean difference (Kahnert 2017).
 
     Creates an offset surface around the particle's combined geometry,
@@ -90,6 +95,7 @@ def apply_distance_coating(particle, thickness: float, material) -> object:
         outer_mesh = _offset_surface(core_mesh, thickness)
         coating = safe_difference(outer_mesh, core_mesh)
     except Exception:
+        logger.warning("Boolean offset failed, falling back to voxel dilation", exc_info=True)
         coating = _voxel_fallback_coating(core_mesh, thickness)
 
     particle.add_mesh("coating", coating, material)

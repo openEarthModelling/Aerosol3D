@@ -1,7 +1,11 @@
+import logging
+
 import numpy as np
 import pyvista as pv
 
 from aerosol3d.physics.units import Q_
+
+logger = logging.getLogger(__name__)
 
 
 def from_file(file_path: str, unit: str = "nm",
@@ -35,6 +39,6 @@ def from_file(file_path: str, unit: str = "nm",
             if not np.isclose(factor, 1.0):
                 mesh.points *= factor
         except Exception:
-            pass  # If units unrecognized, no scaling
+            logger.warning("Unit conversion failed: %s -> %s", source_unit, unit)
 
     return mesh

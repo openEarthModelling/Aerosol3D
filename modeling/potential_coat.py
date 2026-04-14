@@ -17,7 +17,7 @@ def apply_potential_coating(
     particle, target_f_bc: float, material,
     algorithm: str = "void_filling", k: float = 2.0,
     resolution: int = 64
-) -> object:
+):
     """Apply coating via potential field sorting (Luo 2019).
 
     Voxelize the particle, compute potential field on void voxels,

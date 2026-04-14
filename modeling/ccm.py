@@ -3,7 +3,7 @@ import numpy as np
 from aerosol3d.geometry.boolean import safe_difference
 
 
-def apply_ccm_coating(particle, target_f_bc: float, material) -> object:
+def apply_ccm_coating(particle, target_f_bc: float, material):
     """Apply Closed-Cell Model coating (Liu 2025).
 
     Each core component is uniformly scaled by (1/f_bc)^(1/3),

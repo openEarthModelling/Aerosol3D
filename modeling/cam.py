@@ -4,7 +4,7 @@ from aerosol3d.geometry.boolean import safe_difference
 from aerosol3d.geometry.primitives import create_sphere
 
 
-def apply_cam_coating(particle, target_f_bc: float, material) -> object:
+def apply_cam_coating(particle, target_f_bc: float, material):
     """Apply Coated-Aggregate Model coating (Liu 2025).
 
     Encapsulates the entire aggregate in a spherical envelope.

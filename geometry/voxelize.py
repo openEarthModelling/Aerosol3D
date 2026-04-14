@@ -1,5 +1,9 @@
+import logging
+
 import numpy as np
 import pyvista as pv
+
+logger = logging.getLogger(__name__)
 
 
 def voxelize_with_materials(particle, voxel_size: float) -> pv.ImageData:
@@ -53,6 +57,7 @@ def voxelize_with_materials(particle, voxel_size: float) -> pv.ImageData:
             mat_id = block.field_data.get("material_id", [0])[0]
             material_grid[cell_mask.ravel()] = mat_id
         except Exception:
+            logger.warning("Failed to voxelize block %r, skipping", block_name)
             continue
 
     grid.cell_data["material_id"] = material_grid

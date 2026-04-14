@@ -1,15 +1,6 @@
 import pyvista as pv
 
 
-# Default color map for materials
-_DEFAULT_COLORS = {
-    0: "lightgray",   # void
-    1: "red",         # first material (e.g., soot)
-    2: "royalblue",   # second material (e.g., sulfate)
-    3: "green",       # third material
-}
-
-
 def plot_particle(particle, colors=None, opacity=None, off_screen=False):
     """Visualize an aerosol particle with per-block coloring.
 

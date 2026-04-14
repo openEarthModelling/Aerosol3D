@@ -13,7 +13,7 @@ class MixingState(Enum):
 
 
 class AerosolParticle:
-    """Aerosol particle container backed by pv.MultiBlock.
+    """Aerosol particle container holding named geometry blocks.
 
     Each block represents a geometric component (core, coating, etc.)
     tagged with material properties via cell_data and field_data.
