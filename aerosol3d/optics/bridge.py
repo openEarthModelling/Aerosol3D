@@ -167,3 +167,65 @@ def compute_diff_scattering(
         k, kr, dda_result["phi_inc"], alpha_e_jl, input_field, directions
     )
     return np.asarray(dcs, dtype=np.float64)
+
+
+def compute_asymmetry_parameter(
+    positions: np.ndarray,
+    alpha_e: np.ndarray,
+    dda_result: dict,
+    config,
+    C_sca: float,
+    n_points: int = 5804,
+) -> float:
+    """Compute asymmetry parameter g = <cos(theta)> via spherical quadrature.
+
+    Uses uniform spherical grid for numerical integration of the
+    differential scattering cross section weighted by cos(theta).
+
+    Args:
+        positions, alpha_e, dda_result, config: DDA inputs.
+        C_sca: Scattering cross section (denominator for normalization).
+        n_points: Approximate number of quadrature points.
+
+    Returns:
+        float: asymmetry parameter g in [-1, 1].
+    """
+    theta, phi, weights = _spherical_grid(n_points)
+
+    directions = np.column_stack([
+        np.sin(theta) * np.cos(phi),
+        np.sin(theta) * np.sin(phi),
+        np.cos(theta),
+    ])
+
+    dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
+
+    cos_theta = np.cos(theta)
+    if C_sca > 0:
+        g = (4.0 * np.pi / C_sca) * np.sum(cos_theta * dcs * weights)
+    else:
+        g = 0.0
+
+    return float(g)
+
+
+def _spherical_grid(n_points: int = 5804):
+    """Generate uniform spherical quadrature points and weights.
+
+    Returns:
+        theta: (N,) polar angles [0, pi]
+        phi: (N,) azimuthal angles [0, 2*pi]
+        weights: (N,) quadrature weights (sum to 1/(4*pi))
+    """
+    n_side = int(np.ceil(n_points ** (1.0 / 3.0)))
+    u = np.linspace(0, 1, n_side + 1)[1:]
+    theta = np.arccos(2 * u - 1)
+    phi = np.linspace(0, 2 * np.pi, 2 * n_side, endpoint=False)
+    theta_grid, phi_grid = np.meshgrid(theta, phi, indexing="ij")
+    theta_flat = theta_grid.ravel()
+    phi_flat = phi_grid.ravel()
+
+    sin_theta = np.sin(theta_flat)
+    weights = sin_theta / (4.0 * np.pi * sin_theta.sum())
+
+    return theta_flat, phi_flat, weights

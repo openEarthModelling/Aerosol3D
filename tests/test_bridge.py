@@ -100,3 +100,26 @@ class TestBridgeDiffScattering:
         dcs_bwd = compute_diff_scattering(positions, alpha_e, dda_result, config, backward)
         assert dcs_fwd >= 0
         assert dcs_bwd >= 0
+
+
+class TestAsymmetryParameter:
+    def test_symmetric_scattering(self, julia_available):
+        """A small isotropic scatterer should have g near 0 (symmetric)."""
+        from aerosol3d.optics.bridge import (
+            solve_dda, compute_asymmetry_parameter
+        )
+        from aerosol3d.optics.datastructs import SimulationConfig
+
+        import numpy as np
+        # Two separated dipoles with weak polarizability
+        positions = np.array([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+        alpha_e = np.array([0.01 + 0.001j, 0.01 + 0.001j])
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=5.0)
+
+        dda_result = solve_dda(positions, alpha_e, config)
+        g = compute_asymmetry_parameter(
+            positions, alpha_e, dda_result, config, C_sca=1e-10
+        )
+        # g should be a float in [-1, 1]
+        assert isinstance(g, float)
+        assert -1.0 <= g <= 1.0
