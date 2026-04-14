@@ -95,6 +95,7 @@ def solve_optics(
     config: SimulationConfig,
     voxel_size: float,
     compute_near_field: bool = True,
+    compute_phase_func: bool = False,
 ) -> "OpticalResult":
     """Main entry: aerosol particle -> DDA optical result.
 
@@ -103,6 +104,7 @@ def solve_optics(
         config: SimulationConfig with wavelength, polarization, etc.
         voxel_size: Side length of each voxel (same unit as particle).
         compute_near_field: If True, attach |E|^2 to voxel grid.
+        compute_phase_func: If True, compute P11 phase function on (theta, phi) grid.
 
     Returns:
         OpticalResult with cross_sections, voxel_grid, and validity.
@@ -205,10 +207,56 @@ def solve_optics(
     if compute_near_field:
         _compute_near_field_intensity(grid, dda_result["phi_inc"])
 
+    # Step 13: Phase function (optional)
+    phase_function = None
+    if compute_phase_func:
+        phase_function = _compute_phase_function(
+            positions, alpha_e, dda_result, config
+        )
+
     return OpticalResult(
         config=config,
         cross_sections=cross_sections,
+        phase_function=phase_function,
         voxel_grid=grid,
         n_dipoles=len(positions),
         validity=validity,
     )
+
+
+def _compute_phase_function(
+    positions, alpha_e, dda_result, config,
+    n_theta: int = 90, n_phi: int = 180,
+) -> "PhaseFunction":
+    """Compute P11 phase function on a (theta, phi) grid.
+
+    Args:
+        positions: (N, 3) dipole positions.
+        alpha_e: (N,) polarizabilities.
+        dda_result: dict from solve_dda.
+        config: SimulationConfig.
+        n_theta: Number of polar angle bins.
+        n_phi: Number of azimuthal angle bins.
+
+    Returns:
+        PhaseFunction with P11(theta, phi).
+    """
+    from .datastructs import PhaseFunction
+    from .bridge import compute_diff_scattering
+
+    theta = np.linspace(0, np.pi, n_theta)
+    phi = np.linspace(0, 2 * np.pi, n_phi, endpoint=False)
+    theta_grid, phi_grid = np.meshgrid(theta, phi, indexing="ij")
+
+    # Convert to Cartesian directions
+    directions = np.column_stack([
+        np.sin(theta_grid).ravel() * np.cos(phi_grid).ravel(),
+        np.sin(theta_grid).ravel() * np.sin(phi_grid).ravel(),
+        np.cos(theta_grid).ravel(),
+    ])
+
+    # Compute differential scattering cross section
+    dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
+    P11 = dcs.reshape(n_theta, n_phi)
+
+    return PhaseFunction(theta=theta, phi=phi, P11=P11)

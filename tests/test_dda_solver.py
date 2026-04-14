@@ -84,3 +84,38 @@ class TestSolveOptics:
 
         assert result.voxel_grid is not None
         assert "E_intensity" in result.voxel_grid.cell_data
+
+
+class TestPhaseFunction:
+    def test_phase_function_structure(self, julia_available, soot_material):
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        result = solve_optics(p, config, voxel_size=10.0, compute_phase_func=True)
+
+        assert result.phase_function is not None
+        assert result.phase_function.P11.ndim == 2
+        assert result.phase_function.P11.shape[0] == result.phase_function.theta.shape[0]
+        assert np.all(result.phase_function.P11 >= 0)
+
+    def test_forward_peak(self, julia_available, soot_material):
+        """Forward scattering should generally be >= backward for Mie-sized particles."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        result = solve_optics(p, config, voxel_size=10.0, compute_phase_func=True)
+
+        # Forward (theta ~ 0) should be strong
+        forward_idx = np.argmin(result.phase_function.theta)
+        backward_idx = np.argmax(result.phase_function.theta)
+        assert result.phase_function.P11[forward_idx, 0] >= result.phase_function.P11[backward_idx, 0]
