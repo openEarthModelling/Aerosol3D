@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
@@ -32,7 +33,8 @@ def plot_phase_function_2d(
         show: If True, call plt.show().
     """
     import matplotlib
-    matplotlib.use("Agg")
+    if "matplotlib.backends" not in sys.modules:
+        matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     if result.phase_function is None:

@@ -1,5 +1,6 @@
 """DDA optical solver: geometry -> dipoles -> Julia solve -> postprocess."""
 
+import copy
 import logging
 
 import numpy as np
@@ -17,6 +18,11 @@ def _apply_radiative_correction(alpha0, k):
 
     The output is dimensionless (units of k^3 * volume), which is what the
     Julia DDA solver expects.
+
+    Note: The textbook Draine formula uses factor (2/3)*i*k^3 in the
+    denominator. Our factor 1/(6*pi) equals (2/3)/(4*pi), which accounts
+    for the dimensionless normalization being folded into the correction.
+    The two forms are mathematically equivalent up to the normalization.
 
     Args:
         alpha0: Clausius-Mossotti polarizability in volume units (scalar or array, complex).
@@ -132,7 +138,8 @@ def solve_optics(
     from aerosol3d.geometry.voxelize import voxelize_with_materials
     grid = voxelize_with_materials(particle, voxel_size)
 
-    # Step 3: Update config dipole_spacing
+    # Step 3: Copy config and set dipole_spacing (avoid mutating caller's object)
+    config = copy.copy(config)
     config.dipole_spacing = voxel_size
 
     # Step 4: Validity check
