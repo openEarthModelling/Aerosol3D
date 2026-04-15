@@ -119,26 +119,31 @@ def plot_near_field(
     return plotter
 
 
-def print_macroscopic(result: OpticalResult):
+def print_macroscopic(result, solve_time: float = None):
     """Print core aerosol macroscopic optical properties to stdout.
 
-    Outputs: wavelength, C_ext, C_sca, C_abs, SSA, g, Q_ext, Q_sca, Q_abs, r_eff.
+    Args:
+        result: OpticalResult instance.
+        solve_time: Optional solve time in seconds to display.
     """
     cs = result.cross_sections
     print(f"{'='*50}")
-    print(f"  Aerosol Optical Properties @ {cs.wavelength} nm")
+    print(f"  Aerosol Optical Properties @ {cs.wavelength:.1f} nm")
     print(f"{'='*50}")
-    print(f"  C_ext  = {cs.C_ext:12.4f}  (nm^2)")
-    print(f"  C_sca  = {cs.C_sca:12.4f}  (nm^2)")
-    print(f"  C_abs  = {cs.C_abs:12.4f}  (nm^2)")
+    print(f"  C_ext  = {cs.C_ext:12.4f}  nm\u00b2")
+    print(f"  C_sca  = {cs.C_sca:12.4f}  nm\u00b2")
+    print(f"  C_abs  = {cs.C_abs:12.4f}  nm\u00b2")
     print(f"  SSA    = {cs.SSA:12.6f}")
     print(f"  g      = {cs.g:12.6f}")
     print(f"  Q_ext  = {cs.Q_ext:12.6f}")
     print(f"  Q_sca  = {cs.Q_sca:12.6f}")
     print(f"  Q_abs  = {cs.Q_abs:12.6f}")
-    print(f"  r_eff  = {cs.r_eff:12.4f}  (nm)")
+    print(f"  r_eff  = {cs.r_eff:12.4f}  nm")
     print(f"  N_dipo = {result.n_dipoles}")
+    if solve_time is not None:
+        print(f"  Time   = {solve_time:12.2f}  s")
     if result.validity:
         v = result.validity
-        print(f"  |m|kd  = {v['m_k_d']:.4f}  {'OK' if v['valid'] else 'WARNING: > 1'}")
+        status = "OK" if v["valid"] else "WARNING: > 1"
+        print(f"  |m|kd  = {v['m_k_d']:.4f}  {status}")
     print(f"{'='*50}")
