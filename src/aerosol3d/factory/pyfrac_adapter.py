@@ -8,8 +8,11 @@ from aerosol3d.physics.units import Q_
 logger = logging.getLogger(__name__)
 
 
-def from_pyfrac(aggregate_obj, material, target_unit: str = "nm") -> FractalAggregate:
-    """Convert a pyFracAggregate object to a FractalAggregate.
+def from_fractal(aggregate_obj, material, target_unit: str = "nm") -> FractalAggregate:
+    """Convert a pyFracAggregate Aggregate object to a FractalAggregate.
+
+    The input must have .positions (N,3) and .radii (N,) attributes, as provided
+    by the pyFracAggregate library.
 
     Args:
         aggregate_obj: Object with .positions (N,3) and .radii (N,) attributes.
