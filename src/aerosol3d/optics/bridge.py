@@ -52,6 +52,7 @@ def check_gpu_available() -> bool:
     try:
         _ensure_julia()
         from julia import Main
+        Main.eval("using CUDA")
         Main.eval("CUDA.functional()")
         _gpu_checked = True
         logger.info("GPU (CUDA) is available via Julia.")

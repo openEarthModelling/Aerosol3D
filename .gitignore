@@ -19,3 +19,6 @@ htmlcov/
 *.stl
 *.obj
 *.ply
+
+# Example outputs
+examples/output/
