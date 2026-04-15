@@ -110,3 +110,4 @@ class OpticalResult:
     voxel_grid: Optional[pv.ImageData] = None
     n_dipoles: int = 0
     validity: Optional[dict] = None
+    solve_time: Optional[float] = None

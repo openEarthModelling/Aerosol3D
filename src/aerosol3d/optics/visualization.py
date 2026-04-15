@@ -124,9 +124,12 @@ def print_macroscopic(result, solve_time: float = None):
 
     Args:
         result: OpticalResult instance.
-        solve_time: Optional solve time in seconds to display.
+        solve_time: Optional solve time in seconds. If None, uses
+            result.solve_time when available.
     """
     cs = result.cross_sections
+    if solve_time is None:
+        solve_time = getattr(result, "solve_time", None)
     print(f"{'='*50}")
     print(f"  Aerosol Optical Properties @ {cs.wavelength:.1f} nm")
     print(f"{'='*50}")

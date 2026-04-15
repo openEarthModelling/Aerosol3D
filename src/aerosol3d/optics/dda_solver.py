@@ -83,7 +83,8 @@ def solve_optics(
     m_max = max(abs(mat.refractive_index) for mat in material_map.values())
 
     # Step 2: Auto voxel_size when None
-    if voxel_size is None:
+    auto_computed = voxel_size is None
+    if auto_computed:
         from .datastructs import auto_voxel_size
         voxel_size = auto_voxel_size(config.wavelength, m_max, config.precision)
 
@@ -126,12 +127,13 @@ def solve_optics(
         print(f"  n_host         = {config.n_host}")
         print(f"  solver         = {config.solver}")
         print(f"  precision      = {config.precision}")
-        print(f"  dipole_spacing = {voxel_size:.2f} nm (auto)")
+        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if auto_computed else ""))
         print(f"  |m|_max        = {m_max:.4f}")
         print(f"  k              = {2.0 * np.pi / config.wavelength:.6f} nm^-1")
         mkd = m_max * (2.0 * np.pi / config.wavelength) * voxel_size
         status = "OK" if mkd < 1.0 else "WARNING"
-        print(f"  |m|*k*d        = {mkd:.4f}  {status} ({'<' if mkd >= 1.0 else ''}1)")
+        threshold = " (< 1.0)" if mkd >= 1.0 else ""
+        print(f"  |m|*k*d        = {mkd:.4f}  {status}{threshold}")
         print(f"  N_materials    = {len(material_map)} ({', '.join(material_names)})")
         print(f"{'='*52}")
 
@@ -142,7 +144,6 @@ def solve_optics(
         n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
         volume = n_filled * voxel_size ** 3
         r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0) if volume > 0 else 0.0
-        geo_cs = np.pi * r_eff ** 2 if r_eff > 0 else 0.0
         cross_sections = CrossSections(
             wavelength=config.wavelength,
             C_ext=0.0, C_sca=0.0, C_abs=0.0,
@@ -155,6 +156,7 @@ def solve_optics(
             voxel_grid=grid,
             n_dipoles=0,
             validity=validity,
+            solve_time=time.time() - t_start,
         )
 
     # Step 8: DDA solve (single or depolarized)
@@ -217,8 +219,9 @@ def solve_optics(
             positions, alpha_e, dda_result, config
         )
 
+    elapsed = time.time() - t_start
+
     if verbose:
-        elapsed = time.time() - t_start
         print(f"\n  Solve time     = {elapsed:.1f} s")
         print(f"  N_dipoles     = {len(positions)}")
         if do_depolarized:
@@ -231,6 +234,7 @@ def solve_optics(
         voxel_grid=grid,
         n_dipoles=len(positions),
         validity=validity,
+        solve_time=elapsed,
     )
 
 

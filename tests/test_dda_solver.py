@@ -119,3 +119,70 @@ class TestPhaseFunction:
         forward_idx = np.argmin(result.phase_function.theta)
         backward_idx = np.argmax(result.phase_function.theta)
         assert result.phase_function.P11[forward_idx, 0] >= result.phase_function.P11[backward_idx, 0]
+
+
+class TestAutoVoxelSize:
+    def test_auto_voxel_size_produces_valid_mkd(self, julia_available, soot_material):
+        """Auto-computed voxel_size should satisfy |m|*k*d <= target."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, precision="high")
+        result = solve_optics(p, config, voxel_size=None, verbose=False)
+
+        assert result.n_dipoles > 0
+        assert result.validity is not None
+        assert result.validity["m_k_d"] < 1.0
+
+    def test_explicit_voxel_size_overrides_precision(self, julia_available, soot_material):
+        """Explicit voxel_size should be used regardless of precision setting."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, precision="high")
+        result = solve_optics(p, config, voxel_size=20.0, verbose=False)
+
+        assert result.n_dipoles > 0
+        # With large voxel_size, m_k_d should exceed high precision target (0.95)
+        assert result.validity["m_k_d"] > 0.95
+
+
+class TestVerbose:
+    def test_verbose_prints_output(self, julia_available, soot_material, capsys):
+        """verbose=True should print configuration table to stdout."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        solve_optics(p, config, voxel_size=10.0, verbose=True)
+
+        captured = capsys.readouterr()
+        assert "DDA Simulation Configuration" in captured.out
+        assert "Solve time" in captured.out
+
+    def test_verbose_false_suppresses_output(self, julia_available, soot_material, capsys):
+        """verbose=False should not print configuration table."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        solve_optics(p, config, voxel_size=10.0, verbose=False)
+
+        captured = capsys.readouterr()
+        assert "DDA Simulation Configuration" not in captured.out

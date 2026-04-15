@@ -37,9 +37,6 @@ def _ensure_julia():
     logger.info("Julia runtime initialized, CEMD package loaded.")
 
 
-_gpu_checked: Optional[bool] = None
-
-
 def check_gpu_available() -> bool:
     """Check whether Julia CUDA.jl is functional.
 
@@ -127,7 +124,7 @@ def solve_dda(
 
     # Generate plane wave input field
     khat = list(config.propagation)
-    e0 = list(config.polarization) if config.polarization is not None else [1.0, 0.0, 0.0] if config.polarization is not None else [1.0, 0.0, 0.0]
+    e0 = list(config.polarization) if config.polarization is not None else [1.0, 0.0, 0.0]
     input_field = CEMD.InputFields.plane_wave_e(kr, khat=khat, e0=e0)
 
     phi_inc = CEMD.DDACore.solve_DDA_e(
