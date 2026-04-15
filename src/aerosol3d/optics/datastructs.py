@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional, Tuple
 
 import numpy as np
@@ -12,25 +12,62 @@ if TYPE_CHECKING:
     import pyvista as pv
 
 
+# Precision level targets: max allowed |m|*k*d for each level
+_PRECISION_TARGETS = {
+    "low": 0.5,
+    "medium": 0.75,
+    "high": 0.95,
+}
+
+
+def auto_voxel_size(wavelength: float, m_max: float, precision: str = "medium") -> float:
+    """Compute maximum voxel_size satisfying the |m|*k*d convergence criterion.
+
+    Args:
+        wavelength: Wavelength in nm.
+        m_max: Maximum |refractive_index| across all materials.
+        precision: One of "low", "medium", "high".
+
+    Returns:
+        Maximum voxel_size in nm.
+
+    Raises:
+        ValueError: If precision is not a valid level.
+    """
+    if precision not in _PRECISION_TARGETS:
+        available = ", ".join(sorted(_PRECISION_TARGETS.keys()))
+        raise ValueError(f"Unknown precision '{precision}'. Available: {available}")
+
+    target = _PRECISION_TARGETS[precision]
+    k = 2.0 * np.pi / wavelength
+    return target / (m_max * k)
+
+
 @dataclass
 class SimulationConfig:
     """All parameters for a single DDA simulation run."""
 
-    wavelength: float
-    polarization: Tuple[float, float, float] = (1.0, 0.0, 0.0)
+    wavelength: float = 550.0
+    polarization: Optional[Tuple[float, float, float]] = None
     propagation: Tuple[float, float, float] = (0.0, 0.0, 1.0)
     n_host: float = 1.0
     solver: str = "CPU"
     dipole_spacing: float = 0.0
+    precision: str = "medium"
+    source: str = "solar"
 
-    def validity_check(self, m_max: float) -> dict:
+    def validity_check(self, m_max: float, dipole_spacing: float) -> dict:
         """Check |m|*k*d convergence criterion.
 
-        Returns dict with m_max, k, m_k_d, and valid (bool).
-        DDA convergence requires m_k_d < 1.
+        Args:
+            m_max: Maximum |refractive_index| across all materials.
+            dipole_spacing: Actual dipole spacing used.
+
+        Returns:
+            dict with m_max, k, m_k_d, and valid (bool).
         """
         k = 2.0 * np.pi / self.wavelength
-        mkd = abs(m_max) * k * self.dipole_spacing
+        mkd = abs(m_max) * k * dipole_spacing
         return {"m_max": m_max, "k": k, "m_k_d": mkd, "valid": mkd < 1.0}
 
 
