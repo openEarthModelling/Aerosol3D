@@ -9,3 +9,4 @@ from .modeling import (
 from .factory import from_file, from_fractal
 from .io import save_vtp, save_voxel
 from .optics import solve_optics, SimulationConfig  # noqa: F401
+from .utils.plot import save_screenshot, save_rotation_video  # noqa: F401
