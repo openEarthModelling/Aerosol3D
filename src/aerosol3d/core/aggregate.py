@@ -40,6 +40,16 @@ class FractalAggregate:
                            phi_resolution=phi_res)
         return cloud.glyph(geom=sphere, scale="radii", orient=False)
 
+    def to_particle(self, name: str = "fractal_aggregate",
+                    theta_res: int = 20, phi_res: int = 20):
+        from .particle import AerosolParticle, MixingState
+        particle = AerosolParticle(
+            name=name, mixing_state=MixingState.AGGREGATED, unit=self.unit
+        )
+        mesh = self.to_mesh(theta_res, phi_res)
+        particle.add_mesh("aggregate", mesh, self.material)
+        return particle
+
     def __repr__(self) -> str:
         return (f"FractalAggregate(n={self.n_monomers}, "
                 f"material={self.material.name!r})")
