@@ -23,9 +23,9 @@ def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
 
     # --- Step 1: Create bare BC sphere ---
-    from aerosol3d import AerosolParticle, Material, create_sphere, MixingState, save_screenshot
+    from aerosol3d import AerosolParticle, create_sphere, MixingState, save_screenshot, preset_material
 
-    soot = Material("soot", refractive_index=complex(1.95, 0.79), density=1.8)
+    soot = preset_material("black_carbon")
     radius_nm = 50.0
 
     particle = AerosolParticle(
@@ -36,7 +36,7 @@ def main():
     particle.add_mesh("core", create_sphere((0, 0, 0), radius_nm), soot)
 
     print(f"Particle: {particle}")
-    print(f"Material: {soot},  n = {soot.refractive_index.real}, k = {soot.refractive_index.imag}")
+    print(f"Material: {soot}")
 
     # --- Step 2: 3D visualization ---
     save_screenshot(
@@ -57,17 +57,13 @@ def main():
 
     config = SimulationConfig(
         wavelength=550.0,
-        polarization=(1.0, 0.0, 0.0),
-        propagation=(0.0, 0.0, 1.0),
-        n_host=1.0,
-        dipole_spacing=10.0,
+        source="solar",
     )
 
     print(f"\nRunning DDA solve ...")
     result = solve_optics(
         particle,
         config,
-        voxel_size=10.0,
         compute_near_field=True,
         compute_phase_func=True,
     )

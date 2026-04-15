@@ -47,9 +47,9 @@ def main():
     print(f"  Generated: {agg.current_size} monomers, unit={agg.length_unit}")
 
     # --- Step 2: Convert to AerosolParticle ---
-    from aerosol3d import Material, from_fractal, save_screenshot, save_rotation_video
+    from aerosol3d import from_fractal, save_screenshot, save_rotation_video, preset_material
 
-    soot = Material("soot", refractive_index=complex(1.95, 0.79), density=1.8)
+    soot = preset_material("black_carbon")
     fractal = from_fractal(agg, soot)
     particle = fractal.to_particle()
     print(f"  Particle: {particle}")
@@ -81,20 +81,15 @@ def main():
     from aerosol3d import solve_optics, SimulationConfig
     from aerosol3d.optics.visualization import print_macroscopic, plot_phase_function_2d
 
-    # Dipole spacing ~5 nm for good DDA convergence with soot at 550 nm
     config = SimulationConfig(
         wavelength=550.0,
-        polarization=(1.0, 0.0, 0.0),
-        propagation=(0.0, 0.0, 1.0),
-        n_host=1.0,
-        dipole_spacing=5.0,
+        source="solar",
     )
 
-    print(f"\nRunning DDA solve (dipole d = 5 nm)...")
+    print(f"\nRunning DDA solve ...")
     result = solve_optics(
         particle,
         config,
-        voxel_size=5.0,
         compute_near_field=True,
         compute_phase_func=True,
     )
