@@ -6,12 +6,15 @@ boundary is strictly typed as float64 or complex128 with C-contiguous layout.
 """
 
 import logging
+import copy
 
 import numpy as np
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 _julia_initialized = False
+_gpu_checked: Optional[bool] = None
 
 
 def is_julia_ready() -> bool:
@@ -32,6 +35,31 @@ def _ensure_julia():
     Main.eval("DDACore.solve_DDA_e([0.0 0.0 0.0], [1.0im])")
     _julia_initialized = True
     logger.info("Julia runtime initialized, CEMD package loaded.")
+
+
+_gpu_checked: Optional[bool] = None
+
+
+def check_gpu_available() -> bool:
+    """Check whether Julia CUDA.jl is functional.
+
+    Returns:
+        True if CUDA is available on the Julia side, False otherwise.
+    """
+    global _gpu_checked
+    if _gpu_checked is not None:
+        return _gpu_checked
+    try:
+        _ensure_julia()
+        from julia import Main
+        Main.eval("CUDA.functional()")
+        _gpu_checked = True
+        logger.info("GPU (CUDA) is available via Julia.")
+        return True
+    except Exception:
+        _gpu_checked = False
+        logger.info("GPU (CUDA) is not available.")
+        return False
 
 
 def _enforce_types(
@@ -80,6 +108,14 @@ def solve_dda(
         dict with "phi_inc": (N, 3) complex128 incident field at each dipole.
     """
     _ensure_julia()
+
+    if config.solver == "GPU" and not check_gpu_available():
+        logger.warning(
+            "GPU solver requested but CUDA is not available. Falling back to CPU."
+        )
+        config = copy.copy(config)
+        config.solver = "CPU"
+
     from julia import CoupledElectricMagneticDipoles as CEMD
 
     positions, alpha_e = _enforce_types(positions, alpha_e)
@@ -90,7 +126,7 @@ def solve_dda(
 
     # Generate plane wave input field
     khat = list(config.propagation)
-    e0 = list(config.polarization)
+    e0 = list(config.polarization) if config.polarization is not None else [1.0, 0.0, 0.0] if config.polarization is not None else [1.0, 0.0, 0.0]
     input_field = CEMD.InputFields.plane_wave_e(kr, khat=khat, e0=e0)
 
     phi_inc = CEMD.DDACore.solve_DDA_e(
@@ -122,7 +158,7 @@ def compute_cross_sections(
     kr = k * positions
 
     khat = list(config.propagation)
-    e0 = list(config.polarization)
+    e0 = list(config.polarization) if config.polarization is not None else [1.0, 0.0, 0.0]
     input_field = CEMD.InputFields.plane_wave_e(kr, khat=khat, e0=e0)
 
     cs = CEMD.PostProcessing.compute_cross_sections_e(
@@ -156,7 +192,7 @@ def compute_diff_scattering(
     kr = k * positions
 
     khat = list(config.propagation)
-    e0 = list(config.polarization)
+    e0 = list(config.polarization) if config.polarization is not None else [1.0, 0.0, 0.0]
     input_field = CEMD.InputFields.plane_wave_e(kr, khat=khat, e0=e0)
 
     # Ensure directions is 2D (Nu, 3) -- PyJulia may flatten 1-row arrays
