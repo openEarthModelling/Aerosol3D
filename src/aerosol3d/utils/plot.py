@@ -129,18 +129,24 @@ def save_rotation_video(
     focal_point = combined.center
     radius = max(combined.length, 1.0) * 1.5
 
+    # Set initial camera position
+    elev_rad = np.radians(elevation)
+    initial_pos = [
+        radius * np.cos(elev_rad) + focal_point[0],
+        focal_point[1],
+        radius * np.sin(elev_rad) + focal_point[2],
+    ]
+    plotter.camera.position = initial_pos
+    plotter.camera.focal_point = focal_point
+    plotter.camera.up = (0, 0, 1)
+
+    # Force a render to initialize the view
+    plotter.render()
+
     writer = imageio.get_writer(path, fps=fps)
 
     for i in range(n_frames):
-        angle = 360.0 * i / n_frames
-        azimuth_rad = np.radians(angle)
-        elev_rad = np.radians(elevation)
-        pos = [
-            radius * np.cos(azimuth_rad) * np.cos(elev_rad) + focal_point[0],
-            radius * np.sin(azimuth_rad) * np.cos(elev_rad) + focal_point[1],
-            radius * np.sin(elev_rad) + focal_point[2],
-        ]
-        plotter.camera_position = (pos, focal_point, (0, 0, 1))
+        plotter.camera.azimuth = 360.0 * i / n_frames
         frame = plotter.screenshot()
         writer.append_data(frame)
 
