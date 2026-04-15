@@ -9,10 +9,12 @@ dependencies = [
     "pint",
     "scipy",
     "pyjulia",
+    "imageio[ffmpeg]",
+    "matplotlib",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "matplotlib"]
+dev = ["pytest", "pytest-cov"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
