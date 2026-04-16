@@ -129,24 +129,21 @@ def save_rotation_video(
     focal_point = combined.center
     radius = max(combined.length, 1.0) * 1.5
 
-    # Set initial camera position
     elev_rad = np.radians(elevation)
-    initial_pos = [
-        radius * np.cos(elev_rad) + focal_point[0],
-        focal_point[1],
-        radius * np.sin(elev_rad) + focal_point[2],
-    ]
-    plotter.camera.position = initial_pos
-    plotter.camera.focal_point = focal_point
-    plotter.camera.up = (0, 0, 1)
-
-    # Force a render to initialize the view
-    plotter.render()
-
     writer = imageio.get_writer(path, fps=fps)
 
     for i in range(n_frames):
-        plotter.camera.azimuth = 360.0 * i / n_frames
+        azimuth = 360.0 * i / n_frames
+        az_rad = np.radians(azimuth)
+        pos = [
+            radius * np.cos(elev_rad) * np.cos(az_rad) + focal_point[0],
+            radius * np.cos(elev_rad) * np.sin(az_rad) + focal_point[1],
+            radius * np.sin(elev_rad) + focal_point[2],
+        ]
+        # camera_position tuple + render() required in off_screen mode;
+        # individual camera attribute assignments are ignored by pyvista
+        plotter.camera_position = [pos, list(focal_point), [0, 0, 1]]
+        plotter.render()
         frame = plotter.screenshot()
         writer.append_data(frame)
 
