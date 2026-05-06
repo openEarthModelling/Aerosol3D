@@ -12,7 +12,7 @@ class TestCAMCoating:
         core = create_sphere(center=(0, 0, 0), radius=50.0)
         p.add_mesh("bc_core", core, soot_material)
 
-        result = apply_cam_coating(p, target_f_bc=0.5, material=sulfate_material)
+        result = apply_cam_coating(p, f_bc=0.5, material=sulfate_material)
         assert "coating" in result.blocks
         assert result.mixing_state.name == "COATED"
 
@@ -25,7 +25,7 @@ class TestCAMCoating:
         core = create_sphere(center=(0, 0, 0), radius=50.0)
         p.add_mesh("bc_core", core, soot_material)
 
-        result = apply_cam_coating(p, target_f_bc=0.5, material=sulfate_material)
+        result = apply_cam_coating(p, f_bc=0.5, material=sulfate_material)
         coating = result.blocks["coating"]
         expected_R = 50.0 * (2.0 ** (1.0/3.0))
         bounds = coating.bounds
@@ -42,4 +42,4 @@ class TestCAMCoating:
         p.add_mesh("bc_core", core, soot_material)
 
         with pytest.raises(ValueError):
-            apply_cam_coating(p, target_f_bc=0.0, material=sulfate_material)
+            apply_cam_coating(p, f_bc=0.0, material=sulfate_material)
