@@ -85,7 +85,7 @@ def apply_potential_void_coating(
     nx, ny, nz = dims
     bc_3d = bc_mask.reshape(nz, ny, nx).astype(bool)
 
-    eroded = binary_erosion(bc_3d)
+    eroded = binary_erosion(bc_3d).astype(bool)
     surface_3d = bc_3d & ~eroded
     void_3d = ~bc_3d
 
