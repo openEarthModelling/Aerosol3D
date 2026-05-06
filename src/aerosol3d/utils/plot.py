@@ -277,3 +277,70 @@ def save_voxel_grid_screenshot(
     plotter.camera_position = camera_position
     plotter.screenshot(path)
     plotter.close()
+
+
+def save_voxel_grid_video(
+    grid,
+    path: str,
+    colors=None,
+    opacity=None,
+    n_frames: int = 72,
+    fps: int = 24,
+    elevation: float = 30.0,
+    window_size=(1024, 768),
+    background="white",
+):
+    """Render 360-degree rotation of voxel grid and save as MP4.
+
+    Args:
+        grid: pv.ImageData with cell_data['material_id'].
+        path: Output MP4 file path (must end with .mp4).
+        colors: Dict mapping material_id to color string.
+        opacity: Dict mapping material_id to opacity float.
+        n_frames: Total frames (72 = one frame per 5 degrees).
+        fps: Frame rate.
+        elevation: Camera elevation angle in degrees.
+        window_size: (width, height) in pixels.
+        background: Background color string.
+    """
+    import numpy as np
+    import imageio.v2 as imageio
+
+    if not path.endswith(".mp4"):
+        raise ValueError(f"Output path must end with .mp4, got: {path}")
+
+    plotter = plot_voxel_grid(grid, colors=colors, opacity=opacity, off_screen=True)
+    plotter.set_background(background)
+    plotter.window_size = window_size
+
+    glyphs = _build_voxel_glyph_mesh(grid)
+    bounds = glyphs.bounds
+    focal_point = [
+        (bounds[0] + bounds[1]) / 2,
+        (bounds[2] + bounds[3]) / 2,
+        (bounds[4] + bounds[5]) / 2,
+    ]
+    radius = max(
+        bounds[1] - bounds[0],
+        bounds[3] - bounds[2],
+        bounds[5] - bounds[4],
+    ) * 1.5
+
+    elev_rad = np.radians(elevation)
+    writer = imageio.get_writer(path, fps=fps, format="FFMPEG")
+
+    for i in range(n_frames):
+        azimuth = 360.0 * i / n_frames
+        az_rad = np.radians(azimuth)
+        pos = [
+            radius * np.cos(elev_rad) * np.cos(az_rad) + focal_point[0],
+            radius * np.cos(elev_rad) * np.sin(az_rad) + focal_point[1],
+            radius * np.sin(elev_rad) + focal_point[2],
+        ]
+        plotter.camera_position = [pos, list(focal_point), [0, 0, 1]]
+        plotter.render()
+        frame = plotter.screenshot()
+        writer.append_data(frame)
+
+    writer.close()
+    plotter.close()

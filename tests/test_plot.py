@@ -187,3 +187,25 @@ class TestSaveVoxelGridScreenshot:
         path = str(tmp_path / "voxels.jpg")
         with pytest.raises(ValueError, match="png"):
             save_voxel_grid_screenshot(grid, path)
+
+
+class TestSaveVoxelGridVideo:
+    def test_saves_mp4(self, tmp_path):
+        from aerosol3d.utils.plot import save_voxel_grid_video
+
+        ids = np.zeros((4, 4, 4), dtype=np.int32)
+        ids[1:3, 1:3, 1:3] = 1
+        grid = _make_test_voxel_grid(ids)
+
+        path = str(tmp_path / "voxels.mp4")
+        save_voxel_grid_video(grid, path, n_frames=6, fps=6)
+        assert os.path.exists(path)
+        assert os.path.getsize(path) > 0
+
+    def test_rejects_non_mp4(self, tmp_path):
+        from aerosol3d.utils.plot import save_voxel_grid_video
+
+        grid = _make_test_voxel_grid(np.zeros((2, 2, 2), dtype=np.int32))
+        path = str(tmp_path / "voxels.gif")
+        with pytest.raises(ValueError, match="mp4"):
+            save_voxel_grid_video(grid, path)
