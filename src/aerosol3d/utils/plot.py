@@ -245,3 +245,35 @@ def plot_voxel_grid(grid, colors=None, opacity=None, off_screen=False):
             show_edges=False,
         )
     return plotter
+
+
+def save_voxel_grid_screenshot(
+    grid,
+    path: str,
+    colors=None,
+    opacity=None,
+    camera_position="iso",
+    window_size=(1024, 768),
+    background="white",
+):
+    """Render voxel grid and save as PNG screenshot.
+
+    Args:
+        grid: pv.ImageData with cell_data['material_id'].
+        path: Output PNG file path.
+        colors: Dict mapping material_id to color string.
+        opacity: Dict mapping material_id to opacity float.
+        camera_position: Camera preset ("iso", "xy", "xz", "yz", "front")
+            or a manual tuple.
+        window_size: (width, height) in pixels.
+        background: Background color string.
+    """
+    if not path.endswith(".png"):
+        raise ValueError(f"Output path must end with .png, got: {path}")
+
+    plotter = plot_voxel_grid(grid, colors=colors, opacity=opacity, off_screen=True)
+    plotter.set_background(background)
+    plotter.window_size = window_size
+    plotter.camera_position = camera_position
+    plotter.screenshot(path)
+    plotter.close()

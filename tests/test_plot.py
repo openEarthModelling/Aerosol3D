@@ -165,3 +165,25 @@ class TestPlotVoxelGrid:
         grid = pv.ImageData(dimensions=(3, 3, 3), spacing=(1.0, 1.0, 1.0))
         with pytest.raises(ValueError, match="material_id"):
             plot_voxel_grid(grid, off_screen=True)
+
+
+class TestSaveVoxelGridScreenshot:
+    def test_saves_png(self, tmp_path):
+        from aerosol3d.utils.plot import save_voxel_grid_screenshot
+
+        ids = np.zeros((4, 4, 4), dtype=np.int32)
+        ids[1:3, 1:3, 1:3] = 1
+        grid = _make_test_voxel_grid(ids)
+
+        path = str(tmp_path / "voxels.png")
+        save_voxel_grid_screenshot(grid, path)
+        assert os.path.exists(path)
+        assert os.path.getsize(path) > 0
+
+    def test_rejects_non_png(self, tmp_path):
+        from aerosol3d.utils.plot import save_voxel_grid_screenshot
+
+        grid = _make_test_voxel_grid(np.zeros((2, 2, 2), dtype=np.int32))
+        path = str(tmp_path / "voxels.jpg")
+        with pytest.raises(ValueError, match="png"):
+            save_voxel_grid_screenshot(grid, path)
