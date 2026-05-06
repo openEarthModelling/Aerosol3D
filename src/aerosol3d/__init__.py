@@ -6,7 +6,8 @@ from .core import AerosolParticle, MixingState, Material, FractalAggregate
 from .geometry import create_sphere, create_ellipsoid, create_cube
 from .modeling import (
     apply_distance_coating,
-    apply_potential_coating,
+    apply_potential_void_coating,
+    apply_potential_edge_coating,
     apply_ccm_coating,
     apply_cam_coating,
 )
