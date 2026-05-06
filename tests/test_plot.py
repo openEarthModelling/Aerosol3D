@@ -136,3 +136,32 @@ class TestResolveVoxelColors:
         assert colors[1] == "black"
         assert 2 in colors
         assert colors[2] != "black"
+
+
+class TestPlotVoxelGrid:
+    def test_plot_voxel_grid_smoke(self):
+        from aerosol3d.utils.plot import plot_voxel_grid
+
+        ids = np.zeros((4, 4, 4), dtype=np.int32)
+        ids[1:3, 1:3, 1:3] = 1
+        grid = _make_test_voxel_grid(ids)
+
+        plotter = plot_voxel_grid(grid, off_screen=True)
+        assert plotter is not None
+        plotter.close()
+
+    def test_plot_voxel_grid_empty_raises(self):
+        from aerosol3d.utils.plot import plot_voxel_grid
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        grid = _make_test_voxel_grid(ids)
+
+        with pytest.raises(ValueError, match="No occupied voxels"):
+            plot_voxel_grid(grid, off_screen=True)
+
+    def test_plot_voxel_grid_no_material_id_raises(self):
+        from aerosol3d.utils.plot import plot_voxel_grid
+
+        grid = pv.ImageData(dimensions=(3, 3, 3), spacing=(1.0, 1.0, 1.0))
+        with pytest.raises(ValueError, match="material_id"):
+            plot_voxel_grid(grid, off_screen=True)

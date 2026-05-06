@@ -211,3 +211,37 @@ def _resolve_voxel_colors(grid, colors):
     for i, mat_id in enumerate(occupied_ids):
         resolved[int(mat_id)] = colors.get(int(mat_id), _DEFAULT_PALETTE[i % len(_DEFAULT_PALETTE)])
     return resolved
+
+
+def plot_voxel_grid(grid, colors=None, opacity=None, off_screen=False):
+    """Return a PyVista Plotter rendering each occupied voxel as a cube.
+
+    Args:
+        grid: pv.ImageData with cell_data['material_id'].
+        colors: Dict mapping material_id (int) to color string.
+            e.g. {1: "black", 2: "dodgerblue"}. Auto-assigned if None.
+        opacity: Dict mapping material_id to float in [0, 1].
+        off_screen: If True, render without opening a window.
+
+    Returns:
+        pv.Plotter instance.
+    """
+    if opacity is None:
+        opacity = {}
+
+    glyphs = _build_voxel_glyph_mesh(grid)
+    resolved_colors = _resolve_voxel_colors(grid, colors)
+
+    plotter = pv.Plotter(off_screen=off_screen)
+    for mat_id, color in resolved_colors.items():
+        mask = glyphs.cell_data["material_id"] == mat_id
+        if not np.any(mask):
+            continue
+        sub_mesh = glyphs.extract_cells(mask)
+        plotter.add_mesh(
+            sub_mesh,
+            color=color,
+            opacity=opacity.get(mat_id, 1.0),
+            show_edges=False,
+        )
+    return plotter
