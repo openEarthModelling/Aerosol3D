@@ -130,7 +130,7 @@ def save_rotation_video(
     radius = max(combined.length, 1.0) * 1.5
 
     elev_rad = np.radians(elevation)
-    writer = imageio.get_writer(path, fps=fps)
+    writer = imageio.get_writer(path, fps=fps, format="FFMPEG")
 
     for i in range(n_frames):
         azimuth = 360.0 * i / n_frames
