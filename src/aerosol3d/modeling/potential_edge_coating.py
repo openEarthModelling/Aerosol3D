@@ -52,14 +52,35 @@ def apply_potential_edge_coating(
 
     from aerosol3d.core.particle import MixingState
 
-    # 1. Voxelize particle
+    # 1. Voxelize particle with expanded grid for coating
     combined = particle.combined
     bounds = combined.bounds
+    center = np.array(
+        [
+            (bounds[0] + bounds[1]) / 2,
+            (bounds[2] + bounds[3]) / 2,
+            (bounds[4] + bounds[5]) / 2,
+        ]
+    )
     extent = np.array(bounds[1::2]) - np.array(bounds[::2])
     max_extent = float(np.max(extent))
-    voxel_size = max_extent / resolution
 
-    grid = voxelize_with_materials(particle, voxel_size=voxel_size)
+    # Expand grid to accommodate dp_dc_ratio envelope
+    coated_extent = max_extent * dp_dc_ratio
+    voxel_size = coated_extent / resolution
+    half = coated_extent / 2.0
+    coated_bounds = [
+        center[0] - half,
+        center[0] + half,
+        center[1] - half,
+        center[1] + half,
+        center[2] - half,
+        center[2] + half,
+    ]
+
+    grid = voxelize_with_materials(
+        particle, voxel_size=voxel_size, bounds=coated_bounds
+    )
 
     # 2. Identify BC voxels
     core_mat_id = particle.combined.field_data.get("material_id", [0])[0]

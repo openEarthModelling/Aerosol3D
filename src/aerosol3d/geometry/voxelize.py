@@ -6,21 +6,27 @@ import pyvista as pv
 logger = logging.getLogger(__name__)
 
 
-def voxelize_with_materials(particle, voxel_size: float) -> pv.ImageData:
+def voxelize_with_materials(
+    particle, voxel_size: float, bounds: list | None = None
+) -> pv.ImageData:
     """Generate a regular 3D voxel grid with per-voxel material IDs.
 
     Args:
         particle: AerosolParticle instance with .blocks and .combined
         voxel_size: Side length of each voxel in the particle's unit.
+        bounds: Optional 6-element list [xmin, xmax, ymin, ymax, zmin, zmax]
+            to override the particle's natural bounds. Useful when the
+            grid must be larger than the particle (e.g. to accommodate
+            outward-growing coatings).
 
     Returns:
         pv.ImageData with cell_data["material_id"] array.
         material_id == 0 means void (no material).
     """
     combined = particle.combined
-    bounds = combined.bounds
-    origin = np.array(bounds[::2])
-    max_corner = np.array(bounds[1::2])
+    _bounds = bounds if bounds is not None else combined.bounds
+    origin = np.array(_bounds[::2])
+    max_corner = np.array(_bounds[1::2])
     extent = max_corner - origin
 
     dims = np.ceil(extent / voxel_size).astype(int) + 1
