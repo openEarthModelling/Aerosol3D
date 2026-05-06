@@ -70,7 +70,7 @@ class TestFullPipeline:
             if coat_fn == apply_distance_coating:
                 coat_fn(p, thickness=10.0, material=sulfate)
             else:
-                coat_fn(p, target_f_bc=0.5, material=sulfate)
+                coat_fn(p, f_bc=0.5, material=sulfate)
             assert "coating" in p.blocks
 
         # Potential void coating with lower resolution for speed
