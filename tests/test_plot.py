@@ -209,3 +209,40 @@ class TestSaveVoxelGridVideo:
         path = str(tmp_path / "voxels.gif")
         with pytest.raises(ValueError, match="mp4"):
             save_voxel_grid_video(grid, path)
+
+
+class TestParticleVoxelWrappers:
+    def test_save_particle_voxel_screenshot(self, sample_particle, tmp_path):
+        from aerosol3d.utils.plot import save_particle_voxel_screenshot
+
+        path = str(tmp_path / "particle_voxels.png")
+        save_particle_voxel_screenshot(sample_particle, voxel_size=20.0, path=path)
+        assert os.path.exists(path)
+        assert os.path.getsize(path) > 0
+
+    def test_plot_particle_as_voxels(self, sample_particle):
+        from aerosol3d.utils.plot import plot_particle_as_voxels
+
+        plotter = plot_particle_as_voxels(sample_particle, voxel_size=20.0, off_screen=True)
+        assert plotter is not None
+        plotter.close()
+
+    def test_save_particle_voxel_video(self, sample_particle, tmp_path):
+        from aerosol3d.utils.plot import save_particle_voxel_video
+
+        path = str(tmp_path / "particle_voxels.mp4")
+        save_particle_voxel_video(sample_particle, voxel_size=20.0, path=path, n_frames=6, fps=6)
+        assert os.path.exists(path)
+        assert os.path.getsize(path) > 0
+
+    def test_voxel_colors_applied(self, sample_particle, tmp_path):
+        from aerosol3d.utils.plot import save_particle_voxel_screenshot
+
+        path = str(tmp_path / "colored_voxels.png")
+        save_particle_voxel_screenshot(
+            sample_particle,
+            voxel_size=20.0,
+            path=path,
+            colors={1: "black"},
+        )
+        assert os.path.exists(path)

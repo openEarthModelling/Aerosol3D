@@ -344,3 +344,78 @@ def save_voxel_grid_video(
 
     writer.close()
     plotter.close()
+
+
+def plot_particle_as_voxels(
+    particle,
+    voxel_size: float,
+    colors=None,
+    opacity=None,
+    off_screen=False,
+    **voxelize_kwargs,
+):
+    """Voxelize particle and return a Plotter showing occupied voxels as cubes.
+
+    Convenience wrapper: calls voxelize_with_materials internally,
+    then plot_voxel_grid.
+    """
+    from aerosol3d.geometry.voxelize import voxelize_with_materials
+
+    grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
+    return plot_voxel_grid(grid, colors=colors, opacity=opacity, off_screen=off_screen)
+
+
+def save_particle_voxel_screenshot(
+    particle,
+    voxel_size: float,
+    path: str,
+    colors=None,
+    opacity=None,
+    camera_position="iso",
+    window_size=(1024, 768),
+    background="white",
+    **voxelize_kwargs,
+):
+    """Voxelize particle and save voxel grid screenshot."""
+    from aerosol3d.geometry.voxelize import voxelize_with_materials
+
+    grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
+    save_voxel_grid_screenshot(
+        grid,
+        path,
+        colors=colors,
+        opacity=opacity,
+        camera_position=camera_position,
+        window_size=window_size,
+        background=background,
+    )
+
+
+def save_particle_voxel_video(
+    particle,
+    voxel_size: float,
+    path: str,
+    colors=None,
+    opacity=None,
+    n_frames: int = 72,
+    fps: int = 24,
+    elevation: float = 30.0,
+    window_size=(1024, 768),
+    background="white",
+    **voxelize_kwargs,
+):
+    """Voxelize particle and save voxel grid rotation video."""
+    from aerosol3d.geometry.voxelize import voxelize_with_materials
+
+    grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
+    save_voxel_grid_video(
+        grid,
+        path,
+        colors=colors,
+        opacity=opacity,
+        n_frames=n_frames,
+        fps=fps,
+        elevation=elevation,
+        window_size=window_size,
+        background=background,
+    )
