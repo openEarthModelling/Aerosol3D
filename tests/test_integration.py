@@ -47,7 +47,7 @@ class TestFullPipeline:
         p = AerosolParticle(name="ccm_aggregate", unit="nm")
         p.add_mesh("bc_core", agg.to_mesh(theta_res=10, phi_res=10), soot)
 
-        apply_ccm_coating(p, target_f_bc=0.5, material=sulfate)
+        apply_ccm_coating(p, f_bc=0.5, material=sulfate)
         assert p.mixing_state == MixingState.COATED
         assert "coating" in p.blocks
 
@@ -56,7 +56,8 @@ class TestFullPipeline:
         from aerosol3d import (
             AerosolParticle, Material,
             create_sphere,
-            apply_distance_coating, apply_potential_coating,
+            apply_distance_coating, apply_potential_void_coating,
+            apply_potential_edge_coating,
             apply_ccm_coating, apply_cam_coating,
         )
 
@@ -72,8 +73,18 @@ class TestFullPipeline:
                 coat_fn(p, target_f_bc=0.5, material=sulfate)
             assert "coating" in p.blocks
 
-        # Potential coating with lower resolution for speed
+        # Potential void coating with lower resolution for speed
         p = AerosolParticle(name="test", unit="nm")
         p.add_mesh("bc_core", create_sphere((0, 0, 0), 50.0), soot)
-        apply_potential_coating(p, target_f_bc=0.5, material=sulfate, resolution=20)
+        apply_potential_void_coating(
+            p, coated_area_fraction=0.5, dp_dc_ratio=1.5,
+            material=sulfate, resolution=20)
+        assert "coating" in p.blocks
+
+        # Potential edge coating with lower resolution for speed
+        p = AerosolParticle(name="test", unit="nm")
+        p.add_mesh("bc_core", create_sphere((0, 0, 0), 50.0), soot)
+        apply_potential_edge_coating(
+            p, coated_area_fraction=0.5, dp_dc_ratio=1.5,
+            material=sulfate, resolution=20)
         assert "coating" in p.blocks
