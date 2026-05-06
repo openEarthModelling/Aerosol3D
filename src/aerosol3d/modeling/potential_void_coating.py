@@ -83,7 +83,7 @@ def apply_potential_void_coating(
     # 4. Find BC surface voxels and surface-adjacent void voxels
     dims = grid.dimensions  # (nx, ny, nz)
     nx, ny, nz = dims
-    bc_3d = bc_mask.reshape(nz, ny, nx).astype(bool)
+    bc_3d = bc_mask.reshape(nz - 1, ny - 1, nx - 1).astype(bool)
 
     eroded = binary_erosion(bc_3d).astype(bool)
     surface_3d = bc_3d & ~eroded
