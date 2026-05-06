@@ -1,3 +1,7 @@
+from importlib.metadata import version
+
+__version__ = version("aerosol3d")
+
 from .core import AerosolParticle, MixingState, Material, FractalAggregate
 from .geometry import create_sphere, create_ellipsoid, create_cube
 from .modeling import (

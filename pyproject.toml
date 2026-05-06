@@ -1,27 +1,88 @@
-[project]
-name = "aerosol3d"
-version = "0.2.0"
-requires-python = ">=3.10"
-dependencies = [
-    "numpy",
-    "pyvista>=0.44",
-    "manifold3d",
-    "pint",
-    "scipy",
-    "pyjulia",
-    "imageio[ffmpeg]",
-    "matplotlib",
-]
-
-[project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
-
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "aerosol3d"
+version = "0.2.0"
+description = "3D aerosol particle modeling and optical property computation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Fan Zhang", email = "zhangfan@example.com"},
+]
+keywords = [
+    "aerosol",
+    "atmospheric-science",
+    "dda",
+    "optics",
+    "particle",
+    "fractal",
+    "geometry",
+    "visualization",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.21,<2.0",
+    "pyvista>=0.44",
+    "manifold3d>=2.0",
+    "pint>=0.20",
+    "scipy>=1.9",
+    "pyjulia>=0.6",
+    "imageio[ffmpeg]>=2.0",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.6.0",
+    "pre-commit>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/openEarthModelling/aerosol3d"
+Repository = "https://github.com/openEarthModelling/aerosol3d"
+"Bug Tracker" = "https://github.com/openEarthModelling/aerosol3d/issues"
+Changelog = "https://github.com/openEarthModelling/aerosol3d/blob/main/CHANGELOG.md"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+aerosol3d = ["py.typed"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "W",   # pycodestyle warnings
+    "UP",  # pyupgrade
+]
+ignore = ["E501"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=aerosol3d --cov-report=term-missing"
