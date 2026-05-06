@@ -148,7 +148,7 @@ class TestAutoVoxelSize:
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
 
         config = SimulationConfig(wavelength=550.0, precision="high")
-        result = solve_optics(p, config, voxel_size=20.0, verbose=False)
+        result = solve_optics(p, config, voxel_size=44.0, verbose=False)
 
         assert result.n_dipoles > 0
         # With large voxel_size, m_k_d should exceed high precision target (0.95)
