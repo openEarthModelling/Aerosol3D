@@ -1,6 +1,19 @@
 import os
 import numpy as np
 import pytest
+import pyvista as pv
+
+
+def _make_test_voxel_grid(material_ids_3d):
+    """Create a pv.ImageData with cell_data['material_id'] from a 3D array."""
+    nz, ny, nx = material_ids_3d.shape
+    grid = pv.ImageData(
+        dimensions=(nx + 1, ny + 1, nz + 1),
+        spacing=(1.0, 1.0, 1.0),
+        origin=(0.0, 0.0, 0.0),
+    )
+    grid.cell_data["material_id"] = material_ids_3d.ravel(order="F")
+    return grid
 
 
 @pytest.fixture
@@ -44,3 +57,44 @@ class TestSaveRotationVideo:
         path = str(tmp_path / "out.gif")
         with pytest.raises(ValueError, match="mp4"):
             save_rotation_video(sample_particle, path)
+
+
+class TestBuildVoxelGlyphMesh:
+    def test_builds_glyph_mesh(self):
+        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        ids[1, 1, 1] = 1
+        grid = _make_test_voxel_grid(ids)
+
+        glyphs = _build_voxel_glyph_mesh(grid)
+        assert glyphs.n_cells > 0
+
+    def test_preserves_material_id(self):
+        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+
+        ids = np.zeros((4, 4, 4), dtype=np.int32)
+        ids[1:3, 1:3, 1:3] = 2
+        grid = _make_test_voxel_grid(ids)
+
+        glyphs = _build_voxel_glyph_mesh(grid)
+        assert "material_id" in glyphs.cell_data
+        unique = np.unique(glyphs.cell_data["material_id"])
+        assert 2 in unique
+
+    def test_empty_grid_raises(self):
+        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        grid = _make_test_voxel_grid(ids)
+
+        with pytest.raises(ValueError, match="No occupied voxels"):
+            _build_voxel_glyph_mesh(grid)
+
+    def test_missing_material_id_raises(self):
+        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+
+        grid = pv.ImageData(dimensions=(3, 3, 3), spacing=(1.0, 1.0, 1.0))
+        # no material_id
+        with pytest.raises(ValueError, match="material_id"):
+            _build_voxel_glyph_mesh(grid)
