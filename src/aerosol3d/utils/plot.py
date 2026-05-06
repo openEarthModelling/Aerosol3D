@@ -183,3 +183,31 @@ def _build_voxel_glyph_mesh(grid):
     glyphs.cell_data["material_id"] = replicated
 
     return glyphs
+
+
+_DEFAULT_PALETTE = [
+    "red", "blue", "green", "orange", "purple",
+    "cyan", "magenta", "brown", "pink", "olive",
+]
+
+
+def _resolve_voxel_colors(grid, colors):
+    """Return a dict mapping material_id to color string.
+
+    Args:
+        grid: pv.ImageData with cell_data['material_id'].
+        colors: Dict mapping material_id to color string, or None for auto.
+
+    Returns:
+        Dict[int, str] with a color for every occupied material_id.
+    """
+    unique_ids = np.unique(grid.cell_data["material_id"])
+    occupied_ids = unique_ids[unique_ids > 0]
+
+    if colors is None:
+        colors = {}
+
+    resolved = {}
+    for i, mat_id in enumerate(occupied_ids):
+        resolved[int(mat_id)] = colors.get(int(mat_id), _DEFAULT_PALETTE[i % len(_DEFAULT_PALETTE)])
+    return resolved

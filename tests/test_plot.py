@@ -98,3 +98,41 @@ class TestBuildVoxelGlyphMesh:
         # no material_id
         with pytest.raises(ValueError, match="material_id"):
             _build_voxel_glyph_mesh(grid)
+
+
+class TestResolveVoxelColors:
+    def test_auto_assigns_colors(self):
+        from aerosol3d.utils.plot import _resolve_voxel_colors
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        ids[1, 1, 1] = 1
+        ids[1, 1, 2] = 2
+        grid = _make_test_voxel_grid(ids)
+
+        colors = _resolve_voxel_colors(grid, None)
+        assert 1 in colors
+        assert 2 in colors
+        assert colors[1] != colors[2]
+
+    def test_respects_custom_colors(self):
+        from aerosol3d.utils.plot import _resolve_voxel_colors
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        ids[1, 1, 1] = 1
+        grid = _make_test_voxel_grid(ids)
+
+        colors = _resolve_voxel_colors(grid, {1: "black"})
+        assert colors[1] == "black"
+
+    def test_fills_missing_with_auto(self):
+        from aerosol3d.utils.plot import _resolve_voxel_colors
+
+        ids = np.zeros((3, 3, 3), dtype=np.int32)
+        ids[1, 1, 1] = 1
+        ids[1, 1, 2] = 2
+        grid = _make_test_voxel_grid(ids)
+
+        colors = _resolve_voxel_colors(grid, {1: "black"})
+        assert colors[1] == "black"
+        assert 2 in colors
+        assert colors[2] != "black"
