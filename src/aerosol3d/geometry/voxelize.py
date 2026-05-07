@@ -40,7 +40,7 @@ def voxelize_with_materials(
         if block is None:
             continue
         try:
-            enclosed = grid.select_interior_points(block)
+            enclosed = grid.select_interior_points(block, check_surface=False)
             # select_interior_points operates on grid points.
             # Convert point-level selection to cell-level by majority vote:
             # a cell is inside if its enclosing corner points are mostly inside.

@@ -242,7 +242,7 @@ def plot_voxel_grid(grid, colors=None, opacity=None, off_screen=False):
             sub_mesh,
             color=color,
             opacity=opacity.get(mat_id, 1.0),
-            show_edges=False,
+            show_edges=True,
         )
     return plotter
 

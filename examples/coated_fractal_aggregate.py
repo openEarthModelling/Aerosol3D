@@ -68,7 +68,7 @@ def main():
 
     save_particle_voxel_screenshot(
         particle,
-        voxel_size=2.5,
+        voxel_size=5.0,
         path=str(OUTPUT_DIR / "coated_bare_aggregate_voxels.png"),
         colors={soot.id: "black"},
     )
@@ -96,10 +96,10 @@ def main():
 
     save_particle_voxel_screenshot(
         void_particle,
-        voxel_size=2.5,
+        voxel_size=5.0,
         path=str(OUTPUT_DIR / "coated_void_filling_voxels.png"),
         colors={soot.id: "black", sulfate.id: "dodgerblue"},
-        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        opacity={soot.id: 0.9, sulfate.id: 0.3},
     )
     print(f"  Voxel screenshot saved: {OUTPUT_DIR / 'coated_void_filling_voxels.png'}")
 
@@ -126,10 +126,10 @@ def main():
 
     save_particle_voxel_screenshot(
         edge_particle,
-        voxel_size=2.5,
+        voxel_size=5.0,
         path=str(OUTPUT_DIR / "coated_edge_growing_voxels.png"),
         colors={soot.id: "black", sulfate.id: "crimson"},
-        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        opacity={soot.id: 0.9, sulfate.id: 0.3},
     )
     print(f"  Voxel screenshot saved: {OUTPUT_DIR / 'coated_edge_growing_voxels.png'}")
 
@@ -152,10 +152,10 @@ def main():
 
     save_particle_voxel_video(
         void_particle,
-        voxel_size=2.5,
+        voxel_size=5.0,
         path=str(OUTPUT_DIR / "coated_void_rotation_voxels.mp4"),
         colors={soot.id: "black", sulfate.id: "dodgerblue"},
-        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        opacity={soot.id: 0.9, sulfate.id: 0.3},
         n_frames=72,
         fps=24,
     )
@@ -173,10 +173,10 @@ def main():
 
     save_particle_voxel_video(
         edge_particle,
-        voxel_size=2.5,
+        voxel_size=5.0,
         path=str(OUTPUT_DIR / "coated_edge_rotation_voxels.mp4"),
         colors={soot.id: "black", sulfate.id: "crimson"},
-        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        opacity={soot.id: 0.9, sulfate.id: 0.3},
         n_frames=72,
         fps=24,
     )
