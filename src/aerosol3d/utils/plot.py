@@ -152,34 +152,74 @@ def save_rotation_video(
     plotter.close()
 
 
-def _build_voxel_glyph_mesh(grid):
+def _build_voxel_glyph_mesh(grid, surface_only=True):
     """Convert a voxel grid into a renderable glyph mesh of cubes.
 
     Args:
         grid: pv.ImageData with cell_data['material_id'].
+        surface_only: If True, only render surface voxels (those adjacent to
+            void or a different material). This prevents solid materials from
+            appearing as opaque blocks and is recommended for visualization.
 
     Returns:
         pv.PolyData where each occupied voxel is represented as a cube.
 
     Raises:
-        ValueError: If grid lacks 'material_id' or has no occupied cells.
+        ValueError: If grid lacks 'material_id' or has no voxels to render.
     """
     if "material_id" not in grid.cell_data:
         raise ValueError("Grid must contain cell_data['material_id']")
 
-    thresholded = grid.threshold(0.5, scalars="material_id")
-    if thresholded.n_cells == 0:
+    material_ids = grid.cell_data["material_id"]
+    nx, ny, nz = np.array(grid.dimensions) - 1
+
+    if material_ids.size != nx * ny * nz:
+        raise ValueError("material_id size does not match cell dimensions")
+
+    # Reshape to 3D with x varying fastest (matches VTK cell ordering)
+    mat_grid = material_ids.reshape((nx, ny, nz), order="F")
+
+    # Pad with zeros (void) for boundary handling
+    padded = np.pad(mat_grid, pad_width=1, mode="constant", constant_values=0)
+
+    # A voxel is a surface voxel if it's occupied and has a neighbor
+    # with a different material (including void)
+    occupied = mat_grid > 0
+    diff_x_pos = padded[2:, 1:-1, 1:-1] != padded[1:-1, 1:-1, 1:-1]
+    diff_x_neg = padded[:-2, 1:-1, 1:-1] != padded[1:-1, 1:-1, 1:-1]
+    diff_y_pos = padded[1:-1, 2:, 1:-1] != padded[1:-1, 1:-1, 1:-1]
+    diff_y_neg = padded[1:-1, :-2, 1:-1] != padded[1:-1, 1:-1, 1:-1]
+    diff_z_pos = padded[1:-1, 1:-1, 2:] != padded[1:-1, 1:-1, 1:-1]
+    diff_z_neg = padded[1:-1, 1:-1, :-2] != padded[1:-1, 1:-1, 1:-1]
+
+    surface_mask = occupied & (
+        diff_x_pos | diff_x_neg | diff_y_pos | diff_y_neg | diff_z_pos | diff_z_neg
+    )
+
+    if surface_only:
+        target_mask = surface_mask
+        # Fallback: if no surface voxels exist but there are occupied voxels
+        # (e.g. entire grid is one material), show all occupied voxels
+        if not np.any(surface_mask) and np.any(occupied):
+            target_mask = occupied
+    else:
+        target_mask = occupied
+
+    if not np.any(target_mask):
         raise ValueError("No occupied voxels to visualize")
 
-    centers = thresholded.cell_centers()
+    target_ids = np.where(target_mask.ravel(order="F"))[0]
+    target_grid = grid.extract_cells(target_ids)
+
+    centers = target_grid.cell_centers()
     voxel_size = float(grid.spacing[0])
     cube = pv.Cube().scale((voxel_size, voxel_size, voxel_size))
     glyphs = centers.glyph(geom=cube, orient=False, scale=False)
 
     # glyph() does not preserve cell data; replicate material_id per glyph
     n_cells_per_glyph = cube.n_cells
-    material_ids = thresholded.cell_data["material_id"]
-    replicated = np.repeat(material_ids, n_cells_per_glyph)
+    target_material_ids = target_grid.cell_data["material_id"]
+    replicated = np.repeat(target_material_ids, n_cells_per_glyph)
     glyphs.cell_data["material_id"] = replicated
 
     return glyphs
