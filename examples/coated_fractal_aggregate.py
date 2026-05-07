@@ -4,7 +4,7 @@ Demonstrates the new two-parameter coating algorithms:
 1. Generate a BC fractal aggregate
 2. Apply potential void-filling coating (fills internal voids)
 3. Apply potential edge-growing coating (grows outward)
-4. 3D screenshots and rotation videos for comparison
+4. 3D screenshots and rotation videos for comparison (mesh + voxel)
 
 Usage:
     python coated_fractal_aggregate.py
@@ -31,6 +31,8 @@ def main():
         from_fractal,
         save_screenshot,
         save_rotation_video,
+        save_particle_voxel_screenshot,
+        save_particle_voxel_video,
         preset_material,
         apply_potential_void_coating,
         apply_potential_edge_coating,
@@ -64,6 +66,14 @@ def main():
     )
     print(f"  Screenshot saved: {OUTPUT_DIR / 'coated_bare_aggregate.png'}")
 
+    save_particle_voxel_screenshot(
+        particle,
+        voxel_size=2.5,
+        path=str(OUTPUT_DIR / "coated_bare_aggregate_voxels.png"),
+        colors={soot.id: "black"},
+    )
+    print(f"  Voxel screenshot saved: {OUTPUT_DIR / 'coated_bare_aggregate_voxels.png'}")
+
     # --- Step 3: Apply void-filling coating ---
     print("\nApplying potential void-filling coating...")
     void_particle = particle  # work in-place
@@ -83,6 +93,15 @@ def main():
         opacity={"aggregate": 0.9, "coating": 0.5},
     )
     print(f"  Screenshot saved: {OUTPUT_DIR / 'coated_void_filling.png'}")
+
+    save_particle_voxel_screenshot(
+        void_particle,
+        voxel_size=2.5,
+        path=str(OUTPUT_DIR / "coated_void_filling_voxels.png"),
+        colors={soot.id: "black", sulfate.id: "dodgerblue"},
+        opacity={soot.id: 0.9, sulfate.id: 0.5},
+    )
+    print(f"  Voxel screenshot saved: {OUTPUT_DIR / 'coated_void_filling_voxels.png'}")
 
     # --- Step 4: Apply edge-growing coating ---
     print("\nApplying potential edge-growing coating...")
@@ -105,6 +124,15 @@ def main():
     )
     print(f"  Screenshot saved: {OUTPUT_DIR / 'coated_edge_growing.png'}")
 
+    save_particle_voxel_screenshot(
+        edge_particle,
+        voxel_size=2.5,
+        path=str(OUTPUT_DIR / "coated_edge_growing_voxels.png"),
+        colors={soot.id: "black", sulfate.id: "crimson"},
+        opacity={soot.id: 0.9, sulfate.id: 0.5},
+    )
+    print(f"  Voxel screenshot saved: {OUTPUT_DIR / 'coated_edge_growing_voxels.png'}")
+
     # --- Step 5: Rotation videos ---
     if args.no_video:
         print("\nVideo generation skipped (--no-video).")
@@ -122,6 +150,17 @@ def main():
     )
     print(f"  Void-filling rotation video: {OUTPUT_DIR / 'coated_void_rotation.mp4'}")
 
+    save_particle_voxel_video(
+        void_particle,
+        voxel_size=2.5,
+        path=str(OUTPUT_DIR / "coated_void_rotation_voxels.mp4"),
+        colors={soot.id: "black", sulfate.id: "dodgerblue"},
+        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        n_frames=72,
+        fps=24,
+    )
+    print(f"  Void-filling voxel rotation video: {OUTPUT_DIR / 'coated_void_rotation_voxels.mp4'}")
+
     save_rotation_video(
         edge_particle,
         str(OUTPUT_DIR / "coated_edge_rotation.mp4"),
@@ -131,6 +170,17 @@ def main():
         fps=24,
     )
     print(f"  Edge-growing rotation video: {OUTPUT_DIR / 'coated_edge_rotation.mp4'}")
+
+    save_particle_voxel_video(
+        edge_particle,
+        voxel_size=2.5,
+        path=str(OUTPUT_DIR / "coated_edge_rotation_voxels.mp4"),
+        colors={soot.id: "black", sulfate.id: "crimson"},
+        opacity={soot.id: 0.9, sulfate.id: 0.5},
+        n_frames=72,
+        fps=24,
+    )
+    print(f"  Edge-growing voxel rotation video: {OUTPUT_DIR / 'coated_edge_rotation_voxels.mp4'}")
 
     print("\nDone.")
 
