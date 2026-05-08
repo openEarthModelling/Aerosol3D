@@ -1,4 +1,4 @@
-# aerosol3d/optics/datastructs.py
+# Aerosol3D/optics/datastructs.py
 """Pure data classes for DDA optical computation results and configuration."""
 
 from __future__ import annotations

@@ -5,8 +5,8 @@ import pytest
 class TestComputeLegendreMoments:
     def test_hg_phase_function_expansion(self):
         """Henyey-Greenstein phase function should expand to k_l = (2l+1) * g^l."""
-        from aerosol3d.optics.datastructs import PhaseFunction
-        from aerosol3d.optics.legendre import compute_legendre_moments
+        from Aerosol3D.optics.datastructs import PhaseFunction
+        from Aerosol3D.optics.legendre import compute_legendre_moments
 
         g = 0.7
         n_theta = 181
@@ -30,8 +30,8 @@ class TestComputeLegendreMoments:
 
     def test_isotropic_expansion(self):
         """Isotropic scattering (g=0) should give k_0=1, k_{l>0}=0."""
-        from aerosol3d.optics.datastructs import PhaseFunction
-        from aerosol3d.optics.legendre import compute_legendre_moments
+        from Aerosol3D.optics.datastructs import PhaseFunction
+        from Aerosol3D.optics.legendre import compute_legendre_moments
 
         n_theta = 181
         theta = np.linspace(0, np.pi, n_theta)
@@ -47,8 +47,8 @@ class TestComputeLegendreMoments:
 
     def test_reconstruction_check(self):
         """Reconstructed P11 from moments should approximate original."""
-        from aerosol3d.optics.datastructs import PhaseFunction
-        from aerosol3d.optics.legendre import compute_legendre_moments
+        from Aerosol3D.optics.datastructs import PhaseFunction
+        from Aerosol3D.optics.legendre import compute_legendre_moments
 
         g = 0.7
         n_theta = 181

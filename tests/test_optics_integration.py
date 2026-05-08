@@ -16,12 +16,12 @@ def julia_available():
 class TestFullOpticsPipeline:
     def test_coated_sphere_full_pipeline(self, julia_available, tmp_path):
         """BC sphere + sulfate coating -> DDA -> optical properties -> visualization."""
-        from aerosol3d import (
+        from Aerosol3D import (
             AerosolParticle, Material, create_sphere,
             apply_distance_coating,
         )
-        from aerosol3d.optics import solve_optics, SimulationConfig
-        from aerosol3d.optics.visualization import (
+        from Aerosol3D.optics import solve_optics, SimulationConfig
+        from Aerosol3D.optics.visualization import (
             plot_phase_function_2d, print_macroscopic
         )
 
@@ -57,7 +57,7 @@ class TestFullOpticsPipeline:
         assert os.path.exists(tmp_path / "phase.png")
 
     def test_import_from_top_level(self, julia_available):
-        """Verify optics exports are accessible from aerosol3d top-level."""
-        import aerosol3d
-        assert hasattr(aerosol3d, "solve_optics")
-        assert hasattr(aerosol3d, "SimulationConfig")
+        """Verify optics exports are accessible from Aerosol3D top-level."""
+        import Aerosol3D
+        assert hasattr(Aerosol3D, "solve_optics")
+        assert hasattr(Aerosol3D, "SimulationConfig")

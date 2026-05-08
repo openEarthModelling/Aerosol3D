@@ -5,7 +5,7 @@ import pytest
 
 class TestVoxelizeWithMaterials:
     def test_returns_imagedata(self):
-        from aerosol3d.geometry.voxelize import voxelize_with_materials
+        from Aerosol3D.geometry.voxelize import voxelize_with_materials
         pytest.skip("Requires AerosolParticle — tested in Task 7 integration")
 
     def test_select_enclosed_points_basic(self):

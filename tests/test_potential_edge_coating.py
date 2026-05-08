@@ -4,9 +4,9 @@ import pytest
 
 class TestPotentialEdgeCoating:
     def test_coating_added(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -20,9 +20,9 @@ class TestPotentialEdgeCoating:
         assert result.mixing_state.name == "COATED"
 
     def test_coating_has_cells(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -39,10 +39,10 @@ class TestPotentialEdgeCoating:
 
     def test_external_growth(self, soot_material, sulfate_material):
         """Edge strategy should produce larger envelope than void strategy."""
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_void_coating import apply_potential_void_coating
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_void_coating import apply_potential_void_coating
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p_void = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -68,9 +68,9 @@ class TestPotentialEdgeCoating:
         assert edge_extent >= void_extent
 
     def test_area_fraction_validation(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -88,9 +88,9 @@ class TestPotentialEdgeCoating:
             )
 
     def test_dp_dc_validation(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -108,9 +108,9 @@ class TestPotentialEdgeCoating:
             )
 
     def test_infeasible_constraint(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.potential_edge_coating import apply_potential_edge_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.potential_edge_coating import apply_potential_edge_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)

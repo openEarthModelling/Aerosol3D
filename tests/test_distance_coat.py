@@ -5,9 +5,9 @@ import pytest
 
 class TestDistanceCoating:
     def test_coating_added_as_new_block(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.distance_coat import apply_distance_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.distance_coat import apply_distance_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -18,9 +18,9 @@ class TestDistanceCoating:
         assert result.mixing_state.name == "COATED"
 
     def test_coating_volume(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.distance_coat import apply_distance_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.distance_coat import apply_distance_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -33,9 +33,9 @@ class TestDistanceCoating:
         assert abs(coating.volume - expected) / expected < 0.15  # 15% tolerance
 
     def test_thickness_must_be_positive(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.distance_coat import apply_distance_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.distance_coat import apply_distance_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)

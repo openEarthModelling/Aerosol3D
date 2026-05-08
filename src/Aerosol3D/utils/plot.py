@@ -399,7 +399,7 @@ def plot_particle_as_voxels(
     Convenience wrapper: calls voxelize_with_materials internally,
     then plot_voxel_grid.
     """
-    from aerosol3d.geometry.voxelize import voxelize_with_materials
+    from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
     grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
     return plot_voxel_grid(grid, colors=colors, opacity=opacity, off_screen=off_screen)
@@ -417,7 +417,7 @@ def save_particle_voxel_screenshot(
     **voxelize_kwargs,
 ):
     """Voxelize particle and save voxel grid screenshot."""
-    from aerosol3d.geometry.voxelize import voxelize_with_materials
+    from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
     grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
     save_voxel_grid_screenshot(
@@ -445,7 +445,7 @@ def save_particle_voxel_video(
     **voxelize_kwargs,
 ):
     """Voxelize particle and save voxel grid rotation video."""
-    from aerosol3d.geometry.voxelize import voxelize_with_materials
+    from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
     grid = voxelize_with_materials(particle, voxel_size, **voxelize_kwargs)
     save_voxel_grid_video(

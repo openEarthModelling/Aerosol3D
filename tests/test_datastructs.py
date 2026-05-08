@@ -4,13 +4,13 @@ import pytest
 
 @pytest.fixture
 def default_config():
-    from aerosol3d.optics.datastructs import SimulationConfig
+    from Aerosol3D.optics.datastructs import SimulationConfig
     return SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
 
 class TestSimulationConfig:
     def test_defaults(self):
-        from aerosol3d.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.datastructs import SimulationConfig
 
         config = SimulationConfig()
         assert config.wavelength == 550.0
@@ -30,7 +30,7 @@ class TestSimulationConfig:
 
 class TestCrossSections:
     def test_fields(self, default_config):
-        from aerosol3d.optics.datastructs import CrossSections
+        from Aerosol3D.optics.datastructs import CrossSections
 
         cs = CrossSections(
             wavelength=default_config.wavelength,
@@ -44,14 +44,14 @@ class TestCrossSections:
 
 class TestPhaseFunction:
     def test_optional_fields(self):
-        from aerosol3d.optics.datastructs import PhaseFunction
+        from Aerosol3D.optics.datastructs import PhaseFunction
 
         pf = PhaseFunction(theta=np.array([0.0, 1.0]), phi=np.array([0.0, 1.0]), P11=np.array([1.0, 2.0]))
         assert pf.P12 is None
         assert pf.mueller_matrix is None
 
     def test_with_mueller(self):
-        from aerosol3d.optics.datastructs import PhaseFunction
+        from Aerosol3D.optics.datastructs import PhaseFunction
 
         pf = PhaseFunction(
             theta=np.array([0.0, 1.0]),
@@ -64,7 +64,7 @@ class TestPhaseFunction:
 
 class TestOpticalResult:
     def test_minimal(self, default_config):
-        from aerosol3d.optics.datastructs import OpticalResult, CrossSections
+        from Aerosol3D.optics.datastructs import OpticalResult, CrossSections
 
         cs = CrossSections(
             wavelength=default_config.wavelength,
@@ -87,20 +87,20 @@ class TestOpticalResult:
             del sys.modules[m]
 
         # Should not raise
-        from aerosol3d.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.datastructs import SimulationConfig
         config = SimulationConfig()
         assert config.wavelength == 550.0
 
 
 class TestSimulationConfigWavelengthList:
     def test_wavelength_accepts_list(self):
-        from aerosol3d.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.datastructs import SimulationConfig
 
         config = SimulationConfig(wavelength=[400.0, 550.0, 700.0])
         assert config.wavelength == [400.0, 550.0, 700.0]
 
     def test_wavelength_accepts_float(self):
-        from aerosol3d.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.datastructs import SimulationConfig
 
         config = SimulationConfig(wavelength=550.0)
         assert config.wavelength == 550.0
@@ -109,7 +109,7 @@ class TestSimulationConfigWavelengthList:
 class TestPrecisionLevel:
     def test_auto_voxel_size_low(self):
         """Low precision: |m|*k*d should be < 0.5."""
-        from aerosol3d.optics.datastructs import auto_voxel_size
+        from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "low")
         k = 2.0 * np.pi / 550.0
@@ -118,7 +118,7 @@ class TestPrecisionLevel:
 
     def test_auto_voxel_size_high(self):
         """High precision: |m|*k*d should be < 0.95."""
-        from aerosol3d.optics.datastructs import auto_voxel_size
+        from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "high")
         k = 2.0 * np.pi / 550.0
@@ -127,7 +127,7 @@ class TestPrecisionLevel:
         assert mkd > 0.7
 
     def test_auto_voxel_size_medium(self):
-        from aerosol3d.optics.datastructs import auto_voxel_size
+        from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "medium")
         k = 2.0 * np.pi / 550.0
@@ -136,13 +136,13 @@ class TestPrecisionLevel:
         assert mkd > 0.3
 
     def test_invalid_precision_raises(self):
-        from aerosol3d.optics.datastructs import auto_voxel_size
+        from Aerosol3D.optics.datastructs import auto_voxel_size
 
         with pytest.raises(ValueError, match="precision"):
             auto_voxel_size(550.0, 1.5, "ultra")
 
     def test_default_config_new_fields(self):
-        from aerosol3d.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.datastructs import SimulationConfig
 
         config = SimulationConfig()
         assert config.wavelength == 550.0

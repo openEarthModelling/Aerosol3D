@@ -18,7 +18,7 @@ def _make_test_voxel_grid(material_ids_3d):
 
 @pytest.fixture
 def sample_particle(soot_material):
-    from aerosol3d import AerosolParticle, create_sphere
+    from Aerosol3D import AerosolParticle, create_sphere
 
     p = AerosolParticle(name="test", unit="nm")
     p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -27,7 +27,7 @@ def sample_particle(soot_material):
 
 class TestSaveScreenshot:
     def test_saves_png(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_screenshot
+        from Aerosol3D.utils.plot import save_screenshot
 
         path = str(tmp_path / "out.png")
         save_screenshot(sample_particle, path)
@@ -35,7 +35,7 @@ class TestSaveScreenshot:
         assert os.path.getsize(path) > 0
 
     def test_custom_colors(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_screenshot
+        from Aerosol3D.utils.plot import save_screenshot
 
         path = str(tmp_path / "out.png")
         save_screenshot(sample_particle, path, colors={"core": "red"})
@@ -44,7 +44,7 @@ class TestSaveScreenshot:
 
 class TestSaveRotationVideo:
     def test_saves_mp4(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_rotation_video
+        from Aerosol3D.utils.plot import save_rotation_video
 
         path = str(tmp_path / "out.mp4")
         save_rotation_video(sample_particle, path, n_frames=6, fps=6)
@@ -52,7 +52,7 @@ class TestSaveRotationVideo:
         assert os.path.getsize(path) > 0
 
     def test_rejects_non_mp4(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_rotation_video
+        from Aerosol3D.utils.plot import save_rotation_video
 
         path = str(tmp_path / "out.gif")
         with pytest.raises(ValueError, match="mp4"):
@@ -61,7 +61,7 @@ class TestSaveRotationVideo:
 
 class TestBuildVoxelGlyphMesh:
     def test_builds_glyph_mesh(self):
-        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+        from Aerosol3D.utils.plot import _build_voxel_glyph_mesh
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         ids[1, 1, 1] = 1
@@ -71,7 +71,7 @@ class TestBuildVoxelGlyphMesh:
         assert glyphs.n_cells > 0
 
     def test_preserves_material_id(self):
-        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+        from Aerosol3D.utils.plot import _build_voxel_glyph_mesh
 
         ids = np.zeros((4, 4, 4), dtype=np.int32)
         ids[1:3, 1:3, 1:3] = 2
@@ -83,7 +83,7 @@ class TestBuildVoxelGlyphMesh:
         assert 2 in unique
 
     def test_empty_grid_raises(self):
-        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+        from Aerosol3D.utils.plot import _build_voxel_glyph_mesh
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         grid = _make_test_voxel_grid(ids)
@@ -92,7 +92,7 @@ class TestBuildVoxelGlyphMesh:
             _build_voxel_glyph_mesh(grid)
 
     def test_missing_material_id_raises(self):
-        from aerosol3d.utils.plot import _build_voxel_glyph_mesh
+        from Aerosol3D.utils.plot import _build_voxel_glyph_mesh
 
         grid = pv.ImageData(dimensions=(3, 3, 3), spacing=(1.0, 1.0, 1.0))
         # no material_id
@@ -102,7 +102,7 @@ class TestBuildVoxelGlyphMesh:
 
 class TestResolveVoxelColors:
     def test_auto_assigns_colors(self):
-        from aerosol3d.utils.plot import _resolve_voxel_colors
+        from Aerosol3D.utils.plot import _resolve_voxel_colors
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         ids[1, 1, 1] = 1
@@ -115,7 +115,7 @@ class TestResolveVoxelColors:
         assert colors[1] != colors[2]
 
     def test_respects_custom_colors(self):
-        from aerosol3d.utils.plot import _resolve_voxel_colors
+        from Aerosol3D.utils.plot import _resolve_voxel_colors
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         ids[1, 1, 1] = 1
@@ -125,7 +125,7 @@ class TestResolveVoxelColors:
         assert colors[1] == "black"
 
     def test_fills_missing_with_auto(self):
-        from aerosol3d.utils.plot import _resolve_voxel_colors
+        from Aerosol3D.utils.plot import _resolve_voxel_colors
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         ids[1, 1, 1] = 1
@@ -140,7 +140,7 @@ class TestResolveVoxelColors:
 
 class TestPlotVoxelGrid:
     def test_plot_voxel_grid_smoke(self):
-        from aerosol3d.utils.plot import plot_voxel_grid
+        from Aerosol3D.utils.plot import plot_voxel_grid
 
         ids = np.zeros((4, 4, 4), dtype=np.int32)
         ids[1:3, 1:3, 1:3] = 1
@@ -151,7 +151,7 @@ class TestPlotVoxelGrid:
         plotter.close()
 
     def test_plot_voxel_grid_empty_raises(self):
-        from aerosol3d.utils.plot import plot_voxel_grid
+        from Aerosol3D.utils.plot import plot_voxel_grid
 
         ids = np.zeros((3, 3, 3), dtype=np.int32)
         grid = _make_test_voxel_grid(ids)
@@ -160,7 +160,7 @@ class TestPlotVoxelGrid:
             plot_voxel_grid(grid, off_screen=True)
 
     def test_plot_voxel_grid_no_material_id_raises(self):
-        from aerosol3d.utils.plot import plot_voxel_grid
+        from Aerosol3D.utils.plot import plot_voxel_grid
 
         grid = pv.ImageData(dimensions=(3, 3, 3), spacing=(1.0, 1.0, 1.0))
         with pytest.raises(ValueError, match="material_id"):
@@ -169,7 +169,7 @@ class TestPlotVoxelGrid:
 
 class TestSaveVoxelGridScreenshot:
     def test_saves_png(self, tmp_path):
-        from aerosol3d.utils.plot import save_voxel_grid_screenshot
+        from Aerosol3D.utils.plot import save_voxel_grid_screenshot
 
         ids = np.zeros((4, 4, 4), dtype=np.int32)
         ids[1:3, 1:3, 1:3] = 1
@@ -181,7 +181,7 @@ class TestSaveVoxelGridScreenshot:
         assert os.path.getsize(path) > 0
 
     def test_rejects_non_png(self, tmp_path):
-        from aerosol3d.utils.plot import save_voxel_grid_screenshot
+        from Aerosol3D.utils.plot import save_voxel_grid_screenshot
 
         grid = _make_test_voxel_grid(np.zeros((2, 2, 2), dtype=np.int32))
         path = str(tmp_path / "voxels.jpg")
@@ -191,7 +191,7 @@ class TestSaveVoxelGridScreenshot:
 
 class TestSaveVoxelGridVideo:
     def test_saves_mp4(self, tmp_path):
-        from aerosol3d.utils.plot import save_voxel_grid_video
+        from Aerosol3D.utils.plot import save_voxel_grid_video
 
         ids = np.zeros((4, 4, 4), dtype=np.int32)
         ids[1:3, 1:3, 1:3] = 1
@@ -203,7 +203,7 @@ class TestSaveVoxelGridVideo:
         assert os.path.getsize(path) > 0
 
     def test_rejects_non_mp4(self, tmp_path):
-        from aerosol3d.utils.plot import save_voxel_grid_video
+        from Aerosol3D.utils.plot import save_voxel_grid_video
 
         grid = _make_test_voxel_grid(np.zeros((2, 2, 2), dtype=np.int32))
         path = str(tmp_path / "voxels.gif")
@@ -213,7 +213,7 @@ class TestSaveVoxelGridVideo:
 
 class TestParticleVoxelWrappers:
     def test_save_particle_voxel_screenshot(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_particle_voxel_screenshot
+        from Aerosol3D.utils.plot import save_particle_voxel_screenshot
 
         path = str(tmp_path / "particle_voxels.png")
         save_particle_voxel_screenshot(sample_particle, voxel_size=20.0, path=path)
@@ -221,14 +221,14 @@ class TestParticleVoxelWrappers:
         assert os.path.getsize(path) > 0
 
     def test_plot_particle_as_voxels(self, sample_particle):
-        from aerosol3d.utils.plot import plot_particle_as_voxels
+        from Aerosol3D.utils.plot import plot_particle_as_voxels
 
         plotter = plot_particle_as_voxels(sample_particle, voxel_size=20.0, off_screen=True)
         assert plotter is not None
         plotter.close()
 
     def test_save_particle_voxel_video(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_particle_voxel_video
+        from Aerosol3D.utils.plot import save_particle_voxel_video
 
         path = str(tmp_path / "particle_voxels.mp4")
         save_particle_voxel_video(sample_particle, voxel_size=20.0, path=path, n_frames=6, fps=6)
@@ -236,7 +236,7 @@ class TestParticleVoxelWrappers:
         assert os.path.getsize(path) > 0
 
     def test_voxel_colors_applied(self, sample_particle, tmp_path):
-        from aerosol3d.utils.plot import save_particle_voxel_screenshot
+        from Aerosol3D.utils.plot import save_particle_voxel_screenshot
 
         path = str(tmp_path / "colored_voxels.png")
         save_particle_voxel_screenshot(

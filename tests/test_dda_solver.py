@@ -15,9 +15,9 @@ def julia_available():
 class TestSolveOptics:
     def test_sphere_basic(self, julia_available, soot_material):
         """Solve a soot sphere and verify optical result structure."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -40,9 +40,9 @@ class TestSolveOptics:
 
     def test_sphere_validity_warning(self, julia_available, soot_material):
         """Large dipole spacing should trigger validity failure."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -55,11 +55,11 @@ class TestSolveOptics:
 
     def test_coated_sphere(self, julia_available, soot_material, sulfate_material):
         """Solve a coated sphere (two materials) and verify."""
-        from aerosol3d import (
+        from Aerosol3D import (
             AerosolParticle, create_sphere, apply_distance_coating
         )
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="coated", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -72,9 +72,9 @@ class TestSolveOptics:
 
     def test_result_has_voxel_grid(self, julia_available, soot_material):
         """Verify voxel_grid is attached to result."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -88,9 +88,9 @@ class TestSolveOptics:
 
 class TestPhaseFunction:
     def test_phase_function_structure(self, julia_available, soot_material):
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -105,9 +105,9 @@ class TestPhaseFunction:
 
     def test_forward_peak(self, julia_available, soot_material):
         """Forward scattering should generally be >= backward for Mie-sized particles."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -124,9 +124,9 @@ class TestPhaseFunction:
 class TestAutoVoxelSize:
     def test_auto_voxel_size_produces_valid_mkd(self, julia_available, soot_material):
         """Auto-computed voxel_size should satisfy |m|*k*d <= target."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -140,9 +140,9 @@ class TestAutoVoxelSize:
 
     def test_explicit_voxel_size_overrides_precision(self, julia_available, soot_material):
         """Explicit voxel_size should be used regardless of precision setting."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -157,9 +157,9 @@ class TestAutoVoxelSize:
 
 class TestPrepareDDA:
     def test_prepare_dda_returns_expected(self, julia_available, soot_material):
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import _prepare_dda
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import _prepare_dda
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -180,9 +180,9 @@ class TestPrepareDDA:
 class TestSolveSingleWL:
     def test_solve_single_wl_matches_solve_optics(self, julia_available, soot_material):
         """_solve_single_wl should produce same result as original solve_optics for single wavelength."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics, _prepare_dda, _solve_single_wl
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics, _prepare_dda, _solve_single_wl
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -211,9 +211,9 @@ class TestSolveSingleWL:
 class TestVerbose:
     def test_verbose_prints_output(self, julia_available, soot_material, capsys):
         """verbose=True should print configuration table to stdout."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -227,9 +227,9 @@ class TestVerbose:
 
     def test_verbose_false_suppresses_output(self, julia_available, soot_material, capsys):
         """verbose=False should not print configuration table."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)

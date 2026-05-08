@@ -1,10 +1,10 @@
-# aerosol3d
+# Aerosol3D
 
 [![CI](https://github.com/openEarthModelling/aerosol3d/actions/workflows/ci.yml/badge.svg)](https://github.com/openEarthModelling/aerosol3d/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-aerosol3d is a Python toolkit for modeling the 3D geometry and optical properties of atmospheric aerosol particles. It provides a unified pipeline from geometric construction to Discrete Dipole Approximation (DDA) optical computation.
+Aerosol3D is a Python toolkit for modeling the 3D geometry and optical properties of atmospheric aerosol particles. It provides a unified pipeline from geometric construction to Discrete Dipole Approximation (DDA) optical computation.
 
 ## Features
 
@@ -20,14 +20,14 @@ aerosol3d is a Python toolkit for modeling the 3D geometry and optical propertie
 Requires Python >= 3.10.
 
 ```bash
-pip install aerosol3d
+pip install Aerosol3D
 ```
 
 For development:
 
 ```bash
 git clone https://github.com/openEarthModelling/aerosol3d.git
-cd aerosol3d
+cd Aerosol3D
 pip install -e ".[dev]"
 ```
 
@@ -39,7 +39,7 @@ pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from aerosol3d import (
+from Aerosol3D import (
     AerosolParticle, create_sphere, MixingState,
     preset_material, save_screenshot, solve_optics, SimulationConfig
 )
@@ -111,7 +111,7 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 pytest
 
 # Run tests with coverage
-pytest --cov=aerosol3d --cov-report=term-missing
+pytest --cov=Aerosol3D --cov-report=term-missing
 ```
 
 ## License

@@ -1,7 +1,7 @@
 import numpy as np
 
-from aerosol3d.geometry.boolean import safe_difference
-from aerosol3d.geometry.primitives import create_sphere
+from Aerosol3D.geometry.boolean import safe_difference
+from Aerosol3D.geometry.primitives import create_sphere
 
 
 def apply_cam_coating(particle, f_bc: float, material):
@@ -20,7 +20,7 @@ def apply_cam_coating(particle, f_bc: float, material):
     if not 0 < f_bc < 1:
         raise ValueError("f_bc must be between 0 and 1 (exclusive).")
 
-    from aerosol3d.core.particle import MixingState
+    from Aerosol3D.core.particle import MixingState
 
     core_mesh = particle.combined
     total_volume = core_mesh.volume

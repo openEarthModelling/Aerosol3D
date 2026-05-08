@@ -23,7 +23,7 @@ def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
 
     # --- Step 1: Create bare BC sphere ---
-    from aerosol3d import AerosolParticle, create_sphere, MixingState, save_screenshot, preset_material
+    from Aerosol3D import AerosolParticle, create_sphere, MixingState, save_screenshot, preset_material
 
     soot = preset_material("black_carbon")
     radius_nm = 50.0
@@ -52,8 +52,8 @@ def main():
         print("Optical computation skipped (--no-optics).")
         return
 
-    from aerosol3d import solve_optics, SimulationConfig
-    from aerosol3d.optics.visualization import print_macroscopic, plot_phase_function_2d
+    from Aerosol3D import solve_optics, SimulationConfig
+    from Aerosol3D.optics.visualization import print_macroscopic, plot_phase_function_2d
 
     config = SimulationConfig(
         wavelength=550.0,

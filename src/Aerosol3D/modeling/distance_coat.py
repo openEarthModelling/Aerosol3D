@@ -7,8 +7,8 @@ import pyvista as pv
 
 logger = logging.getLogger(__name__)
 
-from aerosol3d.geometry.boolean import safe_difference
-from aerosol3d.geometry.primitives import create_sphere
+from Aerosol3D.geometry.boolean import safe_difference
+from Aerosol3D.geometry.primitives import create_sphere
 
 
 def _offset_surface(core_mesh: pv.PolyData, thickness: float) -> pv.PolyData:
@@ -88,7 +88,7 @@ def apply_distance_coating(particle, thickness: float, material):
     if thickness <= 0:
         raise ValueError("Coating thickness must be positive.")
 
-    from aerosol3d.core.particle import MixingState
+    from Aerosol3D.core.particle import MixingState
 
     core_mesh = particle.combined
     try:

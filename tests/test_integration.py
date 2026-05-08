@@ -7,7 +7,7 @@ import pytest
 class TestFullPipeline:
     def test_sphere_coating_export(self, tmp_path):
         """Create soot sphere → apply distance coating → save VTP."""
-        from aerosol3d import (
+        from Aerosol3D import (
             AerosolParticle, Material, MixingState,
             create_sphere, apply_distance_coating, save_vtp
         )
@@ -29,7 +29,7 @@ class TestFullPipeline:
 
     def test_fractal_aggregate_ccm(self, tmp_path):
         """Create fractal aggregate → apply CCM → verify structure."""
-        from aerosol3d import (
+        from Aerosol3D import (
             AerosolParticle, Material, MixingState, FractalAggregate,
             apply_ccm_coating, save_vtp
         )
@@ -53,7 +53,7 @@ class TestFullPipeline:
 
     def test_all_four_coatings(self, tmp_path):
         """Verify all 4 coating algorithms run without errors on a sphere."""
-        from aerosol3d import (
+        from Aerosol3D import (
             AerosolParticle, Material,
             create_sphere,
             apply_distance_coating, apply_potential_void_coating,

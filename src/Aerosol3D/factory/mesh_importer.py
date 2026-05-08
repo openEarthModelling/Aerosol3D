@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pyvista as pv
 
-from aerosol3d.physics.units import Q_
+from Aerosol3D.physics.units import Q_
 
 logger = logging.getLogger(__name__)
 

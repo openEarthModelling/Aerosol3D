@@ -13,9 +13,9 @@ def julia_available():
 class TestOrientationalAverage:
     def test_sphere_isotropic(self, julia_available, soot_material):
         """Sphere should be isotropic: orientational average equals single direction."""
-        from aerosol3d import AerosolParticle, create_sphere
-        from aerosol3d.optics.datastructs import SimulationConfig
-        from aerosol3d.optics.dda_solver import solve_optics
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)

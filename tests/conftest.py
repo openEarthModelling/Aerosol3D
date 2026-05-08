@@ -5,13 +5,13 @@ import pytest
 
 @pytest.fixture
 def soot_material():
-    from aerosol3d.core.material import Material
+    from Aerosol3D.core.material import Material
     return Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
 
 
 @pytest.fixture
 def sulfate_material():
-    from aerosol3d.core.material import Material
+    from Aerosol3D.core.material import Material
     return Material(name="sulfate", refractive_index=complex(1.4, 0.0), density=1.8)
 
 

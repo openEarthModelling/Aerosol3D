@@ -1,4 +1,4 @@
-# Contributing to aerosol3d
+# Contributing to Aerosol3D
 
 Thank you for your interest in contributing! This document outlines the process and guidelines.
 
@@ -25,7 +25,7 @@ pytest
 With coverage:
 
 ```bash
-pytest --cov=aerosol3d --cov-report=term-missing
+pytest --cov=Aerosol3D --cov-report=term-missing
 ```
 
 ## Code Style
@@ -49,7 +49,7 @@ ruff format src tests
 
 When reporting bugs, please include:
 - Python version
-- aerosol3d version
+- Aerosol3D version
 - Steps to reproduce
 - Expected vs actual behavior
 - Full error traceback if applicable

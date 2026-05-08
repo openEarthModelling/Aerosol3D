@@ -15,9 +15,9 @@ def julia_available():
 @pytest.fixture(scope="module")
 def optical_result(julia_available, soot_material):
     """Pre-computed optical result for visualization tests."""
-    from aerosol3d import AerosolParticle, create_sphere
-    from aerosol3d.optics.datastructs import SimulationConfig
-    from aerosol3d.optics.dda_solver import solve_optics
+    from Aerosol3D import AerosolParticle, create_sphere
+    from Aerosol3D.optics.datastructs import SimulationConfig
+    from Aerosol3D.optics.dda_solver import solve_optics
 
     p = AerosolParticle(name="soot_sphere", unit="nm")
     p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -27,14 +27,14 @@ def optical_result(julia_available, soot_material):
 
 class TestPlotPhaseFunction2D:
     def test_creates_figure(self, optical_result, tmp_path):
-        from aerosol3d.optics.visualization import plot_phase_function_2d
+        from Aerosol3D.optics.visualization import plot_phase_function_2d
 
         fig_path = str(tmp_path / "phase_func.png")
         plot_phase_function_2d(optical_result, save_path=fig_path)
         assert os.path.exists(fig_path)
 
     def test_log_scale(self, optical_result, tmp_path):
-        from aerosol3d.optics.visualization import plot_phase_function_2d
+        from Aerosol3D.optics.visualization import plot_phase_function_2d
 
         fig_path = str(tmp_path / "phase_func_log.png")
         plot_phase_function_2d(optical_result, log_scale=True, save_path=fig_path)
@@ -43,7 +43,7 @@ class TestPlotPhaseFunction2D:
 
 class TestPlotNearField:
     def test_creates_plotter(self, optical_result):
-        from aerosol3d.optics.visualization import plot_near_field
+        from Aerosol3D.optics.visualization import plot_near_field
 
         # Should not raise -- just verify it returns a plotter
         plotter = plot_near_field(optical_result, show=False)
@@ -52,7 +52,7 @@ class TestPlotNearField:
 
 class TestPlotMacroscopic:
     def test_prints_properties(self, optical_result, capsys):
-        from aerosol3d.optics.visualization import print_macroscopic
+        from Aerosol3D.optics.visualization import print_macroscopic
 
         print_macroscopic(optical_result)
         captured = capsys.readouterr()

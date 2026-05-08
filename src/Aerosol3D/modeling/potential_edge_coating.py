@@ -12,7 +12,7 @@ from scipy.spatial.distance import cdist
 from scipy.spatial import ConvexHull
 from scipy.ndimage import binary_erosion, binary_dilation
 
-from aerosol3d.geometry.voxelize import voxelize_with_materials
+from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
 
 def apply_potential_edge_coating(
@@ -50,7 +50,7 @@ def apply_potential_edge_coating(
     if dp_dc_ratio <= 1:
         raise ValueError("dp_dc_ratio must be > 1")
 
-    from aerosol3d.core.particle import MixingState
+    from Aerosol3D.core.particle import MixingState
 
     # 1. Voxelize particle with expanded grid for coating
     combined = particle.combined

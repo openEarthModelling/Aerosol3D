@@ -4,9 +4,9 @@ import pytest
 
 class TestCCMCoating:
     def test_coating_added(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.ccm import apply_ccm_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.ccm import apply_ccm_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)
@@ -17,9 +17,9 @@ class TestCCMCoating:
         assert result.mixing_state.name == "COATED"
 
     def test_f_bc_validation(self, soot_material, sulfate_material):
-        from aerosol3d.core.particle import AerosolParticle
-        from aerosol3d.geometry.primitives import create_sphere
-        from aerosol3d.modeling.ccm import apply_ccm_coating
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.modeling.ccm import apply_ccm_coating
 
         p = AerosolParticle(name="test", unit="nm")
         core = create_sphere(center=(0, 0, 0), radius=50.0)

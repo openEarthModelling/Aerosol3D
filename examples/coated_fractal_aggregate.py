@@ -27,7 +27,7 @@ def main():
 
     # Imports
     from pyFracAggregate import generate as gen_fractal, Monodisperse
-    from aerosol3d import (
+    from Aerosol3D import (
         from_fractal,
         save_screenshot,
         save_rotation_video,

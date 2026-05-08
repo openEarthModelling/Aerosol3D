@@ -23,7 +23,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run tests
-        run: xvfb-run pytest -v --cov=aerosol3d --cov-report=xml
+        run: xvfb-run pytest -v --cov=Aerosol3D --cov-report=xml
         env:
           SKIP_JULIA_TESTS: 1
           PYVISTA_OFF_SCREEN: true

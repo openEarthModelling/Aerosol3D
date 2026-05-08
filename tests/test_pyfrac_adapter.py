@@ -4,7 +4,7 @@ import pytest
 
 class TestFractalAdapter:
     def test_returns_fractal_aggregate(self, soot_material):
-        from aerosol3d.factory.pyfrac_adapter import from_fractal
+        from Aerosol3D.factory.pyfrac_adapter import from_fractal
 
         # Mock pyfrac aggregate object
         class MockAggregate:
@@ -17,7 +17,7 @@ class TestFractalAdapter:
         assert agg.centers.shape == (10, 3)
 
     def test_unit_conversion(self, soot_material):
-        from aerosol3d.factory.pyfrac_adapter import from_fractal
+        from Aerosol3D.factory.pyfrac_adapter import from_fractal
 
         class MockAggregate:
             positions = np.array([[100.0, 0.0, 0.0]])

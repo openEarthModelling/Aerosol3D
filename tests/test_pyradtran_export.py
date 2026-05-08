@@ -1,14 +1,14 @@
 import numpy as np
 import pytest
 
-from aerosol3d.optics.datastructs import (
+from Aerosol3D.optics.datastructs import (
     CrossSections, OpticalResult, PhaseFunction, SimulationConfig,
 )
 
 
 class TestOpticalResultsToPyradtranData:
     def test_shape_and_keys(self):
-        from aerosol3d.optics.pyradtran_export import optical_results_to_pyradtran_data
+        from Aerosol3D.optics.pyradtran_export import optical_results_to_pyradtran_data
 
         # Build 3 mock OpticalResults
         theta = np.linspace(0, np.pi, 90)
@@ -39,7 +39,7 @@ class TestOpticalResultsToPyradtranData:
         assert data["legendre_moments"].shape == (3, 1, 32)
 
     def test_values_reasonable(self):
-        from aerosol3d.optics.pyradtran_export import optical_results_to_pyradtran_data
+        from Aerosol3D.optics.pyradtran_export import optical_results_to_pyradtran_data
 
         theta = np.linspace(0, np.pi, 90)
         phi = np.linspace(0, 2 * np.pi, 180, endpoint=False)
@@ -68,7 +68,7 @@ class TestOpticalResultsToPyradtranData:
         assert np.allclose(data["legendre_moments"][:, :, 0], 1.0)
 
     def test_requires_phase_function(self):
-        from aerosol3d.optics.pyradtran_export import optical_results_to_pyradtran_data
+        from Aerosol3D.optics.pyradtran_export import optical_results_to_pyradtran_data
 
         cs = CrossSections(
             wavelength=550.0, C_ext=100.0, C_sca=80.0, C_abs=20.0,

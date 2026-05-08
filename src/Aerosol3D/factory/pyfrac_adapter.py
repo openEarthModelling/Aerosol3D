@@ -2,8 +2,8 @@ import logging
 
 import numpy as np
 
-from aerosol3d.core.aggregate import FractalAggregate
-from aerosol3d.physics.units import Q_
+from Aerosol3D.core.aggregate import FractalAggregate
+from Aerosol3D.physics.units import Q_
 
 logger = logging.getLogger(__name__)
 

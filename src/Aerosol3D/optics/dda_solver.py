@@ -83,7 +83,7 @@ def _prepare_dda(particle, config, voxel_size=None):
         voxel_size = auto_voxel_size(config.wavelength, m_max, config.precision)
 
     # Step 3: Voxelize
-    from aerosol3d.geometry.voxelize import voxelize_with_materials
+    from Aerosol3D.geometry.voxelize import voxelize_with_materials
     grid = voxelize_with_materials(particle, voxel_size)
 
     # Step 4: Copy config and set dipole_spacing

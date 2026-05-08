@@ -1,4 +1,4 @@
-from aerosol3d.geometry.voxelize import voxelize_with_materials
+from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
 
 def save_vtp(particle, filename: str):

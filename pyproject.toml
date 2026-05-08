@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aerosol3d"
-version = "0.2.0"
+name = "Aerosol3D"
+version = "0.1.0"
 description = "3D aerosol particle modeling and optical property computation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -62,7 +62,7 @@ Changelog = "https://github.com/openEarthModelling/aerosol3d/blob/main/CHANGELOG
 where = ["src"]
 
 [tool.setuptools.package-data]
-aerosol3d = ["py.typed"]
+Aerosol3D = ["py.typed"]
 
 [tool.ruff]
 target-version = "py310"
@@ -85,4 +85,4 @@ convention = "google"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=aerosol3d --cov-report=term-missing"
+addopts = "-v --cov=Aerosol3D --cov-report=term-missing"

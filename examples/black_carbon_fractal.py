@@ -1,6 +1,6 @@
 """Example: Black carbon fractal aggregate — full pipeline.
 
-Demonstrates the complete aerosol3d workflow with pyFracAggregate:
+Demonstrates the complete Aerosol3D workflow with pyFracAggregate:
 1. Generate a BC fractal aggregate using pyFracAggregate
 2. Convert to AerosolParticle via from_fractal()
 3. 3D screenshot and rotation video
@@ -47,7 +47,7 @@ def main():
     print(f"  Generated: {agg.current_size} monomers, unit={agg.length_unit}")
 
     # --- Step 2: Convert to AerosolParticle ---
-    from aerosol3d import from_fractal, save_screenshot, save_rotation_video, preset_material
+    from Aerosol3D import from_fractal, save_screenshot, save_rotation_video, preset_material
 
     soot = preset_material("black_carbon")
     fractal = from_fractal(agg, soot)
@@ -78,8 +78,8 @@ def main():
         print("Optical computation skipped (--no-optics).")
         return
 
-    from aerosol3d import solve_optics, SimulationConfig
-    from aerosol3d.optics.visualization import print_macroscopic, plot_phase_function_2d
+    from Aerosol3D import solve_optics, SimulationConfig
+    from Aerosol3D.optics.visualization import print_macroscopic, plot_phase_function_2d
 
     config = SimulationConfig(
         wavelength=550.0,

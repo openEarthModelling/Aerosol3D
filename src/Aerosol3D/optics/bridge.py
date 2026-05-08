@@ -1,4 +1,4 @@
-# aerosol3d/optics/bridge.py
+# Aerosol3D/optics/bridge.py
 """PyJulia bridge to CoupledElectricMagneticDipoles.jl.
 
 Lazy-loads Julia runtime on first use. All data crossing the Python/Julia
