@@ -298,35 +298,53 @@ def solve_optics(
     compute_near_field: bool = True,
     compute_phase_func: bool = False,
     verbose: bool = True,
-) -> "OpticalResult":
-    """Main entry: aerosol particle -> DDA optical result."""
-    # Determine effective wavelength for preparation (single float)
-    prep_wavelength = config.wavelength
-    if isinstance(prep_wavelength, (list, tuple, np.ndarray)):
-        prep_wavelength = float(min(prep_wavelength))
+) -> "OpticalResult | list[OpticalResult]":
+    """Main entry: aerosol particle -> DDA optical result(s).
+
+    Supports single wavelength (float) or multi-wavelength batch (list).
+    """
+    # Determine wavelength(s)
+    if isinstance(config.wavelength, (list, tuple, np.ndarray)):
+        wavelengths = list(config.wavelength)
+    else:
+        wavelengths = [float(config.wavelength)]
+
+    # Determine effective wavelength for voxel size
+    if voxel_size is None:
+        effective_wl = float(min(wavelengths))
+    else:
+        effective_wl = float(wavelengths[0])
 
     prep_config = copy.copy(config)
-    prep_config.wavelength = prep_wavelength
+    prep_config.wavelength = effective_wl
 
-    # Steps 1-4, 7: Prepare DDA geometry
+    # Steps 1-4, 7: Prepare DDA geometry once
     positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
         particle, prep_config, voxel_size
     )
 
-    # Delegate to per-wavelength solver
-    return _solve_single_wl(
-        positions,
-        alpha_e,
-        grid,
-        material_map,
-        config,
-        m_max,
-        voxel_size,
-        material_names,
-        compute_near_field=compute_near_field,
-        compute_phase_func=compute_phase_func,
-        verbose=verbose,
-    )
+    results = []
+    for wl in wavelengths:
+        wl_config = copy.copy(config)
+        wl_config.wavelength = float(wl)
+        result = _solve_single_wl(
+            positions,
+            alpha_e,
+            grid,
+            material_map,
+            wl_config,
+            m_max,
+            voxel_size,
+            material_names,
+            compute_near_field=compute_near_field,
+            compute_phase_func=compute_phase_func,
+            verbose=verbose and len(wavelengths) == 1,
+        )
+        results.append(result)
+
+    if len(wavelengths) == 1:
+        return results[0]
+    return results
 
 
 def _compute_phase_function(
