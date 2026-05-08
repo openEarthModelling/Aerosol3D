@@ -1,5 +1,4 @@
 import os
-import numpy as np
 import pytest
 
 JULIA_AVAILABLE = os.environ.get("SKIP_JULIA_TESTS") != "1"

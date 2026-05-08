@@ -329,7 +329,6 @@ def _orientational_average(results):
         # Azimuthal average: P11(theta) = mean over phi
         P11_theta = np.mean(P11_avg, axis=1)
         theta_grid = theta
-        dtheta = np.diff(theta_grid)
         # Use trapezoidal integration for cos(theta) weighting
         sin_theta = np.sin(theta_grid)
         integrand = P11_theta * sin_theta * np.cos(theta_grid)
