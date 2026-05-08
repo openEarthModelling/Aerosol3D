@@ -48,22 +48,16 @@ def _compute_near_field_intensity(grid, phi_inc):
     return grid
 
 
-def solve_optics(
-    particle,
-    config: SimulationConfig,
-    voxel_size: float = None,
-    compute_near_field: bool = True,
-    compute_phase_func: bool = False,
-    verbose: bool = True,
-) -> "OpticalResult":
-    """Main entry: aerosol particle -> DDA optical result."""
-    t_start = time.time()
+def _prepare_dda(particle, config, voxel_size=None):
+    """Prepare DDA geometry: material map -> voxelize -> extract dipoles.
 
-    from .datastructs import CrossSections, OpticalResult
-    from .bridge import (
-        solve_dda, compute_cross_sections, compute_asymmetry_parameter
-    )
+    This is wavelength-independent (except for auto voxel_size which
+    uses config.wavelength).  Call once for multi-wavelength solves.
 
+    Returns
+    -------
+    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    """
     # Step 1: Build material map from particle blocks
     material_map = {}
     material_names = []
@@ -96,6 +90,41 @@ def solve_optics(
     config = copy.copy(config)
     config.dipole_spacing = voxel_size
 
+    # Step 7: Extract dipoles
+    positions, alpha_e = _extract_dipoles(grid, config, material_map)
+
+    return positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+
+
+def solve_optics(
+    particle,
+    config: SimulationConfig,
+    voxel_size: float = None,
+    compute_near_field: bool = True,
+    compute_phase_func: bool = False,
+    verbose: bool = True,
+) -> "OpticalResult":
+    """Main entry: aerosol particle -> DDA optical result."""
+    t_start = time.time()
+
+    from .datastructs import CrossSections, OpticalResult
+    from .bridge import (
+        solve_dda, compute_cross_sections, compute_asymmetry_parameter
+    )
+
+    # Determine effective wavelength for preparation (single float)
+    prep_wavelength = config.wavelength
+    if isinstance(prep_wavelength, (list, tuple, np.ndarray)):
+        prep_wavelength = float(min(prep_wavelength))
+
+    prep_config = copy.copy(config)
+    prep_config.wavelength = prep_wavelength
+
+    # Steps 1-4, 7: Prepare DDA geometry
+    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        particle, prep_config, voxel_size
+    )
+
     # Step 5: Handle polarization=None
     do_depolarized = False
     if config.polarization is None:
@@ -114,6 +143,10 @@ def solve_optics(
             validity["m_k_d"],
         )
 
+    # Ensure config has dipole_spacing set for downstream use
+    config = copy.copy(config)
+    config.dipole_spacing = voxel_size
+
     if verbose:
         print(f"{'='*52}")
         print(f"  DDA Simulation Configuration")
@@ -127,7 +160,7 @@ def solve_optics(
         print(f"  n_host         = {config.n_host}")
         print(f"  solver         = {config.solver}")
         print(f"  precision      = {config.precision}")
-        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if auto_computed else ""))
+        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if voxel_size is None else ""))
         print(f"  |m|_max        = {m_max:.4f}")
         print(f"  k              = {2.0 * np.pi / config.wavelength:.6f} nm^-1")
         mkd = m_max * (2.0 * np.pi / config.wavelength) * voxel_size
@@ -136,9 +169,6 @@ def solve_optics(
         print(f"  |m|*k*d        = {mkd:.4f}  {status}{threshold}")
         print(f"  N_materials    = {len(material_map)} ({', '.join(material_names)})")
         print(f"{'='*52}")
-
-    # Step 7: Extract dipoles
-    positions, alpha_e = _extract_dipoles(grid, config, material_map)
 
     if len(positions) == 0:
         n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
