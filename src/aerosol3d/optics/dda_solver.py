@@ -96,33 +96,56 @@ def _prepare_dda(particle, config, voxel_size=None):
     return positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
 
 
-def solve_optics(
-    particle,
-    config: SimulationConfig,
-    voxel_size: float = None,
-    compute_near_field: bool = True,
-    compute_phase_func: bool = False,
-    verbose: bool = True,
-) -> "OpticalResult":
-    """Main entry: aerosol particle -> DDA optical result."""
+def _solve_single_wl(
+    positions,
+    alpha_e,
+    grid,
+    material_map,
+    config,
+    m_max,
+    voxel_size,
+    material_names,
+    compute_near_field=True,
+    compute_phase_func=False,
+    verbose=True,
+):
+    """Solve DDA for a single wavelength.
+
+    Parameters
+    ----------
+    positions : np.ndarray
+        Dipole positions, shape (N, 3).
+    alpha_e : np.ndarray
+        Dipole polarizabilities, shape (N,).
+    grid : pyvista.UnstructuredGrid
+        Voxel grid with material_id cell data.
+    material_map : dict
+        Mapping material_id -> material object with refractive_index attr.
+    config : SimulationConfig
+        Simulation configuration. ``config.wavelength`` is guaranteed to be
+        a single ``float``.
+    m_max : float
+        Maximum refractive index magnitude.
+    voxel_size : float
+        Voxel / dipole spacing in nm.
+    material_names : list[str]
+        Human-readable material names.
+    compute_near_field : bool
+        Compute and attach near-field intensity to grid.
+    compute_phase_func : bool
+        Compute phase function.
+    verbose : bool
+        Print configuration and timing.
+
+    Returns
+    -------
+    OpticalResult
+    """
     t_start = time.time()
 
     from .datastructs import CrossSections, OpticalResult
     from .bridge import (
         solve_dda, compute_cross_sections, compute_asymmetry_parameter
-    )
-
-    # Determine effective wavelength for preparation (single float)
-    prep_wavelength = config.wavelength
-    if isinstance(prep_wavelength, (list, tuple, np.ndarray)):
-        prep_wavelength = float(min(prep_wavelength))
-
-    prep_config = copy.copy(config)
-    prep_config.wavelength = prep_wavelength
-
-    # Steps 1-4, 7: Prepare DDA geometry
-    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
-        particle, prep_config, voxel_size
     )
 
     # Step 5: Handle polarization=None
@@ -265,6 +288,44 @@ def solve_optics(
         n_dipoles=len(positions),
         validity=validity,
         solve_time=elapsed,
+    )
+
+
+def solve_optics(
+    particle,
+    config: SimulationConfig,
+    voxel_size: float = None,
+    compute_near_field: bool = True,
+    compute_phase_func: bool = False,
+    verbose: bool = True,
+) -> "OpticalResult":
+    """Main entry: aerosol particle -> DDA optical result."""
+    # Determine effective wavelength for preparation (single float)
+    prep_wavelength = config.wavelength
+    if isinstance(prep_wavelength, (list, tuple, np.ndarray)):
+        prep_wavelength = float(min(prep_wavelength))
+
+    prep_config = copy.copy(config)
+    prep_config.wavelength = prep_wavelength
+
+    # Steps 1-4, 7: Prepare DDA geometry
+    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        particle, prep_config, voxel_size
+    )
+
+    # Delegate to per-wavelength solver
+    return _solve_single_wl(
+        positions,
+        alpha_e,
+        grid,
+        material_map,
+        config,
+        m_max,
+        voxel_size,
+        material_names,
+        compute_near_field=compute_near_field,
+        compute_phase_func=compute_phase_func,
+        verbose=verbose,
     )
 
 
