@@ -53,10 +53,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/openEarthModelling/aerosol3d"
-Repository = "https://github.com/openEarthModelling/aerosol3d"
-"Bug Tracker" = "https://github.com/openEarthModelling/aerosol3d/issues"
-Changelog = "https://github.com/openEarthModelling/aerosol3d/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/openEarthModelling/Aerosol3D"
+Repository = "https://github.com/openEarthModelling/Aerosol3D"
+"Bug Tracker" = "https://github.com/openEarthModelling/Aerosol3D/issues"
+Changelog = "https://github.com/openEarthModelling/Aerosol3D/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

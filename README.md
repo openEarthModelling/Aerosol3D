@@ -1,6 +1,6 @@
 # Aerosol3D
 
-[![CI](https://github.com/openEarthModelling/aerosol3d/actions/workflows/ci.yml/badge.svg)](https://github.com/openEarthModelling/aerosol3d/actions/workflows/ci.yml)
+[![CI](https://github.com/openEarthModelling/Aerosol3D/actions/workflows/ci.yml/badge.svg)](https://github.com/openEarthModelling/Aerosol3D/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -26,7 +26,7 @@ pip install Aerosol3D
 For development:
 
 ```bash
-git clone https://github.com/openEarthModelling/aerosol3d.git
+git clone https://github.com/openEarthModelling/Aerosol3D.git
 cd Aerosol3D
 pip install -e ".[dev]"
 ```

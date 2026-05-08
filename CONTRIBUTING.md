@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This document outlines the process 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/openEarthModelling/aerosol3d.git`
+2. Clone your fork: `git clone https://github.com/openEarthModelling/Aerosol3D.git`
 3. Install in development mode: `pip install -e ".[dev]"`
 4. Install pre-commit hooks: `pre-commit install`
 
