@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 
-from .datastructs import SimulationConfig
+from .datastructs import OpticalResult, PhaseFunction, SimulationConfig
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def _apply_radiative_correction(alpha0, k):
     """Apply radiative reaction correction and normalize for Julia convention."""
     alpha0 = np.asarray(alpha0, dtype=np.complex128)
-    k3 = k ** 3
+    k3 = k**3
     alpha_rad = alpha0 / (1.0 - 1j * k3 / (6.0 * np.pi) * alpha0)
     return (k3 / (4.0 * np.pi)) * alpha_rad
 
@@ -26,14 +26,14 @@ def _extract_dipoles(grid, config, material_map):
     positions = grid.cell_centers().points[mask].copy()
     k = 2.0 * np.pi / config.wavelength
     d = config.dipole_spacing
-    eps_h = config.n_host ** 2
+    eps_h = config.n_host**2
     alpha_e = np.zeros(len(positions), dtype=np.complex128)
     for mat_id, mat in material_map.items():
         sel = mat_ids == mat_id
         if not np.any(sel):
             continue
-        eps = mat.refractive_index ** 2
-        a_cm = 3.0 * d ** 3 * (eps - eps_h) / (eps + 2.0 * eps_h)
+        eps = mat.refractive_index**2
+        a_cm = 3.0 * d**3 * (eps - eps_h) / (eps + 2.0 * eps_h)
         alpha_e[sel] = _apply_radiative_correction(a_cm, k)
     positions = np.ascontiguousarray(positions, dtype=np.float64)
     alpha_e = np.ascontiguousarray(alpha_e, dtype=np.complex128)
@@ -70,9 +70,13 @@ def _prepare_dda(particle, config, voxel_size=None):
         ri_n = float(np.mean(block_mesh.cell_data["ri_n"]))
         ri_k = float(np.mean(block_mesh.cell_data["ri_k"]))
         material_names.append(str(block_mesh.field_data["material_name"][0]))
-        material_map[mat_id] = type("Mat", (), {
-            "refractive_index": complex(ri_n, ri_k),
-        })()
+        material_map[mat_id] = type(
+            "Mat",
+            (),
+            {
+                "refractive_index": complex(ri_n, ri_k),
+            },
+        )()
 
     m_max = max(abs(mat.refractive_index) for mat in material_map.values())
 
@@ -80,10 +84,12 @@ def _prepare_dda(particle, config, voxel_size=None):
     auto_computed = voxel_size is None
     if auto_computed:
         from .datastructs import auto_voxel_size
+
         voxel_size = auto_voxel_size(config.wavelength, m_max, config.precision)
 
     # Step 3: Voxelize
     from Aerosol3D.geometry.voxelize import voxelize_with_materials
+
     grid = voxelize_with_materials(particle, voxel_size)
 
     # Step 4: Copy config and set dipole_spacing
@@ -143,10 +149,8 @@ def _solve_single_wl(
     """
     t_start = time.time()
 
+    from .bridge import compute_asymmetry_parameter, compute_cross_sections, solve_dda
     from .datastructs import CrossSections, OpticalResult
-    from .bridge import (
-        solve_dda, compute_cross_sections, compute_asymmetry_parameter
-    )
 
     # Step 5: Handle polarization=None
     do_depolarized = False
@@ -171,14 +175,14 @@ def _solve_single_wl(
     config.dipole_spacing = voxel_size
 
     if verbose:
-        print(f"{'='*52}")
-        print(f"  DDA Simulation Configuration")
-        print(f"{'='*52}")
+        print(f"{'=' * 52}")
+        print("  DDA Simulation Configuration")
+        print(f"{'=' * 52}")
         print(f"  wavelength     = {config.wavelength:.1f} nm")
         print(f"  source         = {config.source}")
         print(f"  polarization   = {config.polarization}")
         if do_depolarized:
-            print(f"  mode           = depolarized (2 solves)")
+            print("  mode           = depolarized (2 solves)")
         print(f"  propagation    = {config.propagation}")
         print(f"  n_host         = {config.n_host}")
         print(f"  solver         = {config.solver}")
@@ -191,17 +195,23 @@ def _solve_single_wl(
         threshold = " (< 1.0)" if mkd >= 1.0 else ""
         print(f"  |m|*k*d        = {mkd:.4f}  {status}{threshold}")
         print(f"  N_materials    = {len(material_map)} ({', '.join(material_names)})")
-        print(f"{'='*52}")
+        print(f"{'=' * 52}")
 
     if len(positions) == 0:
         n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
-        volume = n_filled * voxel_size ** 3
+        volume = n_filled * voxel_size**3
         r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0) if volume > 0 else 0.0
         cross_sections = CrossSections(
             wavelength=config.wavelength,
-            C_ext=0.0, C_sca=0.0, C_abs=0.0,
-            Q_ext=0.0, Q_sca=0.0, Q_abs=0.0,
-            SSA=0.0, g=0.0, r_eff=r_eff,
+            C_ext=0.0,
+            C_sca=0.0,
+            C_abs=0.0,
+            Q_ext=0.0,
+            Q_sca=0.0,
+            Q_abs=0.0,
+            SSA=0.0,
+            g=0.0,
+            r_eff=r_eff,
         )
         return OpticalResult(
             config=config,
@@ -237,9 +247,9 @@ def _solve_single_wl(
 
     # Step 9: Equivalent volume sphere radius
     n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
-    volume = n_filled * voxel_size ** 3
+    volume = n_filled * voxel_size**3
     r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0)
-    geo_cs = np.pi * r_eff ** 2
+    geo_cs = np.pi * r_eff**2
 
     # Step 10: Efficiency factors
     Q_ext = C_ext / geo_cs if geo_cs > 0 else 0.0
@@ -250,15 +260,19 @@ def _solve_single_wl(
     SSA = C_sca / C_ext if C_ext > 0 else 0.0
 
     # Step 12: Asymmetry parameter g
-    g = compute_asymmetry_parameter(
-        positions, alpha_e, dda_result, config, C_sca=C_sca
-    )
+    g = compute_asymmetry_parameter(positions, alpha_e, dda_result, config, c_sca=C_sca)
 
     cross_sections = CrossSections(
         wavelength=config.wavelength,
-        C_ext=C_ext, C_sca=C_sca, C_abs=C_abs,
-        Q_ext=Q_ext, Q_sca=Q_sca, Q_abs=Q_abs,
-        SSA=SSA, g=g, r_eff=r_eff,
+        C_ext=C_ext,
+        C_sca=C_sca,
+        C_abs=C_abs,
+        Q_ext=Q_ext,
+        Q_sca=Q_sca,
+        Q_abs=Q_abs,
+        SSA=SSA,
+        g=g,
+        r_eff=r_eff,
     )
 
     # Step 13: Near-field (optional)
@@ -268,9 +282,7 @@ def _solve_single_wl(
     # Step 14: Phase function (optional)
     phase_function = None
     if compute_phase_func:
-        phase_function = _compute_phase_function(
-            positions, alpha_e, dda_result, config
-        )
+        phase_function = _compute_phase_function(positions, alpha_e, dda_result, config)
 
     elapsed = time.time() - t_start
 
@@ -278,7 +290,7 @@ def _solve_single_wl(
         print(f"\n  Solve time     = {elapsed:.1f} s")
         print(f"  N_dipoles     = {len(positions)}")
         if do_depolarized:
-            print(f"  mode           = depolarized average")
+            print("  mode           = depolarized average")
 
     return OpticalResult(
         config=config,
@@ -311,7 +323,7 @@ def _orientational_average(results):
     C_abs = sum(r.cross_sections.C_abs for r in results) / n
 
     r_eff = results[0].cross_sections.r_eff  # Same for all directions
-    geo_cs = np.pi * r_eff ** 2
+    geo_cs = np.pi * r_eff**2
     Q_ext = C_ext / geo_cs if geo_cs > 0 else 0.0
     Q_sca = C_sca / geo_cs if geo_cs > 0 else 0.0
     Q_abs = C_abs / geo_cs if geo_cs > 0 else 0.0
@@ -341,9 +353,15 @@ def _orientational_average(results):
 
     cross_sections = CrossSections(
         wavelength=results[0].cross_sections.wavelength,
-        C_ext=C_ext, C_sca=C_sca, C_abs=C_abs,
-        Q_ext=Q_ext, Q_sca=Q_sca, Q_abs=Q_abs,
-        SSA=SSA, g=g, r_eff=r_eff,
+        C_ext=C_ext,
+        C_sca=C_sca,
+        C_abs=C_abs,
+        Q_ext=Q_ext,
+        Q_sca=Q_sca,
+        Q_abs=Q_abs,
+        SSA=SSA,
+        g=g,
+        r_eff=r_eff,
     )
 
     return OpticalResult(
@@ -372,7 +390,7 @@ def solve_optics(
     Supports orientational averaging via ``propagations``.
     """
     # Determine wavelength(s)
-    if isinstance(config.wavelength, (list, tuple, np.ndarray)):
+    if isinstance(config.wavelength, list | tuple | np.ndarray):
         wavelengths = list(config.wavelength)
     else:
         wavelengths = [float(config.wavelength)]
@@ -412,9 +430,7 @@ def solve_optics(
                     material_names,
                     compute_near_field=compute_near_field,
                     compute_phase_func=compute_phase_func,
-                    verbose=verbose
-                    and len(wavelengths) == 1
-                    and len(propagations) == 1,
+                    verbose=verbose and len(wavelengths) == 1 and len(propagations) == 1,
                 )
                 dir_results.append(dir_result)
             averaged_result = _orientational_average(dir_results)
@@ -441,22 +457,28 @@ def solve_optics(
 
 
 def _compute_phase_function(
-    positions, alpha_e, dda_result, config,
-    n_theta: int = 90, n_phi: int = 180,
+    positions,
+    alpha_e,
+    dda_result,
+    config,
+    n_theta: int = 90,
+    n_phi: int = 180,
 ) -> "PhaseFunction":
     """Compute P11 phase function on a (theta, phi) grid."""
-    from .datastructs import PhaseFunction
     from .bridge import compute_diff_scattering
+    from .datastructs import PhaseFunction
 
     theta = np.linspace(0, np.pi, n_theta)
     phi = np.linspace(0, 2 * np.pi, n_phi, endpoint=False)
     theta_grid, phi_grid = np.meshgrid(theta, phi, indexing="ij")
 
-    directions = np.column_stack([
-        np.sin(theta_grid).ravel() * np.cos(phi_grid).ravel(),
-        np.sin(theta_grid).ravel() * np.sin(phi_grid).ravel(),
-        np.cos(theta_grid).ravel(),
-    ])
+    directions = np.column_stack(
+        [
+            np.sin(theta_grid).ravel() * np.cos(phi_grid).ravel(),
+            np.sin(theta_grid).ravel() * np.sin(phi_grid).ravel(),
+            np.cos(theta_grid).ravel(),
+        ]
+    )
 
     dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
     P11 = dcs.reshape(n_theta, n_phi)

@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Tuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -48,8 +48,8 @@ class SimulationConfig:
     """All parameters for a single DDA simulation run."""
 
     wavelength: float | list[float] = 550.0
-    polarization: Optional[Tuple[float, float, float]] = None
-    propagation: Tuple[float, float, float] = (0.0, 0.0, 1.0)
+    polarization: tuple[float, float, float] | None = None
+    propagation: tuple[float, float, float] = (0.0, 0.0, 1.0)
     n_host: float = 1.0
     solver: str = "CPU"
     dipole_spacing: float = 0.0
@@ -94,10 +94,10 @@ class PhaseFunction:
     theta: np.ndarray
     phi: np.ndarray
     P11: np.ndarray
-    P12: Optional[np.ndarray] = None
-    P22: Optional[np.ndarray] = None
-    mueller_matrix: Optional[np.ndarray] = None
-    depolarization_ratio: Optional[float] = None
+    P12: np.ndarray | None = None
+    P22: np.ndarray | None = None
+    mueller_matrix: np.ndarray | None = None
+    depolarization_ratio: float | None = None
 
 
 @dataclass
@@ -106,8 +106,8 @@ class OpticalResult:
 
     config: SimulationConfig
     cross_sections: CrossSections
-    phase_function: Optional[PhaseFunction] = None
-    voxel_grid: Optional[pv.ImageData] = None
+    phase_function: PhaseFunction | None = None
+    voxel_grid: pv.ImageData | None = None
     n_dipoles: int = 0
-    validity: Optional[dict] = None
-    solve_time: Optional[float] = None
+    validity: dict | None = None
+    solve_time: float | None = None

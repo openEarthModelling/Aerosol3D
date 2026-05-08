@@ -10,8 +10,7 @@ class FractalAggregate:
     via PyVista Glyph.
     """
 
-    def __init__(self, centers: np.ndarray, radii: np.ndarray,
-                 material, unit: str = "nm"):
+    def __init__(self, centers: np.ndarray, radii: np.ndarray, material, unit: str = "nm"):
         self.centers = np.asarray(centers, dtype=float)
         self.radii = np.asarray(radii, dtype=float)
         self.material = material
@@ -24,7 +23,7 @@ class FractalAggregate:
     @property
     def volume(self) -> float:
         """Total analytical volume from radii."""
-        return float(np.sum(4/3 * np.pi * self.radii**3))
+        return float(np.sum(4 / 3 * np.pi * self.radii**3))
 
     @property
     def volume_weighted_center(self) -> np.ndarray:
@@ -36,20 +35,16 @@ class FractalAggregate:
         """Expand to mesh via PyVista Glyph."""
         cloud = pv.PolyData(self.centers)
         cloud.point_data["radii"] = self.radii
-        sphere = pv.Sphere(radius=1.0, theta_resolution=theta_res,
-                           phi_resolution=phi_res)
+        sphere = pv.Sphere(radius=1.0, theta_resolution=theta_res, phi_resolution=phi_res)
         return cloud.glyph(geom=sphere, scale="radii", orient=False)
 
-    def to_particle(self, name: str = "fractal_aggregate",
-                    theta_res: int = 20, phi_res: int = 20):
+    def to_particle(self, name: str = "fractal_aggregate", theta_res: int = 20, phi_res: int = 20):
         from .particle import AerosolParticle, MixingState
-        particle = AerosolParticle(
-            name=name, mixing_state=MixingState.AGGREGATED, unit=self.unit
-        )
+
+        particle = AerosolParticle(name=name, mixing_state=MixingState.AGGREGATED, unit=self.unit)
         mesh = self.to_mesh(theta_res, phi_res)
         particle.add_mesh("aggregate", mesh, self.material)
         return particle
 
     def __repr__(self) -> str:
-        return (f"FractalAggregate(n={self.n_monomers}, "
-                f"material={self.material.name!r})")
+        return f"FractalAggregate(n={self.n_monomers}, material={self.material.name!r})"

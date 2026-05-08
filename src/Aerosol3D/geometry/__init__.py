@@ -1,2 +1,2 @@
-from .primitives import create_sphere, create_ellipsoid, create_cube
+from .primitives import create_cube, create_ellipsoid, create_sphere
 from .voxelize import voxelize_with_materials

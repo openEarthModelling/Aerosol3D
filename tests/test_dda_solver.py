@@ -1,5 +1,6 @@
 # tests/test_dda_solver.py
 import os
+
 import numpy as np
 import pytest
 
@@ -55,9 +56,7 @@ class TestSolveOptics:
 
     def test_coated_sphere(self, julia_available, soot_material, sulfate_material):
         """Solve a coated sphere (two materials) and verify."""
-        from Aerosol3D import (
-            AerosolParticle, create_sphere, apply_distance_coating
-        )
+        from Aerosol3D import AerosolParticle, apply_distance_coating, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
         from Aerosol3D.optics.dda_solver import solve_optics
 
@@ -118,7 +117,9 @@ class TestPhaseFunction:
         # Forward (theta ~ 0) should be strong
         forward_idx = np.argmin(result.phase_function.theta)
         backward_idx = np.argmax(result.phase_function.theta)
-        assert result.phase_function.P11[forward_idx, 0] >= result.phase_function.P11[backward_idx, 0]
+        assert (
+            result.phase_function.P11[forward_idx, 0] >= result.phase_function.P11[backward_idx, 0]
+        )
 
 
 class TestAutoVoxelSize:
@@ -182,7 +183,7 @@ class TestSolveSingleWL:
         """_solve_single_wl should produce same result as original solve_optics for single wavelength."""
         from Aerosol3D import AerosolParticle, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
-        from Aerosol3D.optics.dda_solver import solve_optics, _prepare_dda, _solve_single_wl
+        from Aerosol3D.optics.dda_solver import _prepare_dda, _solve_single_wl, solve_optics
 
         p = AerosolParticle(name="soot_sphere", unit="nm")
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
@@ -197,15 +198,32 @@ class TestSolveSingleWL:
             p, config_extracted, voxel_size=10.0
         )
         result_extracted = _solve_single_wl(
-            positions, alpha_e, grid, material_map, config_extracted, m_max, voxel_size, material_names,
-            compute_near_field=True, compute_phase_func=True, verbose=False,
+            positions,
+            alpha_e,
+            grid,
+            material_map,
+            config_extracted,
+            m_max,
+            voxel_size,
+            material_names,
+            compute_near_field=True,
+            compute_phase_func=True,
+            verbose=False,
         )
 
         assert result_direct.n_dipoles == result_extracted.n_dipoles
-        assert result_direct.cross_sections.C_ext == pytest.approx(result_extracted.cross_sections.C_ext, abs=1e-10)
-        assert result_direct.cross_sections.C_sca == pytest.approx(result_extracted.cross_sections.C_sca, abs=1e-10)
-        assert result_direct.cross_sections.C_abs == pytest.approx(result_extracted.cross_sections.C_abs, abs=1e-10)
-        assert result_direct.cross_sections.g == pytest.approx(result_extracted.cross_sections.g, abs=1e-10)
+        assert result_direct.cross_sections.C_ext == pytest.approx(
+            result_extracted.cross_sections.C_ext, abs=1e-10
+        )
+        assert result_direct.cross_sections.C_sca == pytest.approx(
+            result_extracted.cross_sections.C_sca, abs=1e-10
+        )
+        assert result_direct.cross_sections.C_abs == pytest.approx(
+            result_extracted.cross_sections.C_abs, abs=1e-10
+        )
+        assert result_direct.cross_sections.g == pytest.approx(
+            result_extracted.cross_sections.g, abs=1e-10
+        )
 
 
 class TestVerbose:

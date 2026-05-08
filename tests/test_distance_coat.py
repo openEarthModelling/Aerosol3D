@@ -1,5 +1,4 @@
 import numpy as np
-import pyvista as pv
 import pytest
 
 
@@ -28,7 +27,7 @@ class TestDistanceCoating:
 
         result = apply_distance_coating(p, thickness=10.0, material=sulfate_material)
         coating = result.blocks["coating"]
-        expected = 4/3 * np.pi * (60**3 - 50**3)
+        expected = 4 / 3 * np.pi * (60**3 - 50**3)
         assert coating.volume > 0
         assert abs(coating.volume - expected) / expected < 0.15  # 15% tolerance
 

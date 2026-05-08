@@ -4,8 +4,12 @@ import pyvista as pv
 
 def create_sphere(center, radius, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
     """Create a sphere mesh with analytical parameters in field_data."""
-    mesh = pv.Sphere(radius=radius, center=center,
-                     theta_resolution=theta_resolution, phi_resolution=phi_resolution)
+    mesh = pv.Sphere(
+        radius=radius,
+        center=center,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     mesh.field_data["geometry_type"] = np.array(["sphere"], dtype=object)
     mesh.field_data["analytic_radius"] = np.array([float(radius)], dtype=float)
     mesh.field_data["analytic_center"] = np.array([float(c) for c in center], dtype=float)
@@ -14,8 +18,12 @@ def create_sphere(center, radius, theta_resolution=30, phi_resolution=30) -> pv.
 
 def create_ellipsoid(center, axes, theta_resolution=30, phi_resolution=30) -> pv.PolyData:
     """Create an ellipsoid mesh by scaling a unit sphere."""
-    sphere = pv.Sphere(radius=1.0, center=(0, 0, 0),
-                       theta_resolution=theta_resolution, phi_resolution=phi_resolution)
+    sphere = pv.Sphere(
+        radius=1.0,
+        center=(0, 0, 0),
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+    )
     sphere.points *= np.array(axes, dtype=float)
     sphere.points += np.array(center, dtype=float)
     sphere.field_data["geometry_type"] = np.array(["ellipsoid"], dtype=object)

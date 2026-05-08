@@ -8,8 +8,7 @@ from Aerosol3D.physics.units import Q_
 logger = logging.getLogger(__name__)
 
 
-def from_file(file_path: str, unit: str = "nm",
-              source_unit: str = None) -> pv.PolyData:
+def from_file(file_path: str, unit: str = "nm", source_unit: str = None) -> pv.PolyData:
     """Load a 3D mesh file (STL, OBJ, PLY, etc.) as pv.PolyData.
 
     Args:
@@ -28,7 +27,7 @@ def from_file(file_path: str, unit: str = "nm",
         mesh = mesh.combine()
 
     if source_unit is None:
-        if hasattr(mesh, 'units') and mesh.units:
+        if hasattr(mesh, "units") and mesh.units:
             source_unit = mesh.units
         else:
             source_unit = unit

@@ -1,7 +1,8 @@
 # tests/test_optics_integration.py
 """Full pipeline test: geometry -> coating -> DDA solve -> visualize."""
+
 import os
-import numpy as np
+
 import pytest
 
 JULIA_AVAILABLE = os.environ.get("SKIP_JULIA_TESTS") != "1"
@@ -17,13 +18,13 @@ class TestFullOpticsPipeline:
     def test_coated_sphere_full_pipeline(self, julia_available, tmp_path):
         """BC sphere + sulfate coating -> DDA -> optical properties -> visualization."""
         from Aerosol3D import (
-            AerosolParticle, Material, create_sphere,
+            AerosolParticle,
+            Material,
             apply_distance_coating,
+            create_sphere,
         )
-        from Aerosol3D.optics import solve_optics, SimulationConfig
-        from Aerosol3D.optics.visualization import (
-            plot_phase_function_2d, print_macroscopic
-        )
+        from Aerosol3D.optics import SimulationConfig, solve_optics
+        from Aerosol3D.optics.visualization import plot_phase_function_2d, print_macroscopic
 
         soot = Material("soot", complex(1.8, 0.7), 1.8)
         sulfate = Material("sulfate", complex(1.4, 0.0), 1.8)
@@ -36,7 +37,9 @@ class TestFullOpticsPipeline:
         # Solve optics
         config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
         result = solve_optics(
-            p, config, voxel_size=10.0,
+            p,
+            config,
+            voxel_size=10.0,
             compute_near_field=True,
             compute_phase_func=True,
         )
@@ -59,5 +62,6 @@ class TestFullOpticsPipeline:
     def test_import_from_top_level(self, julia_available):
         """Verify optics exports are accessible from Aerosol3D top-level."""
         import Aerosol3D
+
         assert hasattr(Aerosol3D, "solve_optics")
         assert hasattr(Aerosol3D, "SimulationConfig")

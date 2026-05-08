@@ -24,7 +24,7 @@ def from_fractal(aggregate_obj, material, target_unit: str = "nm") -> FractalAgg
     """
     centers = np.asarray(aggregate_obj.positions, dtype=float)
     radii = np.asarray(aggregate_obj.radii, dtype=float)
-    source_unit = getattr(aggregate_obj, 'length_unit', 'nm')
+    source_unit = getattr(aggregate_obj, "length_unit", "nm")
 
     if source_unit != target_unit:
         try:
@@ -34,6 +34,4 @@ def from_fractal(aggregate_obj, material, target_unit: str = "nm") -> FractalAgg
         except Exception:
             logger.warning("Unit conversion failed: %s -> %s", source_unit, target_unit)
 
-    return FractalAggregate(
-        centers=centers, radii=radii, material=material, unit=target_unit
-    )
+    return FractalAggregate(centers=centers, radii=radii, material=material, unit=target_unit)

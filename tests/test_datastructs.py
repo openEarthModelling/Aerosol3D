@@ -5,6 +5,7 @@ import pytest
 @pytest.fixture
 def default_config():
     from Aerosol3D.optics.datastructs import SimulationConfig
+
     return SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
 
@@ -24,7 +25,9 @@ class TestSimulationConfig:
     def test_validity_check_fails(self, default_config):
         # Override spacing to be very large
         default_config.dipole_spacing = 1000.0
-        result = default_config.validity_check(m_max=1.5, dipole_spacing=default_config.dipole_spacing)
+        result = default_config.validity_check(
+            m_max=1.5, dipole_spacing=default_config.dipole_spacing
+        )
         assert result["valid"] is False
 
 
@@ -34,9 +37,15 @@ class TestCrossSections:
 
         cs = CrossSections(
             wavelength=default_config.wavelength,
-            C_ext=100.0, C_sca=60.0, C_abs=40.0,
-            Q_ext=2.0, Q_sca=1.2, Q_abs=0.8,
-            SSA=0.6, g=0.5, r_eff=50.0,
+            C_ext=100.0,
+            C_sca=60.0,
+            C_abs=40.0,
+            Q_ext=2.0,
+            Q_sca=1.2,
+            Q_abs=0.8,
+            SSA=0.6,
+            g=0.5,
+            r_eff=50.0,
         )
         assert cs.wavelength == 550.0
         assert cs.SSA == 0.6
@@ -46,7 +55,9 @@ class TestPhaseFunction:
     def test_optional_fields(self):
         from Aerosol3D.optics.datastructs import PhaseFunction
 
-        pf = PhaseFunction(theta=np.array([0.0, 1.0]), phi=np.array([0.0, 1.0]), P11=np.array([1.0, 2.0]))
+        pf = PhaseFunction(
+            theta=np.array([0.0, 1.0]), phi=np.array([0.0, 1.0]), P11=np.array([1.0, 2.0])
+        )
         assert pf.P12 is None
         assert pf.mueller_matrix is None
 
@@ -64,13 +75,19 @@ class TestPhaseFunction:
 
 class TestOpticalResult:
     def test_minimal(self, default_config):
-        from Aerosol3D.optics.datastructs import OpticalResult, CrossSections
+        from Aerosol3D.optics.datastructs import CrossSections, OpticalResult
 
         cs = CrossSections(
             wavelength=default_config.wavelength,
-            C_ext=100.0, C_sca=60.0, C_abs=40.0,
-            Q_ext=2.0, Q_sca=1.2, Q_abs=0.8,
-            SSA=0.6, g=0.5, r_eff=50.0,
+            C_ext=100.0,
+            C_sca=60.0,
+            C_abs=40.0,
+            Q_ext=2.0,
+            Q_sca=1.2,
+            Q_abs=0.8,
+            SSA=0.6,
+            g=0.5,
+            r_eff=50.0,
         )
         result = OpticalResult(config=default_config, cross_sections=cs)
         assert result.n_dipoles == 0
@@ -78,7 +95,6 @@ class TestOpticalResult:
 
     def test_no_pyvista_import_at_load(self):
         """SimulationConfig should be importable without pyvista installed."""
-        import importlib
         import sys
 
         # Remove pyvista from sys.modules if present
@@ -88,6 +104,7 @@ class TestOpticalResult:
 
         # Should not raise
         from Aerosol3D.optics.datastructs import SimulationConfig
+
         config = SimulationConfig()
         assert config.wavelength == 550.0
 

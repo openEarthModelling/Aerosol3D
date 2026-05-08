@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,7 +18,7 @@ def plot_phase_function_2d(
     result: OpticalResult,
     plane: str = "xz",
     log_scale: bool = True,
-    save_path: Optional[str] = None,
+    save_path: str | None = None,
     show: bool = False,
 ):
     """Plot 2D polar phase function P11(theta) in a specified scattering plane.
@@ -33,13 +33,15 @@ def plot_phase_function_2d(
         show: If True, call plt.show().
     """
     import matplotlib
+
     if "matplotlib.backends" not in sys.modules:
         matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     if result.phase_function is None:
-        raise ValueError("OpticalResult has no phase_function. "
-                         "Re-run solve_optics with compute_phase_func=True.")
+        raise ValueError(
+            "OpticalResult has no phase_function. Re-run solve_optics with compute_phase_func=True."
+        )
 
     theta = result.phase_function.theta
     P11 = result.phase_function.P11
@@ -94,25 +96,23 @@ def plot_near_field(
     import pyvista as pv
 
     if result.voxel_grid is None:
-        raise ValueError("OpticalResult has no voxel_grid. "
-                         "Re-run solve_optics with compute_near_field=True.")
+        raise ValueError(
+            "OpticalResult has no voxel_grid. Re-run solve_optics with compute_near_field=True."
+        )
     if "E_intensity" not in result.voxel_grid.cell_data:
-        raise ValueError("voxel_grid has no E_intensity. "
-                         "Re-run solve_optics with compute_near_field=True.")
+        raise ValueError(
+            "voxel_grid has no E_intensity. Re-run solve_optics with compute_near_field=True."
+        )
 
     grid = result.voxel_grid
     plotter = pv.Plotter(title=f"|E|^2 @ {result.cross_sections.wavelength} nm")
 
     slices = grid.slice_orthogonal(scalars="E_intensity")
     if log_scale:
-        slices["E_intensity_log"] = np.log10(
-            slices["E_intensity"] + 1e-30
-        )
-        plotter.add_mesh(slices, scalars="E_intensity_log", cmap="hot",
-                         show_scalar_bar=True)
+        slices["E_intensity_log"] = np.log10(slices["E_intensity"] + 1e-30)
+        plotter.add_mesh(slices, scalars="E_intensity_log", cmap="hot", show_scalar_bar=True)
     else:
-        plotter.add_mesh(slices, scalars="E_intensity", cmap="hot",
-                         show_scalar_bar=True)
+        plotter.add_mesh(slices, scalars="E_intensity", cmap="hot", show_scalar_bar=True)
 
     if show:
         plotter.show()
@@ -130,9 +130,9 @@ def print_macroscopic(result, solve_time: float = None):
     cs = result.cross_sections
     if solve_time is None:
         solve_time = getattr(result, "solve_time", None)
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"  Aerosol Optical Properties @ {cs.wavelength:.1f} nm")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"  C_ext  = {cs.C_ext:12.4f}  nm\u00b2")
     print(f"  C_sca  = {cs.C_sca:12.4f}  nm\u00b2")
     print(f"  C_abs  = {cs.C_abs:12.4f}  nm\u00b2")
@@ -149,4 +149,4 @@ def print_macroscopic(result, solve_time: float = None):
         v = result.validity
         status = "OK" if v["valid"] else "WARNING: > 1"
         print(f"  |m|kd  = {v['m_k_d']:.4f}  {status}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")

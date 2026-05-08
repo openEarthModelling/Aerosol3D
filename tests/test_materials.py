@@ -11,7 +11,7 @@ class TestPresetMaterial:
         assert mat.density == 1.8
 
     def test_creates_all_presets(self):
-        from Aerosol3D.materials import preset_material, REFRACTIVE_INDEX
+        from Aerosol3D.materials import REFRACTIVE_INDEX, preset_material
 
         for name in REFRACTIVE_INDEX:
             mat = preset_material(name)

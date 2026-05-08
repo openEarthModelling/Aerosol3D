@@ -5,10 +5,10 @@ import logging
 import numpy as np
 import pyvista as pv
 
-logger = logging.getLogger(__name__)
-
 from Aerosol3D.geometry.boolean import safe_difference
 from Aerosol3D.geometry.primitives import create_sphere
+
+logger = logging.getLogger(__name__)
 
 
 def _offset_surface(core_mesh: pv.PolyData, thickness: float) -> pv.PolyData:

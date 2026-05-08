@@ -5,16 +5,15 @@ Lazy-loads Julia runtime on first use. All data crossing the Python/Julia
 boundary is strictly typed as float64 or complex128 with C-contiguous layout.
 """
 
-import logging
 import copy
+import logging
 
 import numpy as np
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 _julia_initialized = False
-_gpu_checked: Optional[bool] = None
+_gpu_checked: bool | None = None
 
 
 def is_julia_ready() -> bool:
@@ -28,8 +27,10 @@ def _ensure_julia():
     if _julia_initialized:
         return
     from julia.api import Julia
+
     Julia(compiled_modules=False)
     from julia import Main  # noqa: F401
+
     Main.eval("using CoupledElectricMagneticDipoles")
     # JIT warmup with a trivial problem (avoids compilation lag on first real call)
     Main.eval("DDACore.solve_DDA_e([0.0 0.0 0.0], [1.0im])")
@@ -49,6 +50,7 @@ def check_gpu_available() -> bool:
     try:
         _ensure_julia()
         from julia import Main
+
         Main.eval("using CUDA")
         Main.eval("CUDA.functional()")
         _gpu_checked = True
@@ -60,9 +62,7 @@ def check_gpu_available() -> bool:
         return False
 
 
-def _enforce_types(
-    positions: np.ndarray, alpha_e: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
+def _enforce_types(positions: np.ndarray, alpha_e: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Enforce strict dtype and memory layout for Julia interop."""
     positions = np.ascontiguousarray(positions, dtype=np.float64)
     alpha_e = np.ascontiguousarray(alpha_e, dtype=np.complex128)
@@ -72,8 +72,7 @@ def _enforce_types(
         raise ValueError(f"alpha_e must be (N,), got {alpha_e.shape}")
     if positions.shape[0] != alpha_e.shape[0]:
         raise ValueError(
-            f"positions and alpha_e must have same N: "
-            f"{positions.shape[0]} vs {alpha_e.shape[0]}"
+            f"positions and alpha_e must have same N: {positions.shape[0]} vs {alpha_e.shape[0]}"
         )
     return positions, alpha_e
 
@@ -108,9 +107,7 @@ def solve_dda(
     _ensure_julia()
 
     if config.solver == "GPU" and not check_gpu_available():
-        logger.warning(
-            "GPU solver requested but CUDA is not available. Falling back to CPU."
-        )
+        logger.warning("GPU solver requested but CUDA is not available. Falling back to CPU.")
         config = copy.copy(config)
         config.solver = "CPU"
 
@@ -140,10 +137,10 @@ def compute_cross_sections(
     dda_result: dict,
     config,
 ) -> np.ndarray:
-    """Compute C_ext, C_abs, C_sca via Julia PostProcessing.
+    """Compute C_ext, C_abs, c_sca via Julia PostProcessing.
 
     Returns:
-        (3,) float64 array: [C_ext, C_abs, C_sca].
+        (3,) float64 array: [C_ext, C_abs, c_sca].
         Values are in units of knorm^{-2} (same length unit as input positions).
     """
     _ensure_julia()
@@ -172,13 +169,13 @@ def compute_diff_scattering(
     config,
     directions: np.ndarray,
 ) -> np.ndarray:
-    """Compute differential scattering cross section dC_sca/dOmega.
+    """Compute differential scattering cross section dc_sca/dOmega.
 
     Args:
         directions: (Nu, 3) unit direction vectors (auto-normalized by Julia).
 
     Returns:
-        (Nu,) float64 array of dC_sca/dOmega in units of 1/k^2.
+        (Nu,) float64 array of dc_sca/dOmega in units of 1/k^2.
     """
     _ensure_julia()
     from julia import CoupledElectricMagneticDipoles as CEMD
@@ -194,9 +191,7 @@ def compute_diff_scattering(
     input_field = CEMD.InputFields.plane_wave_e(kr, khat=khat, e0=e0)
 
     # Ensure directions is 2D (Nu, 3) -- PyJulia may flatten 1-row arrays
-    directions = np.atleast_2d(
-        np.ascontiguousarray(directions, dtype=np.float64)
-    )
+    directions = np.atleast_2d(np.ascontiguousarray(directions, dtype=np.float64))
     dcs = CEMD.PostProcessing.diff_scattering_cross_section_e(
         k, kr, dda_result["phi_inc"], alpha_e_jl, input_field, directions
     )
@@ -208,7 +203,7 @@ def compute_asymmetry_parameter(
     alpha_e: np.ndarray,
     dda_result: dict,
     config,
-    C_sca: float,
+    c_sca: float,
     n_points: int = 5804,
 ) -> float:
     """Compute asymmetry parameter g = <cos(theta)> via spherical quadrature.
@@ -218,7 +213,7 @@ def compute_asymmetry_parameter(
 
     Args:
         positions, alpha_e, dda_result, config: DDA inputs.
-        C_sca: Scattering cross section (denominator for normalization).
+        c_sca: Scattering cross section (denominator for normalization).
         n_points: Approximate number of quadrature points.
 
     Returns:
@@ -226,17 +221,19 @@ def compute_asymmetry_parameter(
     """
     theta, phi, weights = _spherical_grid(n_points)
 
-    directions = np.column_stack([
-        np.sin(theta) * np.cos(phi),
-        np.sin(theta) * np.sin(phi),
-        np.cos(theta),
-    ])
+    directions = np.column_stack(
+        [
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta),
+        ]
+    )
 
     dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
 
     cos_theta = np.cos(theta)
-    if C_sca > 0:
-        g = (4.0 * np.pi / C_sca) * np.sum(cos_theta * dcs * weights)
+    if c_sca > 0:
+        g = (4.0 * np.pi / c_sca) * np.sum(cos_theta * dcs * weights)
     else:
         g = 0.0
 

@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from typing import Dict, Optional
 
 import numpy as np
 import pyvista as pv
@@ -19,27 +18,27 @@ class AerosolParticle:
     tagged with material properties via cell_data and field_data.
     """
 
-    def __init__(self, name: str = "AerosolParticle",
-                 mixing_state: MixingState = MixingState.INTERNAL,
-                 unit: str = "nm"):
+    def __init__(
+        self,
+        name: str = "AerosolParticle",
+        mixing_state: MixingState = MixingState.INTERNAL,
+        unit: str = "nm",
+    ):
         self.name = name
         self.mixing_state = mixing_state
         self.unit = unit
-        self._blocks: Dict[str, pv.PolyData] = {}
+        self._blocks: dict[str, pv.PolyData] = {}
 
     @property
-    def blocks(self) -> Dict[str, pv.PolyData]:
+    def blocks(self) -> dict[str, pv.PolyData]:
         return self._blocks
 
     def add_mesh(self, name: str, mesh: pv.PolyData, material) -> None:
         """Add a geometric component with material tagging."""
         mesh = mesh.copy()
-        mesh.cell_data["material_id"] = np.full(
-            mesh.n_cells, material.id, dtype=np.int32)
-        mesh.cell_data["ri_n"] = np.full(
-            mesh.n_cells, material.refractive_index.real)
-        mesh.cell_data["ri_k"] = np.full(
-            mesh.n_cells, material.refractive_index.imag)
+        mesh.cell_data["material_id"] = np.full(mesh.n_cells, material.id, dtype=np.int32)
+        mesh.cell_data["ri_n"] = np.full(mesh.n_cells, material.refractive_index.real)
+        mesh.cell_data["ri_k"] = np.full(mesh.n_cells, material.refractive_index.imag)
         mesh.field_data["role"] = [name]
         mesh.field_data["material_name"] = [material.name]
         mesh.field_data["material_id"] = [material.id]
@@ -65,6 +64,8 @@ class AerosolParticle:
             self.combined.save(filename)
 
     def __repr__(self) -> str:
-        return (f"AerosolParticle(name={self.name!r}, "
-                f"blocks={len(self._blocks)}, "
-                f"mixing_state={self.mixing_state.name})")
+        return (
+            f"AerosolParticle(name={self.name!r}, "
+            f"blocks={len(self._blocks)}, "
+            f"mixing_state={self.mixing_state.name})"
+        )

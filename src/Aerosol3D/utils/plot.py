@@ -102,8 +102,8 @@ def save_rotation_video(
     Raises:
         ValueError: If path does not end with .mp4.
     """
-    import numpy as np
     import imageio.v2 as imageio
+    import numpy as np
 
     if not path.endswith(".mp4"):
         raise ValueError(f"Output path must end with .mp4, got: {path}")
@@ -226,8 +226,16 @@ def _build_voxel_glyph_mesh(grid, surface_only=True):
 
 
 _DEFAULT_PALETTE = [
-    "red", "blue", "green", "orange", "purple",
-    "cyan", "magenta", "brown", "pink", "olive",
+    "red",
+    "blue",
+    "green",
+    "orange",
+    "purple",
+    "cyan",
+    "magenta",
+    "brown",
+    "pink",
+    "olive",
 ]
 
 
@@ -343,8 +351,8 @@ def save_voxel_grid_video(
         window_size: (width, height) in pixels.
         background: Background color string.
     """
-    import numpy as np
     import imageio.v2 as imageio
+    import numpy as np
 
     if not path.endswith(".mp4"):
         raise ValueError(f"Output path must end with .mp4, got: {path}")
@@ -360,11 +368,14 @@ def save_voxel_grid_video(
         (bounds[2] + bounds[3]) / 2,
         (bounds[4] + bounds[5]) / 2,
     ]
-    radius = max(
-        bounds[1] - bounds[0],
-        bounds[3] - bounds[2],
-        bounds[5] - bounds[4],
-    ) * 1.5
+    radius = (
+        max(
+            bounds[1] - bounds[0],
+            bounds[3] - bounds[2],
+            bounds[5] - bounds[4],
+        )
+        * 1.5
+    )
 
     elev_rad = np.radians(elevation)
     writer = imageio.get_writer(path, fps=fps, format="FFMPEG")

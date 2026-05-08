@@ -1,17 +1,19 @@
 import numpy as np
-import pyvista as pv
 import pytest
+import pyvista as pv
 
 
 @pytest.fixture
 def soot_material():
     from Aerosol3D.core.material import Material
+
     return Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
 
 
 @pytest.fixture
 def sulfate_material():
     from Aerosol3D.core.material import Material
+
     return Material(name="sulfate", refractive_index=complex(1.4, 0.0), density=1.8)
 
 

@@ -1,6 +1,5 @@
 import numpy as np
 import pyvista as pv
-import pytest
 
 from Aerosol3D.core.particle import AerosolParticle, MixingState
 
@@ -8,6 +7,7 @@ from Aerosol3D.core.particle import AerosolParticle, MixingState
 class TestFractalAggregate:
     def test_create(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.zeros((5, 3))
         radii = np.full(5, 25.0)
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)
@@ -17,14 +17,16 @@ class TestFractalAggregate:
 
     def test_volume(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.zeros((3, 3))
         radii = np.array([10.0, 20.0, 30.0])
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)
-        expected = 4/3 * np.pi * (10**3 + 20**3 + 30**3)
+        expected = 4 / 3 * np.pi * (10**3 + 20**3 + 30**3)
         assert abs(agg.volume - expected) < 1e-6
 
     def test_volume_weighted_center(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.array([[0, 0, 0], [100, 0, 0]], dtype=float)
         radii = np.array([20.0, 20.0])  # equal weight → midpoint
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)
@@ -33,6 +35,7 @@ class TestFractalAggregate:
 
     def test_to_mesh(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.random.default_rng(42).random((5, 3)) * 100
         radii = np.full(5, 10.0)
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)
@@ -42,6 +45,7 @@ class TestFractalAggregate:
 
     def test_to_particle(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.random.default_rng(42).random((5, 3)) * 100
         radii = np.full(5, 10.0)
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)
@@ -56,6 +60,7 @@ class TestFractalAggregate:
 
     def test_to_particle_custom_name(self, soot_material):
         from Aerosol3D.core.aggregate import FractalAggregate
+
         centers = np.zeros((3, 3))
         radii = np.full(3, 20.0)
         agg = FractalAggregate(centers=centers, radii=radii, material=soot_material)

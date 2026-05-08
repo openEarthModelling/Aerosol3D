@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 
@@ -13,8 +12,7 @@ class TestPotentialVoidCoating:
         p.add_mesh("bc_core", core, soot_material)
 
         result = apply_potential_void_coating(
-            p, coated_area_fraction=0.8, dp_dc_ratio=1.5,
-            material=sulfate_material, resolution=32
+            p, coated_area_fraction=0.8, dp_dc_ratio=1.5, material=sulfate_material, resolution=32
         )
         assert "coating" in result.blocks
         assert result.mixing_state.name == "COATED"
@@ -29,8 +27,7 @@ class TestPotentialVoidCoating:
         p.add_mesh("bc_core", core, soot_material)
 
         result = apply_potential_void_coating(
-            p, coated_area_fraction=0.8, dp_dc_ratio=1.5,
-            material=sulfate_material, resolution=32
+            p, coated_area_fraction=0.8, dp_dc_ratio=1.5, material=sulfate_material, resolution=32
         )
 
         # On simple spheres coating may be patchy; verify mesh exists
@@ -48,13 +45,19 @@ class TestPotentialVoidCoating:
 
         with pytest.raises(ValueError):
             apply_potential_void_coating(
-                p, coated_area_fraction=0.0, dp_dc_ratio=1.5,
-                material=sulfate_material, resolution=32
+                p,
+                coated_area_fraction=0.0,
+                dp_dc_ratio=1.5,
+                material=sulfate_material,
+                resolution=32,
             )
         with pytest.raises(ValueError):
             apply_potential_void_coating(
-                p, coated_area_fraction=1.5, dp_dc_ratio=1.5,
-                material=sulfate_material, resolution=32
+                p,
+                coated_area_fraction=1.5,
+                dp_dc_ratio=1.5,
+                material=sulfate_material,
+                resolution=32,
             )
 
     def test_dp_dc_validation(self, soot_material, sulfate_material):
@@ -68,13 +71,19 @@ class TestPotentialVoidCoating:
 
         with pytest.raises(ValueError):
             apply_potential_void_coating(
-                p, coated_area_fraction=0.5, dp_dc_ratio=1.0,
-                material=sulfate_material, resolution=32
+                p,
+                coated_area_fraction=0.5,
+                dp_dc_ratio=1.0,
+                material=sulfate_material,
+                resolution=32,
             )
         with pytest.raises(ValueError):
             apply_potential_void_coating(
-                p, coated_area_fraction=0.5, dp_dc_ratio=0.5,
-                material=sulfate_material, resolution=32
+                p,
+                coated_area_fraction=0.5,
+                dp_dc_ratio=0.5,
+                material=sulfate_material,
+                resolution=32,
             )
 
     def test_infeasible_constraint(self, soot_material, sulfate_material):
@@ -88,6 +97,9 @@ class TestPotentialVoidCoating:
 
         with pytest.raises(ValueError):
             apply_potential_void_coating(
-                p, coated_area_fraction=1.0, dp_dc_ratio=1.01,
-                material=sulfate_material, resolution=32
+                p,
+                coated_area_fraction=1.0,
+                dp_dc_ratio=1.01,
+                material=sulfate_material,
+                resolution=32,
             )

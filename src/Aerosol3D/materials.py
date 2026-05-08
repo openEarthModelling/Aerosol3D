@@ -5,6 +5,8 @@ Values at 550 nm from published literature. Users can override any value.
 
 from __future__ import annotations
 
+from Aerosol3D.core.material import Material
+
 # Refractive indices at 550 nm.
 REFRACTIVE_INDEX: dict[str, dict] = {
     "black_carbon": {
@@ -45,7 +47,7 @@ REFRACTIVE_INDEX: dict[str, dict] = {
 }
 
 
-def preset_material(name: str, **overrides) -> "Material":
+def preset_material(name: str, **overrides) -> Material:
     """Create a Material using preset refractive index, with optional overrides.
 
     Args:
@@ -62,9 +64,7 @@ def preset_material(name: str, **overrides) -> "Material":
 
     if name not in REFRACTIVE_INDEX:
         available = ", ".join(sorted(REFRACTIVE_INDEX.keys()))
-        raise KeyError(
-            f"Unknown material '{name}'. Available: {available}"
-        )
+        raise KeyError(f"Unknown material '{name}'. Available: {available}")
 
     data = REFRACTIVE_INDEX[name].copy()
     data.pop("reference", None)

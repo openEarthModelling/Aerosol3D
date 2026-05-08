@@ -48,9 +48,7 @@ def voxelize_with_materials(
         if block is None:
             continue
         try:
-            enclosed = cell_centres.select_interior_points(
-                block, check_surface=False
-            )
+            enclosed = cell_centres.select_interior_points(block, check_surface=False)
             inside = enclosed.point_data["selected_points"].astype(bool)
             mat_id = block.field_data.get("material_id", [0])[0]
             material_grid[inside] = mat_id

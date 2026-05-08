@@ -8,9 +8,9 @@ Two-stage algorithm:
 """
 
 import numpy as np
-from scipy.spatial.distance import cdist
+from scipy.ndimage import binary_dilation, binary_erosion
 from scipy.spatial import ConvexHull
-from scipy.ndimage import binary_erosion, binary_dilation
+from scipy.spatial.distance import cdist
 
 from Aerosol3D.geometry.voxelize import voxelize_with_materials
 
@@ -78,9 +78,7 @@ def apply_potential_void_coating(
         center[2] + half,
     ]
 
-    grid = voxelize_with_materials(
-        particle, voxel_size=voxel_size, bounds=coated_bounds
-    )
+    grid = voxelize_with_materials(particle, voxel_size=voxel_size, bounds=coated_bounds)
 
     # 2. Identify BC voxels
     core_mat_id = particle.combined.field_data.get("material_id", [0])[0]
@@ -99,7 +97,7 @@ def apply_potential_void_coating(
         hull = ConvexHull(bc_centers)
         A_hull = hull.area
     except Exception:
-        A_hull = 6.0 * (voxel_size ** 2) * (n_bc ** (2.0 / 3.0))
+        A_hull = 6.0 * (voxel_size**2) * (n_bc ** (2.0 / 3.0))
 
     # 4. Find BC surface voxels and surface-adjacent void voxels
     dims = grid.dimensions  # (nx, ny, nz)
@@ -120,14 +118,11 @@ def apply_potential_void_coating(
 
     # 5. Stage 1: Select surface void voxels for contact layer
     target_contact_area = coated_area_fraction * A_hull
-    n_contact_target = min(
-        int(np.ceil(target_contact_area / (voxel_size ** 2))),
-        n_surface_void
-    )
+    n_contact_target = min(int(np.ceil(target_contact_area / (voxel_size**2))), n_surface_void)
 
     surface_void_centers = cell_centers[surface_void_flat]
     dists = cdist(surface_void_centers, bc_centers)
-    surface_potential = np.sum(1.0 / (dists ** k + 1e-20), axis=1)
+    surface_potential = np.sum(1.0 / (dists**k + 1e-20), axis=1)
 
     surface_sort_idx = np.argsort(surface_potential)[::-1]
     selected_surface = surface_sort_idx[:n_contact_target]
@@ -136,9 +131,9 @@ def apply_potential_void_coating(
     contact_indices = surface_void_indices[selected_surface]
 
     # 6. Volume feasibility check
-    V_core = n_bc * (voxel_size ** 3)
-    V_target = V_core * (dp_dc_ratio ** 3)
-    V_contact = len(contact_indices) * (voxel_size ** 3)
+    V_core = n_bc * (voxel_size**3)
+    V_target = V_core * (dp_dc_ratio**3)
+    V_contact = len(contact_indices) * (voxel_size**3)
     V_bulk = V_target - V_core - V_contact
 
     if V_bulk < 0:
@@ -159,12 +154,9 @@ def apply_potential_void_coating(
 
     bulk_void_centers = cell_centers[void_mask_bulk]
     bulk_dists = cdist(bulk_void_centers, bc_centers)
-    bulk_potential = np.sum(1.0 / (bulk_dists ** k + 1e-20), axis=1)
+    bulk_potential = np.sum(1.0 / (bulk_dists**k + 1e-20), axis=1)
 
-    n_bulk_target = min(
-        int(np.ceil(V_bulk / (voxel_size ** 3))),
-        n_void_bulk
-    )
+    n_bulk_target = min(int(np.ceil(V_bulk / (voxel_size**3))), n_void_bulk)
     bulk_sort_idx = np.argsort(bulk_potential)[::-1]
     selected_bulk = bulk_sort_idx[:n_bulk_target]
 

@@ -38,6 +38,7 @@ def compute_legendre_moments(phase_function, n_legendre: int = 32) -> np.ndarray
 
     # Compute Legendre polynomials at quadrature nodes
     from numpy.polynomial.legendre import legvander
+
     V = legvander(mu_nodes, n_legendre - 1)  # (n_nodes, n_legendre)
 
     # Normalize: integral of P11 over mu

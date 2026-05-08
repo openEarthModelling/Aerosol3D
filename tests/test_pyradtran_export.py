@@ -2,7 +2,10 @@ import numpy as np
 import pytest
 
 from Aerosol3D.optics.datastructs import (
-    CrossSections, OpticalResult, PhaseFunction, SimulationConfig,
+    CrossSections,
+    OpticalResult,
+    PhaseFunction,
+    SimulationConfig,
 )
 
 
@@ -18,16 +21,28 @@ class TestOpticalResultsToPyradtranData:
         results = []
         for wl in [400.0, 550.0, 700.0]:
             cs = CrossSections(
-                wavelength=wl, C_ext=100.0, C_sca=80.0, C_abs=20.0,
-                Q_ext=2.0, Q_sca=1.6, Q_abs=0.4,
-                SSA=0.8, g=0.7, r_eff=50.0,
+                wavelength=wl,
+                C_ext=100.0,
+                C_sca=80.0,
+                C_abs=20.0,
+                Q_ext=2.0,
+                Q_sca=1.6,
+                Q_abs=0.4,
+                SSA=0.8,
+                g=0.7,
+                r_eff=50.0,
             )
             pf = PhaseFunction(theta=theta, phi=phi, P11=P11)
             cfg = SimulationConfig(wavelength=wl)
-            results.append(OpticalResult(
-                config=cfg, cross_sections=cs, phase_function=pf,
-                n_dipoles=1000, validity={"m_k_d": 0.5, "valid": True},
-            ))
+            results.append(
+                OpticalResult(
+                    config=cfg,
+                    cross_sections=cs,
+                    phase_function=pf,
+                    n_dipoles=1000,
+                    validity={"m_k_d": 0.5, "valid": True},
+                )
+            )
 
         data = optical_results_to_pyradtran_data(results, n_legendre=32)
 
@@ -48,16 +63,27 @@ class TestOpticalResultsToPyradtranData:
         results = []
         for wl in [400.0, 550.0]:
             cs = CrossSections(
-                wavelength=wl, C_ext=100.0, C_sca=80.0, C_abs=20.0,
-                Q_ext=2.0, Q_sca=1.6, Q_abs=0.4,
-                SSA=0.8, g=0.7, r_eff=50.0,
+                wavelength=wl,
+                C_ext=100.0,
+                C_sca=80.0,
+                C_abs=20.0,
+                Q_ext=2.0,
+                Q_sca=1.6,
+                Q_abs=0.4,
+                SSA=0.8,
+                g=0.7,
+                r_eff=50.0,
             )
             pf = PhaseFunction(theta=theta, phi=phi, P11=P11)
             cfg = SimulationConfig(wavelength=wl)
-            results.append(OpticalResult(
-                config=cfg, cross_sections=cs, phase_function=pf,
-                n_dipoles=1000,
-            ))
+            results.append(
+                OpticalResult(
+                    config=cfg,
+                    cross_sections=cs,
+                    phase_function=pf,
+                    n_dipoles=1000,
+                )
+            )
 
         data = optical_results_to_pyradtran_data(results, n_legendre=16)
 
@@ -71,9 +97,16 @@ class TestOpticalResultsToPyradtranData:
         from Aerosol3D.optics.pyradtran_export import optical_results_to_pyradtran_data
 
         cs = CrossSections(
-            wavelength=550.0, C_ext=100.0, C_sca=80.0, C_abs=20.0,
-            Q_ext=2.0, Q_sca=1.6, Q_abs=0.4,
-            SSA=0.8, g=0.7, r_eff=50.0,
+            wavelength=550.0,
+            C_ext=100.0,
+            C_sca=80.0,
+            C_abs=20.0,
+            Q_ext=2.0,
+            Q_sca=1.6,
+            Q_abs=0.4,
+            SSA=0.8,
+            g=0.7,
+            r_eff=50.0,
         )
         cfg = SimulationConfig(wavelength=550.0)
         result = OpticalResult(config=cfg, cross_sections=cs, phase_function=None)

@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 
 class TestFractalAdapter:
@@ -24,7 +23,6 @@ class TestFractalAdapter:
             radii = np.array([50.0])
             length_unit = "um"
 
-        agg = from_fractal(MockAggregate(), material=soot_material,
-                          target_unit="nm")
+        agg = from_fractal(MockAggregate(), material=soot_material, target_unit="nm")
         # Should have been converted from um to nm
         assert agg.unit == "nm"

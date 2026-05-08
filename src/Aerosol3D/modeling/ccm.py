@@ -1,5 +1,3 @@
-import numpy as np
-
 from Aerosol3D.geometry.boolean import safe_difference
 
 

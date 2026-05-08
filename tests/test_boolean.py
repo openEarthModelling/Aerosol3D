@@ -1,11 +1,11 @@
 import numpy as np
 import pyvista as pv
-import pytest
 
 
 class TestToFromManifold:
     def test_round_trip_preserves_topology(self):
-        from Aerosol3D.geometry.boolean import to_manifold, from_manifold
+        from Aerosol3D.geometry.boolean import from_manifold, to_manifold
+
         sphere = pv.Sphere(radius=50.0)
         m = to_manifold(sphere)
         result = from_manifold(m)
@@ -14,7 +14,8 @@ class TestToFromManifold:
         assert result.n_cells > 0
 
     def test_round_trip_preserves_volume(self):
-        from Aerosol3D.geometry.boolean import to_manifold, from_manifold
+        from Aerosol3D.geometry.boolean import from_manifold, to_manifold
+
         sphere = pv.Sphere(radius=50.0)
         original_vol = sphere.volume
         result = from_manifold(to_manifold(sphere))
@@ -24,16 +25,18 @@ class TestToFromManifold:
 class TestSafeDifference:
     def test_sphere_minus_smaller_sphere(self):
         from Aerosol3D.geometry.boolean import safe_difference
+
         outer = pv.Sphere(radius=50.0)
         inner = pv.Sphere(radius=30.0)
         shell = safe_difference(outer, inner)
         assert isinstance(shell, pv.PolyData)
         assert shell.volume > 0
-        expected = 4/3 * np.pi * (50**3 - 30**3)
+        expected = 4 / 3 * np.pi * (50**3 - 30**3)
         assert abs(shell.volume - expected) / expected < 0.05
 
     def test_non_overlapping_returns_original(self):
         from Aerosol3D.geometry.boolean import safe_difference
+
         sphere = pv.Sphere(radius=50.0, center=(0, 0, 0))
         far_away = pv.Sphere(radius=10.0, center=(200, 200, 200))
         result = safe_difference(sphere, far_away)
@@ -43,6 +46,7 @@ class TestSafeDifference:
 class TestSafeUnion:
     def test_two_overlapping_spheres(self):
         from Aerosol3D.geometry.boolean import safe_union
+
         s1 = pv.Sphere(radius=50.0, center=(-25, 0, 0))
         s2 = pv.Sphere(radius=50.0, center=(25, 0, 0))
         unioned = safe_union(s1, s2)

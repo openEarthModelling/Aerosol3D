@@ -1,11 +1,10 @@
-import numpy as np
 import pyvista as pv
-import pytest
 
 
 class TestMeshImporter:
     def test_import_sphere_from_stl(self, tmp_path):
         from Aerosol3D.factory.mesh_importer import from_file
+
         sphere = pv.Sphere(radius=50.0)
         filepath = str(tmp_path / "test_sphere.stl")
         sphere.save(filepath)
@@ -16,6 +15,7 @@ class TestMeshImporter:
 
     def test_unit_scaling(self, tmp_path):
         from Aerosol3D.factory.mesh_importer import from_file
+
         sphere = pv.Sphere(radius=50.0)
         filepath = str(tmp_path / "test_sphere.stl")
         sphere.save(filepath)

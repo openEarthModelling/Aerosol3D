@@ -1,15 +1,18 @@
 # tests/test_integration.py
 import numpy as np
 import pyvista as pv
-import pytest
 
 
 class TestFullPipeline:
     def test_sphere_coating_export(self, tmp_path):
         """Create soot sphere → apply distance coating → save VTP."""
         from Aerosol3D import (
-            AerosolParticle, Material, MixingState,
-            create_sphere, apply_distance_coating, save_vtp
+            AerosolParticle,
+            Material,
+            MixingState,
+            apply_distance_coating,
+            create_sphere,
+            save_vtp,
         )
 
         soot = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
@@ -30,8 +33,11 @@ class TestFullPipeline:
     def test_fractal_aggregate_ccm(self, tmp_path):
         """Create fractal aggregate → apply CCM → verify structure."""
         from Aerosol3D import (
-            AerosolParticle, Material, MixingState, FractalAggregate,
-            apply_ccm_coating, save_vtp
+            AerosolParticle,
+            FractalAggregate,
+            Material,
+            MixingState,
+            apply_ccm_coating,
         )
 
         soot = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
@@ -39,9 +45,7 @@ class TestFullPipeline:
 
         rng = np.random.default_rng(42)
         agg = FractalAggregate(
-            centers=rng.random((20, 3)) * 200,
-            radii=np.full(20, 25.0),
-            material=soot
+            centers=rng.random((20, 3)) * 200, radii=np.full(20, 25.0), material=soot
         )
 
         p = AerosolParticle(name="ccm_aggregate", unit="nm")
@@ -54,11 +58,14 @@ class TestFullPipeline:
     def test_all_four_coatings(self, tmp_path):
         """Verify all 4 coating algorithms run without errors on a sphere."""
         from Aerosol3D import (
-            AerosolParticle, Material,
-            create_sphere,
-            apply_distance_coating, apply_potential_void_coating,
+            AerosolParticle,
+            Material,
+            apply_cam_coating,
+            apply_ccm_coating,
+            apply_distance_coating,
             apply_potential_edge_coating,
-            apply_ccm_coating, apply_cam_coating,
+            apply_potential_void_coating,
+            create_sphere,
         )
 
         soot = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
@@ -77,14 +84,14 @@ class TestFullPipeline:
         p = AerosolParticle(name="test", unit="nm")
         p.add_mesh("bc_core", create_sphere((0, 0, 0), 50.0), soot)
         apply_potential_void_coating(
-            p, coated_area_fraction=0.5, dp_dc_ratio=1.5,
-            material=sulfate, resolution=20)
+            p, coated_area_fraction=0.5, dp_dc_ratio=1.5, material=sulfate, resolution=20
+        )
         assert "coating" in p.blocks
 
         # Potential edge coating with lower resolution for speed
         p = AerosolParticle(name="test", unit="nm")
         p.add_mesh("bc_core", create_sphere((0, 0, 0), 50.0), soot)
         apply_potential_edge_coating(
-            p, coated_area_fraction=0.5, dp_dc_ratio=1.5,
-            material=sulfate, resolution=20)
+            p, coated_area_fraction=0.5, dp_dc_ratio=1.5, material=sulfate, resolution=20
+        )
         assert "coating" in p.blocks

@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 JULIA_AVAILABLE = os.environ.get("SKIP_JULIA_TESTS") != "1"
@@ -31,8 +32,11 @@ class TestOrientationalAverage:
             (0.577, 0.577, 0.577),
         ]
         averaged = solve_optics(
-            p, config, voxel_size=10.0,
-            propagations=propagations, verbose=False,
+            p,
+            config,
+            voxel_size=10.0,
+            propagations=propagations,
+            verbose=False,
         )
 
         assert averaged.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.05)

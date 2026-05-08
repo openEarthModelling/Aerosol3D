@@ -25,7 +25,7 @@ class TestComputeLegendreMoments:
         assert moments[0] == pytest.approx(1.0, abs=1e-6)
 
         for l in range(1, 8):
-            expected = (2 * l + 1) * (g ** l)
+            expected = (2 * l + 1) * (g**l)
             assert moments[l] == pytest.approx(expected, rel=0.05)
 
     def test_isotropic_expansion(self):
@@ -62,6 +62,7 @@ class TestComputeLegendreMoments:
 
         # Reconstruct P11(theta) = sum_l k_l * P_l(cos_theta)
         from numpy.polynomial.legendre import legval
+
         P11_reconstructed = legval(np.cos(theta), moments)
 
         P11_original = np.mean(P11, axis=1)

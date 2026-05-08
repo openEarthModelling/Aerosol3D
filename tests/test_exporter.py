@@ -1,7 +1,6 @@
 import os
-import numpy as np
+
 import pyvista as pv
-import pytest
 
 
 class TestExporter:
