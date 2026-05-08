@@ -22,3 +22,4 @@ htmlcov/
 
 # Example outputs
 examples/output/
+.worktrees/
