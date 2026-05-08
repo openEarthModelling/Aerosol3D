@@ -92,6 +92,20 @@ class TestOpticalResult:
         assert config.wavelength == 550.0
 
 
+class TestSimulationConfigWavelengthList:
+    def test_wavelength_accepts_list(self):
+        from aerosol3d.optics.datastructs import SimulationConfig
+
+        config = SimulationConfig(wavelength=[400.0, 550.0, 700.0])
+        assert config.wavelength == [400.0, 550.0, 700.0]
+
+    def test_wavelength_accepts_float(self):
+        from aerosol3d.optics.datastructs import SimulationConfig
+
+        config = SimulationConfig(wavelength=550.0)
+        assert config.wavelength == 550.0
+
+
 class TestPrecisionLevel:
     def test_auto_voxel_size_low(self):
         """Low precision: |m|*k*d should be < 0.5."""

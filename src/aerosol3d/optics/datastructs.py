@@ -47,7 +47,7 @@ def auto_voxel_size(wavelength: float, m_max: float, precision: str = "medium") 
 class SimulationConfig:
     """All parameters for a single DDA simulation run."""
 
-    wavelength: float = 550.0
+    wavelength: float | list[float] = 550.0
     polarization: Optional[Tuple[float, float, float]] = None
     propagation: Tuple[float, float, float] = (0.0, 0.0, 1.0)
     n_host: float = 1.0

@@ -48,22 +48,16 @@ def _compute_near_field_intensity(grid, phi_inc):
     return grid
 
 
-def solve_optics(
-    particle,
-    config: SimulationConfig,
-    voxel_size: float = None,
-    compute_near_field: bool = True,
-    compute_phase_func: bool = False,
-    verbose: bool = True,
-) -> "OpticalResult":
-    """Main entry: aerosol particle -> DDA optical result."""
-    t_start = time.time()
+def _prepare_dda(particle, config, voxel_size=None):
+    """Prepare DDA geometry: material map -> voxelize -> extract dipoles.
 
-    from .datastructs import CrossSections, OpticalResult
-    from .bridge import (
-        solve_dda, compute_cross_sections, compute_asymmetry_parameter
-    )
+    This is wavelength-independent (except for auto voxel_size which
+    uses config.wavelength).  Call once for multi-wavelength solves.
 
+    Returns
+    -------
+    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    """
     # Step 1: Build material map from particle blocks
     material_map = {}
     material_names = []
@@ -96,6 +90,64 @@ def solve_optics(
     config = copy.copy(config)
     config.dipole_spacing = voxel_size
 
+    # Step 7: Extract dipoles
+    positions, alpha_e = _extract_dipoles(grid, config, material_map)
+
+    return positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+
+
+def _solve_single_wl(
+    positions,
+    alpha_e,
+    grid,
+    material_map,
+    config,
+    m_max,
+    voxel_size,
+    material_names,
+    compute_near_field=True,
+    compute_phase_func=False,
+    verbose=True,
+):
+    """Solve DDA for a single wavelength.
+
+    Parameters
+    ----------
+    positions : np.ndarray
+        Dipole positions, shape (N, 3).
+    alpha_e : np.ndarray
+        Dipole polarizabilities, shape (N,).
+    grid : pyvista.UnstructuredGrid
+        Voxel grid with material_id cell data.
+    material_map : dict
+        Mapping material_id -> material object with refractive_index attr.
+    config : SimulationConfig
+        Simulation configuration. ``config.wavelength`` is guaranteed to be
+        a single ``float``.
+    m_max : float
+        Maximum refractive index magnitude.
+    voxel_size : float
+        Voxel / dipole spacing in nm.
+    material_names : list[str]
+        Human-readable material names.
+    compute_near_field : bool
+        Compute and attach near-field intensity to grid.
+    compute_phase_func : bool
+        Compute phase function.
+    verbose : bool
+        Print configuration and timing.
+
+    Returns
+    -------
+    OpticalResult
+    """
+    t_start = time.time()
+
+    from .datastructs import CrossSections, OpticalResult
+    from .bridge import (
+        solve_dda, compute_cross_sections, compute_asymmetry_parameter
+    )
+
     # Step 5: Handle polarization=None
     do_depolarized = False
     if config.polarization is None:
@@ -114,6 +166,10 @@ def solve_optics(
             validity["m_k_d"],
         )
 
+    # Ensure config has dipole_spacing set for downstream use
+    config = copy.copy(config)
+    config.dipole_spacing = voxel_size
+
     if verbose:
         print(f"{'='*52}")
         print(f"  DDA Simulation Configuration")
@@ -127,7 +183,7 @@ def solve_optics(
         print(f"  n_host         = {config.n_host}")
         print(f"  solver         = {config.solver}")
         print(f"  precision      = {config.precision}")
-        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if auto_computed else ""))
+        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if voxel_size is None else ""))
         print(f"  |m|_max        = {m_max:.4f}")
         print(f"  k              = {2.0 * np.pi / config.wavelength:.6f} nm^-1")
         mkd = m_max * (2.0 * np.pi / config.wavelength) * voxel_size
@@ -136,9 +192,6 @@ def solve_optics(
         print(f"  |m|*k*d        = {mkd:.4f}  {status}{threshold}")
         print(f"  N_materials    = {len(material_map)} ({', '.join(material_names)})")
         print(f"{'='*52}")
-
-    # Step 7: Extract dipoles
-    positions, alpha_e = _extract_dipoles(grid, config, material_map)
 
     if len(positions) == 0:
         n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
@@ -236,6 +289,155 @@ def solve_optics(
         validity=validity,
         solve_time=elapsed,
     )
+
+
+def _orientational_average(results):
+    """Average OpticalResults over multiple incident directions.
+
+    Averages C_ext, C_sca, C_abs arithmetically.
+    Averages P11 over all directions, then recomputes g from the averaged P11.
+    """
+    from .datastructs import CrossSections, OpticalResult, PhaseFunction
+
+    n = len(results)
+    if n == 0:
+        raise ValueError("Cannot average empty result list")
+    if n == 1:
+        return results[0]
+
+    # Average cross-sections
+    C_ext = sum(r.cross_sections.C_ext for r in results) / n
+    C_sca = sum(r.cross_sections.C_sca for r in results) / n
+    C_abs = sum(r.cross_sections.C_abs for r in results) / n
+
+    r_eff = results[0].cross_sections.r_eff  # Same for all directions
+    geo_cs = np.pi * r_eff ** 2
+    Q_ext = C_ext / geo_cs if geo_cs > 0 else 0.0
+    Q_sca = C_sca / geo_cs if geo_cs > 0 else 0.0
+    Q_abs = C_abs / geo_cs if geo_cs > 0 else 0.0
+    SSA = C_sca / C_ext if C_ext > 0 else 0.0
+
+    # Average phase function P11
+    phase_function = None
+    if results[0].phase_function is not None:
+        theta = results[0].phase_function.theta
+        phi = results[0].phase_function.phi
+        P11_avg = sum(r.phase_function.P11 for r in results) / n
+        phase_function = PhaseFunction(theta=theta, phi=phi, P11=P11_avg)
+
+        # Recompute g from averaged P11
+        # Azimuthal average: P11(theta) = mean over phi
+        P11_theta = np.mean(P11_avg, axis=1)
+        theta_grid = theta
+        # Use trapezoidal integration for cos(theta) weighting
+        sin_theta = np.sin(theta_grid)
+        integrand = P11_theta * sin_theta * np.cos(theta_grid)
+        numerator = np.trapz(integrand, theta_grid)
+        denominator = np.trapz(P11_theta * sin_theta, theta_grid)
+        g = numerator / denominator if denominator > 0 else 0.0
+        g = float(np.clip(g, -1.0, 1.0))
+    else:
+        g = sum(r.cross_sections.g for r in results) / n
+
+    cross_sections = CrossSections(
+        wavelength=results[0].cross_sections.wavelength,
+        C_ext=C_ext, C_sca=C_sca, C_abs=C_abs,
+        Q_ext=Q_ext, Q_sca=Q_sca, Q_abs=Q_abs,
+        SSA=SSA, g=g, r_eff=r_eff,
+    )
+
+    return OpticalResult(
+        config=results[0].config,
+        cross_sections=cross_sections,
+        phase_function=phase_function,
+        voxel_grid=results[0].voxel_grid,
+        n_dipoles=results[0].n_dipoles,
+        validity=results[0].validity,
+        solve_time=sum(r.solve_time for r in results),
+    )
+
+
+def solve_optics(
+    particle,
+    config: SimulationConfig,
+    voxel_size: float = None,
+    compute_near_field: bool = True,
+    compute_phase_func: bool = False,
+    propagations: list | None = None,
+    verbose: bool = True,
+) -> "OpticalResult | list[OpticalResult]":
+    """Main entry: aerosol particle -> DDA optical result(s).
+
+    Supports single wavelength (float) or multi-wavelength batch (list).
+    Supports orientational averaging via ``propagations``.
+    """
+    # Determine wavelength(s)
+    if isinstance(config.wavelength, (list, tuple, np.ndarray)):
+        wavelengths = list(config.wavelength)
+    else:
+        wavelengths = [float(config.wavelength)]
+
+    # Determine effective wavelength for voxel size
+    if voxel_size is None:
+        effective_wl = float(min(wavelengths))
+    else:
+        effective_wl = float(wavelengths[0])
+
+    prep_config = copy.copy(config)
+    prep_config.wavelength = effective_wl
+
+    # Steps 1-4, 7: Prepare DDA geometry once
+    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        particle, prep_config, voxel_size
+    )
+
+    results = []
+    for wl in wavelengths:
+        wl_config = copy.copy(config)
+        wl_config.wavelength = float(wl)
+
+        if propagations is not None:
+            dir_results = []
+            for prop in propagations:
+                prop_config = copy.copy(wl_config)
+                prop_config.propagation = tuple(prop)
+                dir_result = _solve_single_wl(
+                    positions,
+                    alpha_e,
+                    grid,
+                    material_map,
+                    prop_config,
+                    m_max,
+                    voxel_size,
+                    material_names,
+                    compute_near_field=compute_near_field,
+                    compute_phase_func=compute_phase_func,
+                    verbose=verbose
+                    and len(wavelengths) == 1
+                    and len(propagations) == 1,
+                )
+                dir_results.append(dir_result)
+            averaged_result = _orientational_average(dir_results)
+            results.append(averaged_result)
+        else:
+            result = _solve_single_wl(
+                positions,
+                alpha_e,
+                grid,
+                material_map,
+                wl_config,
+                m_max,
+                voxel_size,
+                material_names,
+                compute_near_field=compute_near_field,
+                compute_phase_func=compute_phase_func,
+                verbose=verbose and len(wavelengths) == 1,
+            )
+            results.append(result)
+
+    if len(wavelengths) == 1:
+        return results[0]
+    return results
 
 
 def _compute_phase_function(

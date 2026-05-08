@@ -155,6 +155,59 @@ class TestAutoVoxelSize:
         assert result.validity["m_k_d"] > 0.95
 
 
+class TestPrepareDDA:
+    def test_prepare_dda_returns_expected(self, julia_available, soot_material):
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import _prepare_dda
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+            p, config, voxel_size=10.0
+        )
+
+        assert positions.ndim == 2 and positions.shape[1] == 3
+        assert alpha_e.ndim == 1
+        assert positions.shape[0] == alpha_e.shape[0]
+        assert positions.shape[0] > 0
+        assert voxel_size == 10.0
+        assert m_max > 0
+
+
+class TestSolveSingleWL:
+    def test_solve_single_wl_matches_solve_optics(self, julia_available, soot_material):
+        """_solve_single_wl should produce same result as original solve_optics for single wavelength."""
+        from aerosol3d import AerosolParticle, create_sphere
+        from aerosol3d.optics.datastructs import SimulationConfig
+        from aerosol3d.optics.dda_solver import solve_optics, _prepare_dda, _solve_single_wl
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config_direct = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        config_extracted = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        # Direct solve_optics
+        result_direct = solve_optics(p, config_direct, voxel_size=10.0, verbose=False)
+
+        # Via _prepare_dda + _solve_single_wl
+        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+            p, config_extracted, voxel_size=10.0
+        )
+        result_extracted = _solve_single_wl(
+            positions, alpha_e, grid, material_map, config_extracted, m_max, voxel_size, material_names,
+            compute_near_field=True, compute_phase_func=True, verbose=False,
+        )
+
+        assert result_direct.n_dipoles == result_extracted.n_dipoles
+        assert result_direct.cross_sections.C_ext == pytest.approx(result_extracted.cross_sections.C_ext, abs=1e-10)
+        assert result_direct.cross_sections.C_sca == pytest.approx(result_extracted.cross_sections.C_sca, abs=1e-10)
+        assert result_direct.cross_sections.C_abs == pytest.approx(result_extracted.cross_sections.C_abs, abs=1e-10)
+        assert result_direct.cross_sections.g == pytest.approx(result_extracted.cross_sections.g, abs=1e-10)
+
+
 class TestVerbose:
     def test_verbose_prints_output(self, julia_available, soot_material, capsys):
         """verbose=True should print configuration table to stdout."""
