@@ -38,6 +38,21 @@ class TestEquivalentDiameter:
             _ = p.equivalent_diameter
 
 
+class TestEquivalentDiameterVolumetric:
+    def test_tetrahedral_sphere(self, soot_material):
+        import pyvista as pv
+        from Aerosol3D.core.particle import AerosolParticle
+
+        p = AerosolParticle(name="test")
+        # Create a tetrahedral mesh
+        surf = pv.Sphere(radius=50.0, theta_resolution=10, phi_resolution=10)
+        vol = surf.delaunay_3d()
+        p.add_mesh("core", vol, soot_material)
+
+        d_ve = p.equivalent_diameter
+        assert d_ve == pytest.approx(100.0, rel=0.1)
+
+
 class TestEffectiveRefractiveIndex:
     def test_single_material(self, soot_material):
         from Aerosol3D.core.particle import AerosolParticle

@@ -75,16 +75,30 @@ class AerosolParticle:
         if vol > 0:
             return vol
         # Fallback for closed surface meshes
-        return float(block.volume)
+        volume = float(block.volume)
+        if volume < 0:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Block '%s' has negative volume (%.3f). Check mesh orientation.",
+                getattr(block, "field_data", {}).get("role", ["unknown"])[0]
+                if hasattr(block, "field_data")
+                else "unknown",
+                volume,
+            )
+        return abs(volume)
 
     @property
     def equivalent_diameter(self) -> float:
-        """Volume-equivalent sphere diameter in particle units (nm by default)."""
+        """Return the diameter of a sphere with the same total volume as all blocks.
+
+        Note: This returns a raw geometric value. Unit conversion is the caller's responsibility.
+        """
         total_volume = 0.0
         for block in self._blocks.values():
             if block is None:
                 continue
-            total_volume += abs(self._block_volume(block))
+            total_volume += self._block_volume(block)
         if total_volume <= 0:
             raise ValueError("Particle has no volume.")
         return (6.0 * total_volume / np.pi) ** (1.0 / 3.0)
@@ -105,7 +119,7 @@ class AerosolParticle:
                 float(np.mean(block.cell_data["ri_n"])),
                 float(np.mean(block.cell_data["ri_k"])),
             )
-            volume = abs(self._block_volume(block))
+            volume = self._block_volume(block)
             total_volume += volume
             weighted_sum += ri * volume
         if total_volume <= 0:
