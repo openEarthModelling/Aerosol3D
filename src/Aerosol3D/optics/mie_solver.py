@@ -55,9 +55,7 @@ def solve_mie(
         print(f"  x              = {np.pi * d / wavelength:.4f} (size parameter)")
         print(f"{'=' * 52}")
 
-    Qext, Qsca, Qabs, g, _, _, _ = pms.MieQ(
-        m, wavelength, d, nMedium=config.n_host
-    )
+    Qext, Qsca, Qabs, g, _, _, _ = pms.MieQ(m, wavelength, d, nMedium=config.n_host)
 
     r_eff = d / 2.0
     geo_cs = np.pi * r_eff**2
