@@ -41,6 +41,7 @@ class TestEquivalentDiameter:
 class TestEquivalentDiameterVolumetric:
     def test_tetrahedral_sphere(self, soot_material):
         import pyvista as pv
+
         from Aerosol3D.core.particle import AerosolParticle
 
         p = AerosolParticle(name="test")
