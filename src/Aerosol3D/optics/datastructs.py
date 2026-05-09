@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
@@ -102,7 +102,7 @@ class PhaseFunction:
 
 @dataclass
 class OpticalResult:
-    """Complete result of a DDA simulation."""
+    """Complete result of an optical simulation."""
 
     config: SimulationConfig
     cross_sections: CrossSections
@@ -111,4 +111,4 @@ class OpticalResult:
     n_dipoles: int = 0
     validity: dict | None = None
     solve_time: float | None = None
-    solver: str = "DDA"
+    solver: Literal["DDA", "MIE"] = "DDA"
