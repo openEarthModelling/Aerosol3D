@@ -111,3 +111,4 @@ class OpticalResult:
     n_dipoles: int = 0
     validity: dict | None = None
     solve_time: float | None = None
+    solver: str = "DDA"
