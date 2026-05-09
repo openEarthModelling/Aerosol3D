@@ -307,3 +307,25 @@ class TestSolverDispatch:
 
         assert averaged.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.05)
         assert averaged.cross_sections.C_sca == pytest.approx(single.cross_sections.C_sca, rel=0.05)
+
+    def test_orientational_average_n_dirs_one(self, julia_available, soot_material):
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        result = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            orientational_average=True,
+            n_dirs=1,
+            verbose=False,
+        )
+        # n_dirs=1 should give same result as single direction
+        single = solve_optics(p, config, solver="DDA", voxel_size=10.0, verbose=False)
+        assert result.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.01)

@@ -377,6 +377,8 @@ def _orientational_average(results):
 
 def _fibonacci_sphere(n):
     """Generate n approximately uniform points on the unit sphere."""
+    if n <= 1:
+        return [(0.0, 0.0, 1.0)]
     directions = []
     phi = np.pi * (3.0 - np.sqrt(5.0))  # golden angle
     for i in range(n):
