@@ -63,6 +63,55 @@ class AerosolParticle:
         else:
             self.combined.save(filename)
 
+    @staticmethod
+    def _block_volume(block: pv.PolyData) -> float:
+        """Return the geometric volume of a block.
+
+        For closed surface meshes (e.g. spheres) ``PolyData.volume`` gives the
+        enclosed volume.  For volumetric meshes ``compute_cell_sizes()`` is used.
+        """
+        sized = block.compute_cell_sizes()
+        vol = float(sized.cell_data["Volume"].sum())
+        if vol > 0:
+            return vol
+        # Fallback for closed surface meshes
+        return float(block.volume)
+
+    @property
+    def equivalent_diameter(self) -> float:
+        """Volume-equivalent sphere diameter in particle units (nm by default)."""
+        total_volume = 0.0
+        for block in self._blocks.values():
+            if block is None:
+                continue
+            total_volume += abs(self._block_volume(block))
+        if total_volume <= 0:
+            raise ValueError("Particle has no volume.")
+        return (6.0 * total_volume / np.pi) ** (1.0 / 3.0)
+
+    @property
+    def effective_refractive_index(self) -> complex:
+        """Volume-weighted average refractive index.
+
+        This is the baseline mixing rule. Advanced mixing (Maxwell-Garnett,
+        Bruggeman) can be added later as separate functions.
+        """
+        total_volume = 0.0
+        weighted_sum = 0.0 + 0j
+        for block in self._blocks.values():
+            if block is None:
+                continue
+            ri = complex(
+                float(np.mean(block.cell_data["ri_n"])),
+                float(np.mean(block.cell_data["ri_k"])),
+            )
+            volume = abs(self._block_volume(block))
+            total_volume += volume
+            weighted_sum += ri * volume
+        if total_volume <= 0:
+            raise ValueError("Particle has no volume.")
+        return weighted_sum / total_volume
+
     def __repr__(self) -> str:
         return (
             f"AerosolParticle(name={self.name!r}, "
