@@ -1,3 +1,7 @@
+import numpy as np
+import pytest
+
+
 def test_optical_result_has_solver_field():
     from Aerosol3D.optics.datastructs import CrossSections, OpticalResult, SimulationConfig
 
@@ -39,18 +43,6 @@ def test_optical_result_solver_can_be_set():
     assert result.solver == "MIE"
 
 
-import numpy as np
-import pytest
-
-
-def _apply_pymiescatt_workaround():
-    """Apply scipy trapz workaround before importing PyMieScatt."""
-    import scipy.integrate
-
-    if not hasattr(scipy.integrate, "trapz"):
-        scipy.integrate.trapz = scipy.integrate.trapezoid
-
-
 class TestMieSolver:
     def test_solve_mie_importable(self):
         from Aerosol3D.optics.mie_solver import solve_mie
@@ -58,7 +50,6 @@ class TestMieSolver:
         assert callable(solve_mie)
 
     def test_solve_mie_returns_optical_result(self, soot_material):
-        _apply_pymiescatt_workaround()
         pytest.importorskip("PyMieScatt")
         from Aerosol3D import AerosolParticle, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
@@ -79,7 +70,6 @@ class TestMieSolver:
         assert result.n_dipoles == 0
 
     def test_solve_mie_with_phase_function(self, soot_material):
-        _apply_pymiescatt_workaround()
         pytest.importorskip("PyMieScatt")
         from Aerosol3D import AerosolParticle, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
@@ -98,3 +88,40 @@ class TestMieSolver:
         P11 = result.phase_function.P11[:, 0]
         integral = 2 * np.pi * np.trapz(P11 * np.sin(theta), theta)
         assert integral == pytest.approx(1.0, abs=0.01)
+
+    def test_solve_mie_ssa_consistency(self, soot_material):
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.mie_solver import solve_mie
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        result = solve_mie(p, config, verbose=False)
+        cs = result.cross_sections
+
+        # Q_ext = Q_sca + Q_abs
+        assert cs.Q_ext == pytest.approx(cs.Q_sca + cs.Q_abs, abs=0.01)
+        # SSA = Q_sca / Q_ext
+        assert cs.SSA == pytest.approx(cs.Q_sca / cs.Q_ext, abs=0.01)
+
+    def test_solve_mie_absorbing_material(self):
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D import AerosolParticle, Material, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.mie_solver import solve_mie
+
+        # Strongly absorbing material
+        mat = Material(name="soot", refractive_index=complex(1.8, 0.7), density=1.8)
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), mat)
+        config = SimulationConfig(wavelength=550.0)
+
+        result = solve_mie(p, config, verbose=False)
+        assert result.cross_sections.Q_ext > 0
+        assert result.cross_sections.Q_sca > 0
+        assert result.cross_sections.Q_abs > 0
+        assert result.cross_sections.g >= -1.0
+        assert result.cross_sections.g <= 1.0

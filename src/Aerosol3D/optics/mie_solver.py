@@ -1,17 +1,18 @@
 """MIE optical solver using PyMieScatt."""
 
+import scipy.integrate
+
+if not hasattr(scipy.integrate, "trapz"):
+    scipy.integrate.trapz = scipy.integrate.trapezoid
+
 import numpy as np
 
 from .datastructs import CrossSections, OpticalResult, PhaseFunction, SimulationConfig
 
 
-def _mie_phase_function(m, d, wavelength, n_theta=181):
+def _mie_phase_function(m, d, wavelength, n_theta=181) -> tuple[np.ndarray, np.ndarray]:
     """Compute phase function P11(theta) using PyMieScatt.ScatteringFunction."""
-    import scipy.integrate
-
-    if not hasattr(scipy.integrate, "trapz"):
-        scipy.integrate.trapz = scipy.integrate.trapezoid
-    import PyMieScatt as pms
+    import PyMieScatt as pms  # noqa: N813
 
     angular_resolution = 180.0 / (n_theta - 1) if n_theta > 1 else 1.0
     theta_rad, _, _, SU = pms.ScatteringFunction(
@@ -37,11 +38,7 @@ def solve_mie(
     verbose: bool = True,
 ) -> OpticalResult:
     """Solve optics using Mie theory (PyMieScatt)."""
-    import scipy.integrate
-
-    if not hasattr(scipy.integrate, "trapz"):
-        scipy.integrate.trapz = scipy.integrate.trapezoid
-    import PyMieScatt as pms
+    import PyMieScatt as pms  # noqa: N813
 
     m = particle.effective_refractive_index / config.n_host
     d = particle.equivalent_diameter
