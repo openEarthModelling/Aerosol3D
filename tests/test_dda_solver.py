@@ -257,3 +257,53 @@ class TestVerbose:
 
         captured = capsys.readouterr()
         assert "DDA Simulation Configuration" not in captured.out
+
+
+class TestSolverDispatch:
+    def test_solver_param_mie(self, soot_material):
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        result = solve_optics(p, config, solver="MIE", verbose=False)
+        assert result.solver == "MIE"
+
+    def test_solver_param_invalid(self, soot_material):
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        with pytest.raises(ValueError, match="solver must be"):
+            solve_optics(p, config, solver="INVALID", verbose=False)
+
+    def test_orientational_average_flag(self, julia_available, soot_material):
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        single = solve_optics(p, config, solver="DDA", voxel_size=10.0, verbose=False)
+        averaged = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            orientational_average=True,
+            n_dirs=5,
+            verbose=False,
+        )
+
+        assert averaged.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.05)
+        assert averaged.cross_sections.C_sca == pytest.approx(single.cross_sections.C_sca, rel=0.05)

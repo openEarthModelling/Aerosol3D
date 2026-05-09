@@ -375,20 +375,89 @@ def _orientational_average(results):
     )
 
 
+def _fibonacci_sphere(n):
+    """Generate n approximately uniform points on the unit sphere."""
+    directions = []
+    phi = np.pi * (3.0 - np.sqrt(5.0))  # golden angle
+    for i in range(n):
+        y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
+        radius = np.sqrt(1 - y * y)
+        theta = phi * i
+        x = np.cos(theta) * radius
+        z = np.sin(theta) * radius
+        directions.append((x, y, z))
+    return directions
+
+
 def solve_optics(
     particle,
     config: SimulationConfig,
+    *,
+    solver: str = "DDA",
     voxel_size: float = None,
     compute_near_field: bool = True,
     compute_phase_func: bool = False,
+    orientational_average: bool = False,
+    n_dirs: int = 100,
     propagations: list | None = None,
     verbose: bool = True,
 ) -> "OpticalResult | list[OpticalResult]":
-    """Main entry: aerosol particle -> DDA optical result(s).
+    """Main entry: aerosol particle -> optical result(s).
 
     Supports single wavelength (float) or multi-wavelength batch (list).
-    Supports orientational averaging via ``propagations``.
+    Supports orientational averaging via ``propagations`` or the
+    ``orientational_average`` flag (DDA only).
+
+    Parameters
+    ----------
+    particle : AerosolParticle
+        The aerosol particle to simulate.
+    config : SimulationConfig
+        Simulation configuration, including wavelength(s).
+    solver : {"DDA", "MIE"}, optional
+        Which solver to use. Default is "DDA".
+    voxel_size : float, optional
+        Voxel size for DDA discretization. If None, auto-computed.
+    compute_near_field : bool, optional
+        Whether to compute near-field (DDA only). Default True.
+    compute_phase_func : bool, optional
+        Whether to compute phase function. Default False.
+    orientational_average : bool, optional
+        If True, average over ``n_dirs`` random orientations (DDA only).
+        Ignored if ``propagations`` is provided. Default False.
+    n_dirs : int, optional
+        Number of orientations for orientational averaging. Default 100.
+    propagations : list, optional
+        Explicit list of propagation directions for orientational averaging.
+    verbose : bool, optional
+        Print progress and timing. Default True.
     """
+    if solver not in ("DDA", "MIE"):
+        raise ValueError(f"solver must be 'DDA' or 'MIE', got {solver!r}")
+
+    # MIE solver dispatch
+    if solver == "MIE":
+        from .mie_solver import solve_mie
+
+        if isinstance(config.wavelength, list | tuple | np.ndarray):
+            wavelengths = list(config.wavelength)
+        else:
+            wavelengths = [float(config.wavelength)]
+
+        results = []
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
+            result = solve_mie(
+                particle,
+                wl_config,
+                compute_phase_func=compute_phase_func,
+                verbose=verbose and len(wavelengths) == 1,
+            )
+            results.append(result)
+
+        return results[0] if len(results) == 1 else results
+
     # Determine wavelength(s)
     if isinstance(config.wavelength, list | tuple | np.ndarray):
         wavelengths = list(config.wavelength)
@@ -408,6 +477,19 @@ def solve_optics(
     positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
         particle, prep_config, voxel_size
     )
+
+    # DDA orientational averaging
+    if orientational_average and propagations is None:
+        if n_dirs < 1:
+            raise ValueError("n_dirs must be >= 1")
+        propagations = _fibonacci_sphere(n_dirs)
+        if compute_phase_func and n_dirs < 100:
+            logger.warning(
+                "compute_phase_func=True with n_dirs=%d. "
+                "Phase function convergence may require n_dirs >= 100. "
+                "Consider increasing n_dirs.",
+                n_dirs,
+            )
 
     results = []
     for wl in wavelengths:
