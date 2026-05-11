@@ -233,7 +233,7 @@ def compute_asymmetry_parameter(
 
     cos_theta = np.cos(theta)
     if c_sca > 0:
-        g = (4.0 * np.pi / c_sca) * np.sum(cos_theta * dcs * weights)
+        g = (1.0 / c_sca) * np.sum(cos_theta * dcs * weights)
     else:
         g = 0.0
 
@@ -243,20 +243,26 @@ def compute_asymmetry_parameter(
 def _spherical_grid(n_points: int = 5804):
     """Generate uniform spherical quadrature points and weights.
 
+    Uses a product grid uniform in cos(θ) and φ. The solid angle
+    element dΩ = d(cos θ)·dφ is constant for all points.
+
     Returns:
         theta: (N,) polar angles [0, pi]
         phi: (N,) azimuthal angles [0, 2*pi]
-        weights: (N,) quadrature weights (sum to 1/(4*pi))
+        weights: (N,) quadrature weights (sum to 4π)
     """
     n_side = int(np.ceil(n_points ** (1.0 / 3.0)))
-    u = np.linspace(0, 1, n_side + 1)[1:]
+    # Cell-centered uniform grid in cos(θ): d(cos θ) = 2/n_side
+    u = (np.arange(n_side) + 0.5) / n_side
     theta = np.arccos(2 * u - 1)
     phi = np.linspace(0, 2 * np.pi, 2 * n_side, endpoint=False)
     theta_grid, phi_grid = np.meshgrid(theta, phi, indexing="ij")
     theta_flat = theta_grid.ravel()
     phi_flat = phi_grid.ravel()
 
-    sin_theta = np.sin(theta_flat)
-    weights = sin_theta / (4.0 * np.pi * sin_theta.sum())
+    # Uniform grid in φ: dφ = 2π/(2*n_side) = π/n_side
+    d_mu = 2.0 / n_side
+    d_phi = np.pi / n_side
+    weights = np.full_like(theta_flat, d_mu * d_phi)
 
     return theta_flat, phi_flat, weights

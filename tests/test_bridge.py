@@ -127,3 +127,38 @@ class TestAsymmetryParameter:
         # g should be a float in [-1, 1]
         assert isinstance(g, float)
         assert -1.0 <= g <= 1.0
+
+
+class TestSphericalGrid:
+    def test_weights_sum_to_solid_angle(self):
+        """Spherical grid weights must sum to approximately 4π."""
+        import numpy as np
+
+        from Aerosol3D.optics.bridge import _spherical_grid
+
+        _, _, weights = _spherical_grid(n_points=5804)
+        total = weights.sum()
+        # Should be very close to 4π (surface area of unit sphere)
+        assert total == pytest.approx(4.0 * np.pi, abs=0.1)
+
+    def test_weights_are_constant(self):
+        """For uniform cos(θ) grid, all weights must be equal."""
+        import numpy as np
+
+        from Aerosol3D.optics.bridge import _spherical_grid
+
+        _, _, weights = _spherical_grid(n_points=1000)
+        # All weights should be identical (within float precision)
+        assert np.allclose(weights, weights[0], atol=1e-12)
+
+    def test_weighted_cos_theta_integral(self):
+        """∫ cos(θ) dΩ over full sphere = 0 (odd function)."""
+        import numpy as np
+
+        from Aerosol3D.optics.bridge import _spherical_grid
+
+        theta, _, weights = _spherical_grid(n_points=5804)
+        cos_theta = np.cos(theta)
+        integral = np.sum(cos_theta * weights)
+        # Should be very close to 0
+        assert abs(integral) < 0.01
