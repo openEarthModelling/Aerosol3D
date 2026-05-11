@@ -67,6 +67,23 @@ def main():
         f"DDA_avg={dda_avg_result.cross_sections.g:.4f}"
     )
 
+    # --- Validation assertions ---
+    mie_g = mie_result.cross_sections.g
+    dda_g = dda_result.cross_sections.g
+    dda_avg_g = dda_avg_result.cross_sections.g
+
+    # g agreement within 10% relative error
+    assert abs(dda_g - mie_g) / abs(mie_g) < 0.10, (
+        f"g mismatch too large: DDA={dda_g:.4f}, MIE={mie_g:.4f}"
+    )
+    print("PASS: DDA g agrees with MIE within 10%")
+
+    # Orientational-averaged g should be even closer
+    assert abs(dda_avg_g - mie_g) / abs(mie_g) < 0.10, (
+        f"Averaged g mismatch too large: DDA_avg={dda_avg_g:.4f}, MIE={mie_g:.4f}"
+    )
+    print("PASS: DDA averaged g agrees with MIE within 10%")
+
     # Phase function comparison
     try:
         import matplotlib.pyplot as plt
@@ -79,6 +96,15 @@ def main():
 
         theta_dda_avg = np.degrees(dda_avg_result.phase_function.theta)
         P11_dda_avg = np.mean(dda_avg_result.phase_function.P11, axis=1)
+
+        # P11 correlation check (compare on common theta grid)
+        from numpy import corrcoef
+
+        # Interpolate DDA to MIE theta grid for fair comparison
+        P11_dda_interp = np.interp(theta_mie, theta_dda, P11_dda)
+        r = corrcoef(np.log10(P11_mie), np.log10(P11_dda_interp))[0, 1]
+        assert r > 0.90, f"P11 correlation too low: r={r:.3f}"
+        print(f"PASS: P11 correlation r={r:.3f}")
 
         plt.figure(figsize=(8, 5))
         plt.semilogy(theta_mie, P11_mie, label="MIE", linewidth=2)
