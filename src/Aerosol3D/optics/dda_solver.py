@@ -308,8 +308,8 @@ def _solve_single_wl(
 def _orientational_average(results):
     """Average OpticalResults over multiple incident directions.
 
-    Averages C_ext, C_sca, C_abs arithmetically.
-    Averages P11 over all directions, then recomputes g from the averaged P11.
+    Averages C_ext, C_sca, C_abs, and g arithmetically.
+    Averages P11 over all directions in the lab frame.
     """
     from .datastructs import CrossSections, OpticalResult, PhaseFunction
 
@@ -331,27 +331,20 @@ def _orientational_average(results):
     Q_abs = C_abs / geo_cs if geo_cs > 0 else 0.0
     SSA = C_sca / C_ext if C_ext > 0 else 0.0
 
-    # Average phase function P11
+    # Average asymmetry parameter g arithmetically across orientations.
+    # Recomputing g from the lab-frame averaged P11 is incorrect because
+    # the lab-frame average of a rotationally invariant particle is isotropic
+    # (g -> 0), whereas the average of individual g values is the correct
+    # orientational average.
+    g = sum(r.cross_sections.g for r in results) / n
+
+    # Average phase function P11 in the lab frame
     phase_function = None
     if results[0].phase_function is not None:
         theta = results[0].phase_function.theta
         phi = results[0].phase_function.phi
         P11_avg = sum(r.phase_function.P11 for r in results) / n
         phase_function = PhaseFunction(theta=theta, phi=phi, P11=P11_avg)
-
-        # Recompute g from averaged P11
-        # Azimuthal average: P11(theta) = mean over phi
-        P11_theta = np.mean(P11_avg, axis=1)
-        theta_grid = theta
-        # Use trapezoidal integration for cos(theta) weighting
-        sin_theta = np.sin(theta_grid)
-        integrand = P11_theta * sin_theta * np.cos(theta_grid)
-        numerator = np.trapz(integrand, theta_grid)
-        denominator = np.trapz(P11_theta * sin_theta, theta_grid)
-        g = numerator / denominator if denominator > 0 else 0.0
-        g = float(np.clip(g, -1.0, 1.0))
-    else:
-        g = sum(r.cross_sections.g for r in results) / n
 
     cross_sections = CrossSections(
         wavelength=results[0].cross_sections.wavelength,

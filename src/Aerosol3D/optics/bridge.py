@@ -206,10 +206,12 @@ def compute_asymmetry_parameter(
     c_sca: float,
     n_points: int = 5804,
 ) -> float:
-    """Compute asymmetry parameter g = <cos(theta)> via spherical quadrature.
+    """Compute asymmetry parameter g = <cos(theta_scat)> via spherical quadrature.
 
     Uses uniform spherical grid for numerical integration of the
-    differential scattering cross section weighted by cos(theta).
+    differential scattering cross section weighted by cos(theta_scat),
+    where theta_scat is the scattering angle (angle between incident
+    and scattered directions).
 
     Args:
         positions, alpha_e, dda_result, config: DDA inputs.
@@ -231,7 +233,10 @@ def compute_asymmetry_parameter(
 
     dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
 
-    cos_theta = np.cos(theta)
+    # cos(theta) where theta is the scattering angle (angle between incident
+    # and scattered directions), not the polar angle from the z-axis.
+    k_hat = np.array(config.propagation) / np.linalg.norm(config.propagation)
+    cos_theta = np.dot(directions, k_hat)
     if c_sca > 0:
         g = (1.0 / c_sca) * np.sum(cos_theta * dcs * weights)
     else:
