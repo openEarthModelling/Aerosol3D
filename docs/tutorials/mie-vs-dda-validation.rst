@@ -1,4 +1,4 @@
-MIE vs DDA Validation
+Mie vs DDA Validation
 =====================
 
 This tutorial validates DDA results against exact Mie theory for a spherical
