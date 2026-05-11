@@ -1,8 +1,8 @@
 Coated Particle
 ===============
 
-This tutorial creates a coated particle (core + shell) and compares the
-optical properties with the bare core.
+This tutorial creates a coated black carbon fractal aggregate and compares
+the optical properties with the bare aggregate.
 
 Full Script
 -----------
