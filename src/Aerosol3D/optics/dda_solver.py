@@ -282,7 +282,9 @@ def _solve_single_wl(
     # Step 14: Phase function (optional)
     phase_function = None
     if compute_phase_func:
-        phase_function = _compute_phase_function(positions, alpha_e, dda_result, config)
+        phase_function = _compute_phase_function(
+            positions, alpha_e, dda_result, config, c_sca=C_sca
+        )
 
     elapsed = time.time() - t_start
 
@@ -545,10 +547,15 @@ def _compute_phase_function(
     alpha_e,
     dda_result,
     config,
+    c_sca: float,
     n_theta: int = 90,
     n_phi: int = 180,
 ) -> "PhaseFunction":
-    """Compute P11 phase function on a (theta, phi) grid."""
+    """Compute P11 phase function on a (theta, phi) grid.
+
+    P11 is normalized such that the integral over the full sphere is 1:
+        ∫ P11(θ, φ) dΩ = 1
+    """
     from .bridge import compute_diff_scattering
     from .datastructs import PhaseFunction
 
@@ -566,5 +573,9 @@ def _compute_phase_function(
 
     dcs = compute_diff_scattering(positions, alpha_e, dda_result, config, directions)
     P11 = dcs.reshape(n_theta, n_phi)
+
+    # Normalize: phase function integrates to 1 over 4π
+    if c_sca > 0:
+        P11 = P11 / c_sca
 
     return PhaseFunction(theta=theta, phi=phi, P11=P11)

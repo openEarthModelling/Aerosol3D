@@ -59,6 +59,48 @@ class TestFullOpticsPipeline:
         plot_phase_function_2d(result, save_path=str(tmp_path / "phase.png"))
         assert os.path.exists(tmp_path / "phase.png")
 
+    def test_phase_function_normalization(self, julia_available):
+        """P11 must integrate to approximately 1 over the full sphere."""
+        import numpy as np
+        from Aerosol3D import (
+            AerosolParticle,
+            Material,
+            apply_distance_coating,
+            create_sphere,
+        )
+        from Aerosol3D.optics import SimulationConfig, solve_optics
+
+        soot = Material("soot", complex(1.8, 0.7), 1.8)
+        sulfate = Material("sulfate", complex(1.4, 0.0), 1.8)
+
+        p = AerosolParticle("coated", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot)
+        apply_distance_coating(p, thickness=10.0, material=sulfate)
+
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+        result = solve_optics(
+            p,
+            config,
+            voxel_size=10.0,
+            compute_phase_func=True,
+            n_dirs=1,  # Single direction for speed
+        )
+
+        assert result.phase_function is not None
+        theta = result.phase_function.theta
+        phi = result.phase_function.phi
+        P11 = result.phase_function.P11
+
+        # Integrate P11 over the sphere using trapezoidal rule
+        # ∫ P11 dΩ = ∫₀^{2π} ∫₀^π P11(θ,φ) sin(θ) dθ dφ
+        sin_theta = np.sin(theta)
+        # Average over phi first
+        P11_theta = np.mean(P11, axis=1)
+        integrand = P11_theta * sin_theta
+        integral = np.trapz(integrand, theta) * 2 * np.pi
+
+        assert integral == pytest.approx(1.0, abs=0.05)
+
     def test_import_from_top_level(self, julia_available):
         """Verify optics exports are accessible from Aerosol3D top-level."""
         import Aerosol3D
