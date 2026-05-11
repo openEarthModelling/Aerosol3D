@@ -123,7 +123,7 @@ class TestAsymmetryParameter:
         config = SimulationConfig(wavelength=550.0, dipole_spacing=5.0)
 
         dda_result = solve_dda(positions, alpha_e, config)
-        g = compute_asymmetry_parameter(positions, alpha_e, dda_result, config, C_sca=1e-10)
+        g = compute_asymmetry_parameter(positions, alpha_e, dda_result, config, c_sca=1e-10)
         # g should be a float in [-1, 1]
         assert isinstance(g, float)
         assert -1.0 <= g <= 1.0
@@ -161,4 +161,4 @@ class TestSphericalGrid:
         cos_theta = np.cos(theta)
         integral = np.sum(cos_theta * weights)
         # Should be very close to 0
-        assert abs(integral) < 0.01
+        assert integral == pytest.approx(0.0, abs=1e-12)
