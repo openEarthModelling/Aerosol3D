@@ -22,4 +22,5 @@ htmlcov/
 
 # Example outputs
 examples/output/
+examples/dda_mie_pyradtran_pipeline/output/
 .worktrees/
