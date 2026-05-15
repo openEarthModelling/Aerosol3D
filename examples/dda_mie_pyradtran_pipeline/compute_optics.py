@@ -222,14 +222,15 @@ def plot_p11_comparison(dda_results: list, mie_results: list, output_dir: Path):
         wl = dda_results[i].cross_sections.wavelength
         dda_p11 = dda_results[i].phase_function.P11[:, 0]  # Use first phi
         mie_p11 = mie_results[i].phase_function.P11[:, 0]
-        theta_deg = np.degrees(dda_results[i].phase_function.theta)
+        dda_theta_deg = np.degrees(dda_results[i].phase_function.theta)
+        mie_theta_deg = np.degrees(mie_results[i].phase_function.theta)
 
         fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
         # Linear plot
         ax = axes[0]
-        ax.semilogy(theta_deg, dda_p11, "b-", label="DDA", linewidth=1.5)
-        ax.semilogy(theta_deg, mie_p11, "r--", label="Mie", linewidth=1.5)
+        ax.semilogy(dda_theta_deg, dda_p11, "b-", label="DDA", linewidth=1.5)
+        ax.semilogy(mie_theta_deg, mie_p11, "r--", label="Mie", linewidth=1.5)
         ax.set_xlabel("Scattering angle θ (°)")
         ax.set_ylabel("P11")
         ax.set_title(f"P11(θ) @ {wl:.0f} nm (log scale)")
@@ -238,21 +239,23 @@ def plot_p11_comparison(dda_results: list, mie_results: list, output_dir: Path):
 
         # Polar plot
         ax = axes[1]
-        theta_rad = np.radians(theta_deg)
-        ax.semilogy(theta_rad, dda_p11, "b-", label="DDA", linewidth=1.5)
-        ax.semilogy(theta_rad, mie_p11, "r--", label="Mie", linewidth=1.5)
+        dda_theta_rad = np.radians(dda_theta_deg)
+        mie_theta_rad = np.radians(mie_theta_deg)
+        ax.semilogy(dda_theta_rad, dda_p11, "b-", label="DDA", linewidth=1.5)
+        ax.semilogy(mie_theta_rad, mie_p11, "r--", label="Mie", linewidth=1.5)
         ax.set_xlabel("θ (rad)")
         ax.set_ylabel("P11")
         ax.set_title("P11(θ) (polar view)")
         ax.legend()
         ax.grid(True, alpha=0.3)
 
-        # Relative difference
+        # Relative difference - interpolate Mie to DDA grid for comparison
         ax = axes[2]
+        mie_p11_interp = np.interp(dda_theta_deg, mie_theta_deg, mie_p11)
         with np.errstate(divide="ignore", invalid="ignore"):
-            rel_diff = (dda_p11 - mie_p11) / mie_p11 * 100.0
+            rel_diff = (dda_p11 - mie_p11_interp) / mie_p11_interp * 100.0
         rel_diff = np.where(np.isfinite(rel_diff), rel_diff, 0.0)
-        ax.plot(theta_deg, rel_diff, "g-", linewidth=1.0)
+        ax.plot(dda_theta_deg, rel_diff, "g-", linewidth=1.0)
         ax.axhline(0, color="k", linestyle="-", linewidth=0.5)
         ax.set_xlabel("Scattering angle θ (°)")
         ax.set_ylabel("Relative difference (%)")
