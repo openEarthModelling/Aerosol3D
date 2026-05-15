@@ -15,7 +15,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 # ---------------------------------------------------------------------------
 PARTICLE_CONFIG = {
     "material": "black_carbon",
-    "radius_nm": 50.0,
+    "radius_nm": 200.0,
     "wavelengths_nm": np.linspace(400, 700, 7).tolist(),  # 7 wavelengths
 }
 

@@ -63,6 +63,7 @@ def compute_optics(particle: AerosolParticle, solver: str) -> list:
         wavelength=wavelengths,
         source="solar",
         precision=DDA_CONFIG["precision"] if solver == "DDA" else "medium",
+        dipole_spacing=5.0 if solver == "DDA" else 0.0,
     )
 
     logger.info(f"Running {solver} solve for {len(wavelengths)} wavelengths: "
