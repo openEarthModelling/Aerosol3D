@@ -59,26 +59,30 @@ def compute_optics(particle: AerosolParticle, solver: str) -> list:
         List of OpticalResult, one per wavelength.
     """
     wavelengths = PARTICLE_CONFIG["wavelengths_nm"]
-    config = SimulationConfig(
-        wavelength=wavelengths,
-        source="solar",
-        precision=DDA_CONFIG["precision"] if solver == "DDA" else "medium",
-        dipole_spacing=5.0 if solver == "DDA" else 0.0,
-    )
 
     logger.info(f"Running {solver} solve for {len(wavelengths)} wavelengths: "
                 f"{wavelengths[0]:.0f}-{wavelengths[-1]:.0f} nm")
 
-    results = solve_optics(
-        particle,
-        config,
-        solver=solver,
-        compute_phase_func=True,
-    )
-
-    # solve_optics may return a single result or a list depending on wavelength type
-    if not isinstance(results, list):
-        results = [results]
+    # Solve each wavelength independently so that dipole polarizability
+    # alpha_e is recomputed with the correct k for each wavelength.
+    results = []
+    for wl in wavelengths:
+        config = SimulationConfig(
+            wavelength=wl,
+            source="solar",
+            precision="medium" if solver == "DDA" else "medium",  # corrected: medium=0.75, high=0.5
+        )
+        result = solve_optics(
+            particle,
+            config,
+            solver=solver,
+            voxel_size=None,  # auto: each wavelength gets its own |m|kd-optimal spacing
+            compute_phase_func=True,
+        )
+        if isinstance(result, list):
+            results.extend(result)
+        else:
+            results.append(result)
 
     logger.info(f"{solver} solve complete: {len(results)} results")
     for r in results:

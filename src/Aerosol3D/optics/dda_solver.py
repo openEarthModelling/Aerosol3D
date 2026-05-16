@@ -282,9 +282,26 @@ def _solve_single_wl(
     # Step 14: Phase function (optional)
     phase_function = None
     if compute_phase_func:
-        phase_function = _compute_phase_function(
-            positions, alpha_e, dda_result, config, c_sca=C_sca
-        )
+        if do_depolarized:
+            from .datastructs import PhaseFunction
+
+            # Compute P11 for each polarization and average for unpolarized result
+            pf_x = _compute_phase_function(
+                positions, alpha_e, dda_result_x, config_x, c_sca=float(cs_x_raw[2])
+            )
+            pf_y = _compute_phase_function(
+                positions, alpha_e, dda_result_y, config_y, c_sca=float(cs_y_raw[2])
+            )
+            # For unpolarized incident light, P11 is the average of the two
+            # orthogonal polarization responses.
+            P11_avg = (pf_x.P11 + pf_y.P11) / 2.0
+            phase_function = PhaseFunction(
+                theta=pf_x.theta, phi=pf_x.phi, P11=P11_avg
+            )
+        else:
+            phase_function = _compute_phase_function(
+                positions, alpha_e, dda_result, config, c_sca=C_sca
+            )
 
     elapsed = time.time() - t_start
 

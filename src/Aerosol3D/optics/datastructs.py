@@ -12,11 +12,12 @@ if TYPE_CHECKING:
     import pyvista as pv
 
 
-# Precision level targets: max allowed |m|*k*d for each level
+# Precision level targets: max allowed |m|*k*d for each level.
+# Lower |m|*k*d -> smaller dipole spacing -> more dipoles -> higher accuracy.
 _PRECISION_TARGETS = {
-    "low": 0.5,
+    "low": 0.95,
     "medium": 0.75,
-    "high": 0.95,
+    "high": 0.5,
 }
 
 
