@@ -295,9 +295,7 @@ def _solve_single_wl(
             # For unpolarized incident light, P11 is the average of the two
             # orthogonal polarization responses.
             P11_avg = (pf_x.P11 + pf_y.P11) / 2.0
-            phase_function = PhaseFunction(
-                theta=pf_x.theta, phi=pf_x.phi, P11=P11_avg
-            )
+            phase_function = PhaseFunction(theta=pf_x.theta, phi=pf_x.phi, P11=P11_avg)
         else:
             phase_function = _compute_phase_function(
                 positions, alpha_e, dda_result, config, c_sca=C_sca
