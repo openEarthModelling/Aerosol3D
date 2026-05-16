@@ -62,6 +62,7 @@ class TestFullOpticsPipeline:
     def test_phase_function_normalization(self, julia_available):
         """P11 must integrate to approximately 1 over the full sphere."""
         import numpy as np
+
         from Aerosol3D import (
             AerosolParticle,
             Material,
@@ -88,7 +89,6 @@ class TestFullOpticsPipeline:
 
         assert result.phase_function is not None
         theta = result.phase_function.theta
-        phi = result.phase_function.phi
         P11 = result.phase_function.P11
 
         # Integrate P11 over the sphere using trapezoidal rule

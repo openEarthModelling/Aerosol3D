@@ -1,6 +1,7 @@
 """Potential-based void-filling coating with dual-parameter control.
 
 Two-stage algorithm:
+
 1. Surface contact layer: ensures coated_area_fraction of BC convex hull
    surface area is in contact with coating.
 2. Bulk void filling: fills internal voids with remaining coating volume

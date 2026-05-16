@@ -125,23 +125,24 @@ class TestSimulationConfigWavelengthList:
 
 class TestPrecisionLevel:
     def test_auto_voxel_size_low(self):
-        """Low precision: |m|*k*d should be < 0.5."""
+        """Low precision: |m|*k*d should be ~0.95."""
         from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "low")
         k = 2.0 * np.pi / 550.0
         mkd = 2.08 * k * d
-        assert mkd <= 0.55
+        assert mkd <= 1.0
+        assert mkd > 0.8
 
     def test_auto_voxel_size_high(self):
-        """High precision: |m|*k*d should be < 0.95."""
+        """High precision: |m|*k*d should be ~0.5."""
         from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "high")
         k = 2.0 * np.pi / 550.0
         mkd = 2.08 * k * d
-        assert mkd <= 1.0
-        assert mkd > 0.7
+        assert mkd <= 0.6
+        assert mkd > 0.3
 
     def test_auto_voxel_size_medium(self):
         from Aerosol3D.optics.datastructs import auto_voxel_size

@@ -1,3 +1,7 @@
+---
+orphan: true
+---
+
 # Sphinx Documentation Site Design
 
 **Date:** 2026-05-11

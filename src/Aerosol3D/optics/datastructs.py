@@ -22,11 +22,11 @@ _PRECISION_TARGETS = {
 
 
 def auto_voxel_size(wavelength: float, m_max: float, precision: str = "medium") -> float:
-    """Compute maximum voxel_size satisfying the |m|*k*d convergence criterion.
+    """Compute maximum voxel_size satisfying the ``|m|*k*d`` convergence criterion.
 
     Args:
         wavelength: Wavelength in nm.
-        m_max: Maximum |refractive_index| across all materials.
+        m_max: Maximum ``|refractive_index|`` across all materials.
         precision: One of "low", "medium", "high".
 
     Returns:
@@ -58,10 +58,10 @@ class SimulationConfig:
     source: str = "solar"
 
     def validity_check(self, m_max: float, dipole_spacing: float) -> dict:
-        """Check |m|*k*d convergence criterion.
+        """Check ``|m|*k*d`` convergence criterion.
 
         Args:
-            m_max: Maximum |refractive_index| across all materials.
+            m_max: Maximum ``|refractive_index|`` across all materials.
             dipole_spacing: Actual dipole spacing used.
 
         Returns:

@@ -1,6 +1,7 @@
 """Potential-based edge-growing coating with dual-parameter control.
 
 Two-stage algorithm:
+
 1. Surface contact layer: ensures coated_area_fraction of BC convex hull
    surface area is in contact with coating.
 2. Bulk edge growth: grows coating outward from the surface with remaining
