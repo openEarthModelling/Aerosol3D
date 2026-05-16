@@ -2,49 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- DDA-Mie-pyRadtran optical computation pipeline with stage 1 (compute optics), stages 2-3, and pipeline config/directory structure
+- Sphinx documentation site with user guide, tutorials (with embedded example scripts), API reference (autodoc), and contributing guide
+- Sphinx optional-dependencies group (`sphinx`, `sphinx-rtd-theme`, `myst-parser`, `sphinx-copybutton`)
+- GitHub Actions workflow for building and deploying Sphinx docs to GitHub Pages
+
+### Changed
+- DDA particle radius increased to 200nm with manual 5nm dipole spacing
+
+### Fixed
+- DDA multi-wavelength polarizability: alpha_e is now recomputed per wavelength instead of reusing the first wavelength's value (previously caused up to 435% error)
+- DDA depolarized P11 phase function: now properly averages both orthogonal polarizations instead of using only one
+- DDA precision targets: swapped inverted high/low values so "high" produces finer dipole spacing
+- P11 comparison plots: handle different theta grid dimensions between DDA and Mie
+
 ## [0.2.0] - 2026-05-11
 
 ### Added
-
-- **MIE solver integration** — New `solver="MIE"` option in `solve_optics()` using PyMieScatt
-  for spherical particles. MIE theory provides exact optical properties (Q_ext, Q_sca, Q_abs, g, P11)
-  for comparison and validation against DDA.
-- `solver` field added to `OpticalResult` dataclass for result provenance tracking.
-- `equivalent_diameter` and `effective_refractive_index` properties added to `AerosolParticle`
-  class for solver-agnostic particle characterization.
-- DDA **orientational averaging** via Fibonacci sphere sampling. Averages cross-sections and
-  phase function over multiple incident directions.
-- `compute_legendre_moments()` for expanding phase functions into Legendre polynomial coefficients.
-- `validate_mie_vs_dda.py` example script for comparing MIE and DDA results.
-- `validate_grid_convergence.py` example script for demonstrating DDA grid convergence.
-
-### Fixed
-
-- **DDA asymmetry parameter g** — Corrected spherical quadrature weights in `_spherical_grid()`.
-  Weights were incorrectly proportional to `sin(theta)`, vanishing at the forward scattering
-  direction and causing ~95% error in g. Now uses constant solid-angle weights
-  `dOmega = d(cos theta) * dphi` for the uniform cos(theta) grid.
-- **DDA scattering angle computation** — `compute_asymmetry_parameter()` now uses
-  `dot(k_inc, k_scat)` instead of the polar angle from the z-axis, fixing g for non-z-axis
-  incident directions.
-- **DDA orientational averaging for g** — `_orientational_average()` now averages g
-  arithmetically across orientations instead of recomputing from lab-frame P11 (which is
-  isotropic by construction, yielding g ~ 0).
-- **P11 phase function normalization** — `_compute_phase_function()` now normalizes P11
-  by C_sca so that the integral over the full sphere equals 1, matching MIE theory convention.
-- `n_dirs=1` no longer crashes Fibonacci sphere generation.
+- MIE solver bridge using PyMieScatt with `solve_optics` dispatch
+- DDA orientational averaging over Fibonacci sphere
+- MIE vs DDA validation example script
+- Scattering asymmetry parameter (g) and P11 agreement assertions in validation
 
 ### Changed
+- Improved MIE solver code quality and tests
+- Improved particle properties robustness and tests
 
-- `solve_optics()` now accepts explicit `solver="MIE"` or `solver="DDA"` parameter.
+### Fixed
+- Scattering angle and orientational averaging for g parameter
+- P11 normalization by C_sca in `_compute_phase_function`
+- Spherical quadrature weights in `_spherical_grid`
+- Handle `n_dirs=1` edge case in Fibonacci sphere and orientational averaging
+- Parameter name `C_sca`→`c_sca` and tightened spherical grid tolerance in tests
 
-## [0.1.0] - 2026-05-08
+## [0.1.0] - 2026-05-07
 
 ### Added
+- Initial release of aerosol3d
+- DDA solver for computing optical properties of non-spherical aerosol particles
+- Particle shape generation (sphere, spheroid, cube, coated sphere)
+- Core data structures for optical properties and simulation configuration
 
-- Initial release with DDA solver via CEMD.jl (Julia) integration.
-- Fractal aggregate modeling with PyFrac.
-- Geometry primitives: sphere, ellipsoid, cube.
-- Coating models: CAM, CCM, distance-based, potential edge, potential void.
-- Voxelization and visualization utilities.
-- pyRadtran export for radiative transfer applications.
+[Unreleased]: https://github.com/openEarthModelling/aerosol3d/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/openEarthModelling/aerosol3d/releases/tag/v0.1.0
