@@ -10,7 +10,8 @@ import logging
 import os
 
 import numpy as np
-import xarray as xr
+
+from Aerosol3D.optics.optics_export import AerosolOpticsData
 
 from pyradtran import Scene, Runner, IntegrationConfig
 from pyradtran.models.aerosol_composite import (
@@ -35,101 +36,55 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def load_optics_dataset(path: str) -> xr.Dataset:
-    """Load optical properties from NetCDF."""
-    logger.info(f"Loading optics from {path}")
-    ds = xr.open_dataset(path)
-    return ds
-
-
 def compute_mass_profile(optical_depth_550: float, altitude_grid_km: np.ndarray,
                          scale_height_km: float, Q_ext_at_550: float,
                          r_eff_um: float, density_kg_m3: float) -> np.ndarray:
-    """Compute mass concentration profile from target optical depth.
+    """Compute mass concentration profile from target optical depth."""
+    geom_cross_section_um2 = np.pi * r_eff_um ** 2
+    geom_cross_section_m2 = geom_cross_section_um2 * 1e-12
 
-    Uses exponential decay profile and integrates to match target tau.
-
-    Args:
-        optical_depth_550: Target optical depth at 550 nm.
-        altitude_grid_km: Altitude layer boundaries in km.
-        scale_height_km: Exponential scale height in km.
-        Q_ext_at_550: Extinction efficiency at 550 nm.
-        r_eff_um: Effective radius in micrometers.
-        density_kg_m3: Particle density in kg/m3.
-
-    Returns:
-        Mass concentration per layer (kg/m3).
-    """
-    # Compute geometric cross-section
-    geom_cross_section_um2 = np.pi * r_eff_um ** 2  # um2
-    geom_cross_section_m2 = geom_cross_section_um2 * 1e-12  # m2
-
-    # Extinction cross-section at 550 nm
     C_ext_550_m2 = Q_ext_at_550 * geom_cross_section_m2
 
-    # Particle volume
     r_eff_m = r_eff_um * 1e-6
     volume_m3 = (4.0 / 3.0) * np.pi * r_eff_m ** 3
-
-    # Mass per particle
     mass_per_particle_kg = density_kg_m3 * volume_m3
 
-    # Number concentration needed for tau = 0.3 over scale height
-    # tau = integral n(z) * C_ext dz
-    # n(z) = n0 * exp(-z/H)
-    # tau = n0 * C_ext * H (assuming H in meters)
     H_m = scale_height_km * 1000.0
     n0_m3 = optical_depth_550 / (C_ext_550_m2 * H_m)
 
-    # Mass concentration at each altitude
     alt_mid_km = 0.5 * (altitude_grid_km[:-1] + altitude_grid_km[1:])
     n_z_m3 = n0_m3 * np.exp(-alt_mid_km / scale_height_km)
-    mass_profile = n_z_m3 * mass_per_particle_kg  # kg/m3
+    mass_profile = n_z_m3 * mass_per_particle_kg
 
     return mass_profile
 
 
-def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
-    """Build pyRadtran CompositeAerosol from optical dataset.
+def build_composite_aerosol(optics: AerosolOpticsData) -> CompositeAerosol:
+    """Build pyRadtran CompositeAerosol from AerosolOpticsData."""
+    wavelengths_um = optics.wavelength_nm / 1000.0
+    r_eff_um = optics.r_eff_nm / 1000.0
 
-    Args:
-        optics_ds: xarray Dataset with optical properties.
+    C_ext_um2 = optics.C_ext * 1e-6  # nm² -> um²
+    C_sca_um2 = optics.C_sca * 1e-6
+    g_arr = optics.g.reshape((-1, 1))
 
-    Returns:
-        pyRadtran CompositeAerosol object.
-    """
-    # Extract data
-    wavelengths_nm = optics_ds["wavelength_nm"].values
-    wavelengths_um = wavelengths_nm / 1000.0
-
-    C_ext_nm2 = optics_ds["C_ext_nm2"].values  # (n_wl,)
-    C_sca_nm2 = optics_ds["C_sca_nm2"].values
-    g = optics_ds["g"].values
-    r_eff_nm = float(optics_ds.attrs["r_eff_nm"])
-    r_eff_um = r_eff_nm / 1000.0
-
-    # Convert nm2 to um2 for pyRadtran
-    C_ext_um2 = C_ext_nm2 * 1e-6
-    C_sca_um2 = C_sca_nm2 * 1e-6
-
-    # Build arrays with shape (n_wl, 1) for single radius
-    n_wl = len(wavelengths_um)
-    radius_um = [r_eff_um]
-
-    Cext_arr = C_ext_um2.reshape((n_wl, 1))
-    Csca_arr = C_sca_um2.reshape((n_wl, 1))
-    g_arr = g.reshape((n_wl, 1))
-
-    # Create ParticleOptics from cross-sections
-    particle_optics = ParticleOptics.from_cross_sections(
+    pf_kwargs = dict(
         wavelength_um=wavelengths_um.tolist(),
-        radius_um=radius_um,
-        Cext_um2=Cext_arr,
-        Csca_um2=Csca_arr,
+        radius_um=[r_eff_um],
+        Cext_um2=C_ext_um2.reshape((-1, 1)),
+        Csca_um2=C_sca_um2.reshape((-1, 1)),
         g=g_arr,
     )
+    if optics.legendre_moments is not None:
+        pf_kwargs["legendre_moments"] = optics.legendre_moments.reshape(
+            (-1, 1, optics.n_legendre)
+        )
+        logger.info(f"Passing Legendre moments ({optics.n_legendre} terms) to pyRadtran")
+    else:
+        logger.warning("No Legendre moments available — pyRadtran will use HG fallback")
 
-    # Create size distribution (narrow lognormal)
+    particle_optics = ParticleOptics.from_cross_sections(**pf_kwargs)
+
     size_dist = SizeDistribution(
         kind=SIZE_DISTRIBUTION["kind"],
         params={
@@ -138,7 +93,6 @@ def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
         },
     )
 
-    # Create precomputed species
     precomputed = PrecomputedSpecies(
         particle_optics=particle_optics,
         size_distribution=size_dist,
@@ -146,10 +100,8 @@ def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
         integration_config=IntegrationConfig(),
     )
 
-    # Compute mass profile
-    # Find Q_ext closest to 550 nm
-    idx_550 = np.argmin(np.abs(wavelengths_nm - 550.0))
-    Q_ext_550 = float(optics_ds["Q_ext"].values[idx_550])
+    idx_550 = np.argmin(np.abs(optics.wavelength_nm - 550.0))
+    Q_ext_550 = optics.C_ext[idx_550] / (np.pi * optics.r_eff_nm ** 2)
 
     altitude_grid_km = np.array(AEROSOL_PROFILE["altitude_grid_km"])
     mass_profile = compute_mass_profile(
@@ -161,13 +113,8 @@ def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
         density_kg_m3=AEROSOL_PROFILE["particle_density_kg_m3"],
     )
 
-    # Layer altitudes (mass_profile has n_layers = n_boundaries - 1)
-    # Need altitude_km to have len(mass_profile) + 1 elements
-    # Use the bottom n_layers+1 boundaries
     n_layers = len(mass_profile)
     altitude_km = altitude_grid_km[:n_layers + 1]
-
-    # pyRadtran requires altitude_km strictly descending
     altitude_km_desc = altitude_km[::-1]
     mass_profile_desc = mass_profile[::-1]
 
@@ -177,26 +124,18 @@ def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
         altitude_km=altitude_km_desc.tolist(),
     )
 
-    # Build CompositeAerosol
     aerosol = CompositeAerosol(
         sources=[loaded],
         wavelength_grid_um=wavelengths_um.tolist(),
         altitude_grid_km=altitude_grid_km[::-1].tolist(),
-        n_legendre=32,
+        n_legendre=optics.n_legendre,
     )
 
     return aerosol
 
 
 def build_scene(aerosol: CompositeAerosol) -> Scene:
-    """Build pyRadtran Scene with aerosol.
-
-    Args:
-        aerosol: CompositeAerosol object.
-
-    Returns:
-        Configured Scene.
-    """
+    """Build pyRadtran Scene with aerosol."""
     cfg = SCENE_CONFIG
 
     scene = (
@@ -228,32 +167,24 @@ def build_scene(aerosol: CompositeAerosol) -> Scene:
 
 
 def run_radiative_transfer(optics_path: str, output_path: str):
-    """Run radiative transfer for given optics and save result.
-
-    Args:
-        optics_path: Path to optics NetCDF file.
-        output_path: Path to save RT result NetCDF.
-    """
+    """Run radiative transfer for given optics and save result."""
     logger.info(f"\nRunning radiative transfer for {optics_path}")
 
-    # Load optics
-    optics_ds = load_optics_dataset(optics_path)
+    optics = AerosolOpticsData.from_netcdf(optics_path)
+    logger.info(f"Loaded {len(optics.wavelength_nm)} wavelengths, "
+                f"legendre_moments={'yes' if optics.legendre_moments is not None else 'no'}")
 
-    # Build aerosol and scene
-    aerosol = build_composite_aerosol(optics_ds)
+    aerosol = build_composite_aerosol(optics)
     scene = build_scene(aerosol)
 
-    # Check for libRadtran data path
     data_path = os.environ.get("PYRADTRAN_DATA_PATH", "/usr/local/share/libRadtran/data")
     if not os.path.exists(data_path):
         logger.warning(f"libRadtran data path not found: {data_path}")
         logger.warning("Set PYRADTRAN_DATA_PATH environment variable")
 
-    # Run
     logger.info("Executing pyRadtran...")
     result = Runner.execute(scene, data_path=data_path)
 
-    # Save
     result.to_netcdf(output_path)
     logger.info(f"Saved RT result to {output_path}")
     logger.info(f"Result dimensions: {dict(result.dims)}")
