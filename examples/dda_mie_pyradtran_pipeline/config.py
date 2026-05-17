@@ -16,7 +16,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 PARTICLE_CONFIG = {
     "material": "black_carbon",
     "radius_nm": 200.0,
-    "wavelengths_nm": np.linspace(400, 700, 7).tolist(),  # 7 wavelengths
+    "wavelengths_nm": np.linspace(400, 700, 7).tolist(),  # match DDA grid
 }
 
 # ---------------------------------------------------------------------------
@@ -42,13 +42,13 @@ MIE_CONFIG = {
 SCENE_CONFIG = {
     "atmosphere": {"profile": "us", "altitude": 0.0},
     "source": {"type": "solar", "sza": 30.0},
-    "wavelength": {"min_nm": 400.0, "max_nm": 700.0},
-    "solver": {"method": "disort", "streams": 16},
+    "wavelength": {"min_nm": 401.0, "max_nm": 699.0},
+    "solver": {"method": "disort", "streams": 16, "disort_intcor": "moments"},
     "surface": {"albedo": 0.1},
     "output": {
         "quantities": ["lambda", "edir", "edn", "eup"],
         "quantity": "transmittance",
-        "format": "netcdf",
+        "format": "ascii",
     },
 }
 

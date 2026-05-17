@@ -167,17 +167,21 @@ def build_composite_aerosol(optics_ds: xr.Dataset) -> CompositeAerosol:
     n_layers = len(mass_profile)
     altitude_km = altitude_grid_km[:n_layers + 1]
 
+    # pyRadtran requires altitude_km strictly descending
+    altitude_km_desc = altitude_km[::-1]
+    mass_profile_desc = mass_profile[::-1]
+
     loaded = LoadedSpecies(
         species=precomputed,
-        mass_profile_kg_m3=mass_profile.tolist(),
-        altitude_km=altitude_km.tolist(),
+        mass_profile_kg_m3=mass_profile_desc.tolist(),
+        altitude_km=altitude_km_desc.tolist(),
     )
 
     # Build CompositeAerosol
     aerosol = CompositeAerosol(
         sources=[loaded],
         wavelength_grid_um=wavelengths_um.tolist(),
-        altitude_grid_km=altitude_grid_km.tolist(),
+        altitude_grid_km=altitude_grid_km[::-1].tolist(),
         n_legendre=32,
     )
 
@@ -209,6 +213,7 @@ def build_scene(aerosol: CompositeAerosol) -> Scene:
         .set_solver(
             method=cfg["solver"]["method"],
             streams=cfg["solver"]["streams"],
+            disort_intcor=cfg["solver"].get("disort_intcor"),
         )
         .set_surface(albedo=cfg["surface"]["albedo"])
         .set_output(
