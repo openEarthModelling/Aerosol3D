@@ -24,3 +24,9 @@ htmlcov/
 examples/output/
 examples/dda_mie_pyradtran_pipeline/output/
 .worktrees/
+
+# Runtime artifacts
+aerosol/
+randomseed
+docs/_build/
+docs/sphinx-docs-implementation-plan.md
