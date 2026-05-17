@@ -37,6 +37,108 @@ class AerosolOpticsData:
     refractive_index_real: np.ndarray | None = None
     refractive_index_imag: np.ndarray | None = None
 
+    def to_netcdf(self, path: str) -> None:
+        """Save optical properties to NetCDF file."""
+        import xarray as xr
+
+        data_vars = {
+            "C_ext_nm2": (["wavelength"], self.C_ext),
+            "C_sca_nm2": (["wavelength"], self.C_sca),
+            "C_abs_nm2": (["wavelength"], self.C_abs),
+            "SSA": (["wavelength"], self.SSA),
+            "g": (["wavelength"], self.g),
+        }
+        coords = {
+            "wavelength_nm": (["wavelength"], self.wavelength_nm),
+        }
+        attrs = {
+            "r_eff_nm": float(self.r_eff_nm),
+            "n_legendre": self.n_legendre,
+            "solver": self.solver,
+            "material": self.material,
+        }
+
+        if self.P11 is not None:
+            assert self.theta_rad is not None and self.phi_rad is not None
+            coords["theta_deg"] = (["theta"], np.degrees(self.theta_rad))
+            coords["phi_deg"] = (["phi"], np.degrees(self.phi_rad))
+            data_vars["P11"] = (["wavelength", "theta", "phi"], self.P11)
+
+        if self.legendre_moments is not None:
+            coords["legendre_order"] = (
+                ["legendre_order"],
+                np.arange(self.n_legendre),
+            )
+            data_vars["legendre_moments"] = (
+                ["wavelength", "legendre_order"],
+                self.legendre_moments,
+            )
+
+        if self.refractive_index_real is not None:
+            data_vars["refractive_index_real"] = (
+                ["wavelength"],
+                self.refractive_index_real,
+            )
+        if self.refractive_index_imag is not None:
+            data_vars["refractive_index_imag"] = (
+                ["wavelength"],
+                self.refractive_index_imag,
+            )
+
+        ds = xr.Dataset(data_vars, coords=coords, attrs=attrs)
+        ds.to_netcdf(path)
+
+    @classmethod
+    def from_netcdf(cls, path: str) -> AerosolOpticsData:
+        """Load optical properties from NetCDF file."""
+        import xarray as xr
+
+        ds = xr.open_dataset(path)
+
+        P11 = ds["P11"].values if "P11" in ds else None
+        theta_rad = (
+            np.radians(ds["theta_deg"].values) if "theta_deg" in ds else None
+        )
+        phi_rad = (
+            np.radians(ds["phi_deg"].values) if "phi_deg" in ds else None
+        )
+        legendre_moments = (
+            ds["legendre_moments"].values
+            if "legendre_moments" in ds
+            else None
+        )
+        n_real = (
+            ds["refractive_index_real"].values
+            if "refractive_index_real" in ds
+            else None
+        )
+        n_imag = (
+            ds["refractive_index_imag"].values
+            if "refractive_index_imag" in ds
+            else None
+        )
+
+        obj = cls(
+            wavelength_nm=ds["wavelength_nm"].values,
+            C_ext=ds["C_ext_nm2"].values,
+            C_sca=ds["C_sca_nm2"].values,
+            C_abs=ds["C_abs_nm2"].values,
+            SSA=ds["SSA"].values,
+            g=ds["g"].values,
+            r_eff_nm=float(ds.attrs["r_eff_nm"]),
+            theta_rad=theta_rad,
+            phi_rad=phi_rad,
+            P11=P11,
+            legendre_moments=legendre_moments,
+            n_legendre=int(ds.attrs.get("n_legendre", 32)),
+            solver=ds.attrs.get("solver", ""),
+            material=ds.attrs.get("material", ""),
+            refractive_index_real=n_real,
+            refractive_index_imag=n_imag,
+        )
+        ds.close()
+        return obj
+
 
 def from_optical_results(
     results: list[OpticalResult],

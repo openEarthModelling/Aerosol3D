@@ -93,3 +93,54 @@ class TestFromOpticalResults:
         assert data.P11.shape[0] == 1
         assert data.theta_rad is not None
         assert data.phi_rad is not None
+
+
+class TestNetCDFRoundTrip:
+    def test_round_trip_with_legendre(self, tmp_path):
+        from Aerosol3D.optics.optics_export import (
+            AerosolOpticsData,
+            from_optical_results,
+        )
+
+        results = [_make_result(400.0), _make_result(550.0), _make_result(700.0)]
+        original = from_optical_results(results, n_legendre=16)
+
+        path = tmp_path / "test_optics.nc"
+        original.to_netcdf(str(path))
+        loaded = AerosolOpticsData.from_netcdf(str(path))
+
+        assert loaded.wavelength_nm.shape == original.wavelength_nm.shape
+        assert np.allclose(loaded.wavelength_nm, original.wavelength_nm)
+        assert np.allclose(loaded.C_ext, original.C_ext)
+        assert np.allclose(loaded.C_sca, original.C_sca)
+        assert np.allclose(loaded.C_abs, original.C_abs)
+        assert np.allclose(loaded.SSA, original.SSA)
+        assert np.allclose(loaded.g, original.g)
+        assert loaded.r_eff_nm == original.r_eff_nm
+        assert loaded.n_legendre == original.n_legendre
+        assert loaded.legendre_moments is not None
+        assert np.allclose(
+            loaded.legendre_moments, original.legendre_moments, atol=1e-10
+        )
+        assert loaded.P11 is not None
+        assert np.allclose(loaded.P11, original.P11, atol=1e-10)
+        assert loaded.solver == original.solver
+
+    def test_round_trip_without_phase_function(self, tmp_path):
+        from Aerosol3D.optics.optics_export import (
+            AerosolOpticsData,
+            from_optical_results,
+        )
+
+        results = [_make_result(550.0, has_pf=False)]
+        original = from_optical_results(results)
+
+        path = tmp_path / "test_no_pf.nc"
+        original.to_netcdf(str(path))
+        loaded = AerosolOpticsData.from_netcdf(str(path))
+
+        assert loaded.P11 is None
+        assert loaded.legendre_moments is None
+        assert loaded.theta_rad is None
+        assert loaded.phi_rad is None
+        assert np.allclose(loaded.wavelength_nm, [550.0])
