@@ -76,10 +76,14 @@ def build_composite_aerosol(optics: AerosolOpticsData) -> CompositeAerosol:
         g=g_arr,
     )
     if optics.legendre_moments is not None:
-        pf_kwargs["legendre_moments"] = optics.legendre_moments.reshape(
+        # Convert k_l = (2l+1)*integral to beta_l = k_l/(2l+1) for libRadtran/DISORT PMOM
+        l_vals = np.arange(optics.n_legendre)
+        beta_l = optics.legendre_moments / (2 * l_vals + 1)
+        pf_kwargs["legendre_moments"] = beta_l.reshape(
             (-1, 1, optics.n_legendre)
         )
-        logger.info(f"Passing Legendre moments ({optics.n_legendre} terms) to pyRadtran")
+        logger.info(f"Passing Legendre moments ({optics.n_legendre} terms, "
+                     f"beta_1={beta_l[0, 1]:.4f}) to pyRadtran")
     else:
         logger.warning("No Legendre moments available — pyRadtran will use HG fallback")
 

@@ -340,7 +340,7 @@ def plot_phase_function_comparison(
         ref_az = np.mean(datasets[0].P11[i_wl], axis=1)
         for j in range(1, len(datasets)):
             P11_az = np.mean(datasets[j].P11[i_wl], axis=1)
-            if not np.allclose(datasets[j].theta_rad, datasets[0].theta_rad):
+            if datasets[j].theta_rad.shape != datasets[0].theta_rad.shape or not np.allclose(datasets[j].theta_rad, datasets[0].theta_rad):
                 P11_az = np.interp(
                     datasets[0].theta_rad, datasets[j].theta_rad, P11_az
                 )
