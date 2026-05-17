@@ -4,7 +4,8 @@ def test_legendre_export_importable():
     assert callable(compute_legendre_moments)
 
 
-def test_pyradtran_export_importable():
-    from Aerosol3D.optics import optical_results_to_pyradtran_data
+def test_optics_export_importable():
+    from Aerosol3D.optics import AerosolOpticsData, from_optical_results
 
-    assert callable(optical_results_to_pyradtran_data)
+    assert AerosolOpticsData is not None
+    assert callable(from_optical_results)
