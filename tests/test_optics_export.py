@@ -29,7 +29,7 @@ def _make_result(wl=550.0, g=0.7, r_eff=200.0, has_pf=True):
         theta = np.linspace(0, np.pi, n_theta)
         phi = np.linspace(0, 2 * np.pi, n_phi, endpoint=False)
         mu = np.cos(theta[:, None])
-        P11 = (1 - g ** 2) / (1 + g ** 2 - 2 * g * mu) ** 1.5
+        P11 = (1 - g**2) / (1 + g**2 - 2 * g * mu) ** 1.5
         pf = PhaseFunction(theta=theta, phi=phi, P11=P11)
     cfg = SimulationConfig(wavelength=wl)
     return OpticalResult(config=cfg, cross_sections=cs, phase_function=pf, solver="MIE")
@@ -63,7 +63,7 @@ class TestFromOpticalResults:
         assert data.legendre_moments.shape == (1, 8)
         assert data.legendre_moments[0, 0] == pytest.approx(1.0, abs=1e-6)
         for l in range(1, 8):
-            expected = (2 * l + 1) * (0.7 ** l)
+            expected = (2 * l + 1) * (0.7**l)
             assert data.legendre_moments[0, l] == pytest.approx(expected, rel=0.05)
 
     def test_no_phase_function_gives_no_legendre(self):
@@ -119,9 +119,7 @@ class TestNetCDFRoundTrip:
         assert loaded.r_eff_nm == original.r_eff_nm
         assert loaded.n_legendre == original.n_legendre
         assert loaded.legendre_moments is not None
-        assert np.allclose(
-            loaded.legendre_moments, original.legendre_moments, atol=1e-10
-        )
+        assert np.allclose(loaded.legendre_moments, original.legendre_moments, atol=1e-10)
         assert loaded.P11 is not None
         assert np.allclose(loaded.P11, original.P11, atol=1e-10)
         assert loaded.solver == original.solver

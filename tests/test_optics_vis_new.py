@@ -11,12 +11,12 @@ def _make_data(n_wl=3, g=0.7, n_legendre=16):
     wl = np.array([400.0, 550.0, 700.0][:n_wl])
 
     mu = np.cos(theta[:, None])
-    P11_base = (1 - g ** 2) / (1 + g ** 2 - 2 * g * mu) ** 1.5
+    P11_base = (1 - g**2) / (1 + g**2 - 2 * g * mu) ** 1.5
     P11 = np.broadcast_to(P11_base, (n_wl, n_theta, n_phi)).copy()
 
     legendre_moments = np.zeros((n_wl, n_legendre))
     for l in range(n_legendre):
-        legendre_moments[:, l] = (2 * l + 1) * g ** l
+        legendre_moments[:, l] = (2 * l + 1) * g**l
 
     return AerosolOpticsData(
         wavelength_nm=wl,

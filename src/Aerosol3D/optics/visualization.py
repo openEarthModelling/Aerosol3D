@@ -82,7 +82,7 @@ def plot_near_field(
     log_scale: bool = True,
     show: bool = False,
 ):
-    """Plot orthogonal slices of |E|^2 through the voxel grid.
+    """Plot orthogonal slices of ``|E|^2`` through the voxel grid.
 
     Useful for diagnosing localized absorption/heating in mixed aerosol.
 
@@ -340,10 +340,10 @@ def plot_phase_function_comparison(
         ref_az = np.mean(datasets[0].P11[i_wl], axis=1)
         for j in range(1, len(datasets)):
             P11_az = np.mean(datasets[j].P11[i_wl], axis=1)
-            if datasets[j].theta_rad.shape != datasets[0].theta_rad.shape or not np.allclose(datasets[j].theta_rad, datasets[0].theta_rad):
-                P11_az = np.interp(
-                    datasets[0].theta_rad, datasets[j].theta_rad, P11_az
-                )
+            if datasets[j].theta_rad.shape != datasets[0].theta_rad.shape or not np.allclose(
+                datasets[j].theta_rad, datasets[0].theta_rad
+            ):
+                P11_az = np.interp(datasets[0].theta_rad, datasets[j].theta_rad, P11_az)
             rel = (P11_az - ref_az) / (np.abs(ref_az) + 1e-12) * 100
             ax.plot(
                 np.degrees(datasets[0].theta_rad),
@@ -395,9 +395,7 @@ def plot_legendre_convergence(
     )
     for n in n_terms_list:
         P11_recon = legval(mu, moments[:n])
-        ax.semilogy(
-            np.degrees(theta), np.maximum(P11_recon, 1e-30), "--", label=f"{n} terms"
-        )
+        ax.semilogy(np.degrees(theta), np.maximum(P11_recon, 1e-30), "--", label=f"{n} terms")
     ax.set_xlabel("Scattering angle (°)")
     ax.set_ylabel("P11 (log)")
     ax.set_title(f"Legendre Convergence @ {wl:.0f} nm")
