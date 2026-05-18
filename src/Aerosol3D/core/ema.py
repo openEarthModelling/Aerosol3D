@@ -11,7 +11,7 @@ def volume_weighted(volumes: list[float], refractive_indices: list[complex]) -> 
     m_eff = sum(f_i * m_i) where f_i = V_i / V_total.
     """
     if not volumes:
-        raise ValueError("Material list is empty.")
+        raise ValueError("Particle has no volume.")
     total = sum(volumes)
     return sum(v * m for v, m in zip(volumes, refractive_indices)) / total
 
@@ -27,7 +27,7 @@ def maxwell_garnett(volumes: list[float], refractive_indices: list[complex]) -> 
     where eps = m^2 and f_i = V_i / V_total.
     """
     if not volumes:
-        raise ValueError("Material list is empty.")
+        raise ValueError("Particle has no volume.")
     if len(volumes) == 1:
         return refractive_indices[0]
 
@@ -55,7 +55,7 @@ def bruggeman(volumes: list[float], refractive_indices: list[complex]) -> comple
     Solved via Newton iteration starting from volume-weighted estimate.
     """
     if not volumes:
-        raise ValueError("Material list is empty.")
+        raise ValueError("Particle has no volume.")
     if len(volumes) == 1:
         return refractive_indices[0]
 

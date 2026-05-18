@@ -63,7 +63,7 @@ class TestEffectiveRefractiveIndex:
         mesh = create_sphere(center=(0, 0, 0), radius=50.0)
         p.add_mesh("core", mesh, soot_material)
 
-        m_eff = p.effective_refractive_index
+        m_eff = p.effective_refractive_index()
         assert m_eff == pytest.approx(complex(1.8, 0.7), rel=0.01)
 
     def test_two_materials_volume_weighted(self, soot_material, sulfate_material):
@@ -76,7 +76,7 @@ class TestEffectiveRefractiveIndex:
         p.add_mesh("core", core, soot_material)
         p.add_mesh("coating", coating, sulfate_material)
 
-        m_eff = p.effective_refractive_index
+        m_eff = p.effective_refractive_index()
         # V_core = 4/3*pi*50^3, V_coating = 4/3*pi*60^3
         # m_eff = (V_core * 1.8 + V_coating * 1.4) / (V_core + V_coating)
         v_core = (4.0 / 3.0) * np.pi * 50.0**3
@@ -89,4 +89,4 @@ class TestEffectiveRefractiveIndex:
 
         p = AerosolParticle(name="empty")
         with pytest.raises(ValueError, match="no volume"):
-            _ = p.effective_refractive_index
+            _ = p.effective_refractive_index()

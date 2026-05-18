@@ -16,7 +16,7 @@ def main():
     particle.add_mesh("core", create_sphere((0, 0, 0), 100.0), material)
 
     print(f"Equivalent diameter: {particle.equivalent_diameter:.2f} nm")
-    print(f"Effective refractive index: {particle.effective_refractive_index}")
+    print(f"Effective refractive index: {particle.effective_refractive_index()}")
 
     config = SimulationConfig(wavelength=550.0, n_host=1.0, solver="CPU")
 

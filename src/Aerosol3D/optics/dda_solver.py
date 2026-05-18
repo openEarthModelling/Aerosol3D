@@ -406,6 +406,7 @@ def solve_optics(
     config: SimulationConfig,
     *,
     solver: str = "DDA",
+    ema_method: str = "volume_weighted",
     voxel_size: float = None,
     compute_near_field: bool = True,
     compute_phase_func: bool = False,
@@ -426,8 +427,12 @@ def solve_optics(
         The aerosol particle to simulate.
     config : SimulationConfig
         Simulation configuration, including wavelength(s).
-    solver : {"DDA", "MIE"}, optional
+    solver : {"DDA", "MIE", "MIE_CORESHELL"}, optional
         Which solver to use. Default is "DDA".
+    ema_method : str, optional
+        EMA method for Mie homogeneous-sphere path. One of
+        'volume_weighted', 'maxwell_garnett', 'bruggeman'.
+        Default is 'volume_weighted'.
     voxel_size : float, optional
         Voxel size for DDA discretization. If None, auto-computed.
     compute_near_field : bool, optional
@@ -464,6 +469,7 @@ def solve_optics(
                 particle,
                 wl_config,
                 compute_phase_func=compute_phase_func,
+                ema_method=ema_method,
                 verbose=verbose and len(wavelengths) == 1,
             )
             results.append(result)

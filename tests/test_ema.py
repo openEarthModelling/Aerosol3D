@@ -22,7 +22,7 @@ class TestVolumeWeighted:
     def test_empty_raises(self):
         from Aerosol3D.core.ema import volume_weighted
 
-        with pytest.raises(ValueError, match="empty"):
+        with pytest.raises(ValueError, match="no volume"):
             volume_weighted([], [])
 
     def test_equal_materials(self):
