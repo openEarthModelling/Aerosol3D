@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import pyvista as pv
 
 
@@ -78,3 +79,51 @@ class TestAerosolParticle:
         p = AerosolParticle(name="fractal", unit="nm")
         p.add_mesh("bc_core", agg.to_mesh(theta_res=8, phi_res=8), soot_material)
         assert p.blocks["bc_core"].n_points > 0
+
+
+class TestEffectiveRefractiveIndexMethods:
+    def test_default_is_volume_weighted(self, soot_material, sulfate_material):
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+
+        default = p.effective_refractive_index()
+        vw = p.effective_refractive_index(method="volume_weighted")
+        assert abs(default - vw) < 1e-12
+
+    def test_maxwell_garnett(self, soot_material, sulfate_material):
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+
+        result = p.effective_refractive_index(method="maxwell_garnett")
+        assert isinstance(result, complex)
+        assert result.real > 0
+
+    def test_bruggeman(self, soot_material, sulfate_material):
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+
+        result = p.effective_refractive_index(method="bruggeman")
+        assert isinstance(result, complex)
+        assert result.real > 0
+
+    def test_unknown_method_raises(self, soot_material):
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        with pytest.raises(ValueError, match="Unknown EMA method"):
+            p.effective_refractive_index(method="invalid")

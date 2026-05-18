@@ -103,15 +103,34 @@ class AerosolParticle:
             raise ValueError("Particle has no volume.")
         return (6.0 * total_volume / np.pi) ** (1.0 / 3.0)
 
-    @property
-    def effective_refractive_index(self) -> complex:
-        """Volume-weighted average refractive index.
+    def effective_refractive_index(self, method: str = "volume_weighted") -> complex:
+        """Compute effective refractive index using an EMA method.
 
-        This is the baseline mixing rule. Advanced mixing (Maxwell-Garnett,
-        Bruggeman) can be added later as separate functions.
+        Args:
+            method: One of 'volume_weighted', 'maxwell_garnett', 'bruggeman'.
+
+        Returns:
+            Effective complex refractive index.
         """
-        total_volume = 0.0
-        weighted_sum = 0.0 + 0j
+        from .ema import bruggeman, maxwell_garnett, volume_weighted
+
+        volumes, ri_list = self._material_data()
+        if method == "volume_weighted":
+            return volume_weighted(volumes, ri_list)
+        elif method == "maxwell_garnett":
+            return maxwell_garnett(volumes, ri_list)
+        elif method == "bruggeman":
+            return bruggeman(volumes, ri_list)
+        else:
+            raise ValueError(
+                f"Unknown EMA method '{method}'. "
+                "Available: volume_weighted, maxwell_garnett, bruggeman"
+            )
+
+    def _material_data(self) -> tuple[list[float], list[complex]]:
+        """Extract [(volume, ri), ...] from all blocks."""
+        volumes = []
+        ri_list = []
         for block in self._blocks.values():
             if block is None:
                 continue
@@ -119,12 +138,10 @@ class AerosolParticle:
                 float(np.mean(block.cell_data["ri_n"])),
                 float(np.mean(block.cell_data["ri_k"])),
             )
-            volume = self._block_volume(block)
-            total_volume += volume
-            weighted_sum += ri * volume
-        if total_volume <= 0:
-            raise ValueError("Particle has no volume.")
-        return weighted_sum / total_volume
+            vol = self._block_volume(block)
+            volumes.append(vol)
+            ri_list.append(ri)
+        return volumes, ri_list
 
     def __repr__(self) -> str:
         return (

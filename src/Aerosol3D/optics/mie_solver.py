@@ -40,7 +40,7 @@ def solve_mie(
     """Solve optics using Mie theory (PyMieScatt)."""
     import PyMieScatt as pms  # noqa: N813
 
-    m = particle.effective_refractive_index / config.n_host
+    m = particle.effective_refractive_index() / config.n_host
     d = particle.equivalent_diameter
     wavelength = config.wavelength
 
