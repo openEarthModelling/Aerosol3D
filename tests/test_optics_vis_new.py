@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from Aerosol3D.optics.optics_export import AerosolOpticsData
 
