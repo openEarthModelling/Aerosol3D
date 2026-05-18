@@ -1,4 +1,5 @@
 # tests/test_ema.py
+import numpy as np
 import pytest
 
 
@@ -30,3 +31,51 @@ class TestVolumeWeighted:
         m = complex(1.5, 0.0)
         result = volume_weighted([100.0, 200.0], [m, m])
         assert abs(result - m) < 1e-10
+
+
+class TestMaxwellGarnett:
+    def test_two_component_bc_sulfate(self):
+        from Aerosol3D.core.ema import maxwell_garnett
+
+        # BC (20%) + sulfate (80%)
+        volumes = [100.0, 400.0]
+        ri = [complex(1.95, 0.79), complex(1.53, 0.0)]
+        result = maxwell_garnett(volumes, ri)
+
+        # Verify against formula: host = sulfate (largest volume)
+        m_h = complex(1.53, 0.0)
+        m_i = complex(1.95, 0.79)
+        f_i = 100.0 / 500.0
+        beta = f_i * (m_i**2 - m_h**2) / (m_i**2 + 2 * m_h**2)
+        eps_eff = m_h**2 * (1 + 2 * beta) / (1 - beta)
+        expected = np.sqrt(eps_eff)
+        assert abs(result - expected) < 1e-10
+
+    def test_single_component(self):
+        from Aerosol3D.core.ema import maxwell_garnett
+
+        m = complex(1.95, 0.79)
+        result = maxwell_garnett([100.0], [m])
+        assert abs(result - m) < 1e-10
+
+    def test_equal_materials(self):
+        from Aerosol3D.core.ema import maxwell_garnett
+
+        m = complex(1.5, 0.0)
+        result = maxwell_garnett([100.0, 200.0], [m, m])
+        assert abs(result - m) < 1e-10
+
+    def test_real_valued(self):
+        from Aerosol3D.core.ema import maxwell_garnett
+
+        # Purely real RI: host=1.5, inclusion=2.0, f_i=0.25
+        volumes = [1.0, 3.0]
+        ri = [complex(2.0, 0.0), complex(1.5, 0.0)]
+        result = maxwell_garnett(volumes, ri)
+        m_h = complex(1.5, 0.0)
+        m_i = complex(2.0, 0.0)
+        f_i = 0.25
+        beta = f_i * (m_i**2 - m_h**2) / (m_i**2 + 2 * m_h**2)
+        expected = np.sqrt(m_h**2 * (1 + 2 * beta) / (1 - beta))
+        assert abs(result - expected) < 1e-10
+        assert result.imag == pytest.approx(0.0, abs=1e-12)
