@@ -43,12 +43,18 @@ SCENE_CONFIG = {
     "atmosphere": {"profile": "us", "altitude": 0.0},
     "source": {"type": "solar", "sza": 30.0},
     "wavelength": {"min_nm": 401.0, "max_nm": 699.0},
-    "solver": {"method": "disort", "streams": 16, "disort_intcor": "moments"},
+    "solver": {
+        "method": "disort",
+        "streams": 16,
+        "disort_intcor": "moments",
+        "pseudospherical": True,
+        "deltam": True,
+    },
     "surface": {"albedo": 0.1},
     "output": {
         "quantities": ["lambda", "edir", "edn", "eup"],
         "quantity": "transmittance",
-        "format": "ascii",
+        "format": "netcdf",
     },
 }
 
@@ -60,14 +66,6 @@ AEROSOL_PROFILE = {
     "scale_height_km": 1.5,
     "total_optical_depth_550": 0.3,
     "particle_density_kg_m3": 1800.0,  # black carbon density
-}
-
-# ---------------------------------------------------------------------------
-# Size distribution (narrow lognormal, near-monodisperse)
-# ---------------------------------------------------------------------------
-SIZE_DISTRIBUTION = {
-    "kind": "lognormal",
-    "sigma_g": 1.1,
 }
 
 # ---------------------------------------------------------------------------

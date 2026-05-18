@@ -29,7 +29,6 @@ from config import (
     RT_MIE_NC,
     SCENE_CONFIG,
     AEROSOL_PROFILE,
-    SIZE_DISTRIBUTION,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -61,40 +60,12 @@ def compute_mass_profile(optical_depth_550: float, altitude_grid_km: np.ndarray,
 
 def build_composite_aerosol(optics: AerosolOpticsData) -> CompositeAerosol:
     """Build pyRadtran CompositeAerosol from AerosolOpticsData."""
-    wavelengths_um = optics.wavelength_nm / 1000.0
+    particle_optics = ParticleOptics.from_aerosol3d(optics)
+
     r_eff_um = optics.r_eff_nm / 1000.0
-
-    C_ext_um2 = optics.C_ext * 1e-6  # nm² -> um²
-    C_sca_um2 = optics.C_sca * 1e-6
-    g_arr = optics.g.reshape((-1, 1))
-
-    pf_kwargs = dict(
-        wavelength_um=wavelengths_um.tolist(),
-        radius_um=[r_eff_um],
-        Cext_um2=C_ext_um2.reshape((-1, 1)),
-        Csca_um2=C_sca_um2.reshape((-1, 1)),
-        g=g_arr,
-    )
-    if optics.legendre_moments is not None:
-        # Convert k_l = (2l+1)*integral to beta_l = k_l/(2l+1) for libRadtran/DISORT PMOM
-        l_vals = np.arange(optics.n_legendre)
-        beta_l = optics.legendre_moments / (2 * l_vals + 1)
-        pf_kwargs["legendre_moments"] = beta_l.reshape(
-            (-1, 1, optics.n_legendre)
-        )
-        logger.info(f"Passing Legendre moments ({optics.n_legendre} terms, "
-                     f"beta_1={beta_l[0, 1]:.4f}) to pyRadtran")
-    else:
-        logger.warning("No Legendre moments available — pyRadtran will use HG fallback")
-
-    particle_optics = ParticleOptics.from_cross_sections(**pf_kwargs)
-
     size_dist = SizeDistribution(
-        kind=SIZE_DISTRIBUTION["kind"],
-        params={
-            "r_g_um": r_eff_um,
-            "sigma_g": SIZE_DISTRIBUTION["sigma_g"],
-        },
+        kind="monodisperse",
+        params={"radius_um": r_eff_um},
     )
 
     precomputed = PrecomputedSpecies(
@@ -122,6 +93,8 @@ def build_composite_aerosol(optics: AerosolOpticsData) -> CompositeAerosol:
     altitude_km_desc = altitude_km[::-1]
     mass_profile_desc = mass_profile[::-1]
 
+    wavelengths_um = optics.wavelength_nm / 1000.0
+
     loaded = LoadedSpecies(
         species=precomputed,
         mass_profile_kg_m3=mass_profile_desc.tolist(),
@@ -131,7 +104,7 @@ def build_composite_aerosol(optics: AerosolOpticsData) -> CompositeAerosol:
     aerosol = CompositeAerosol(
         sources=[loaded],
         wavelength_grid_um=wavelengths_um.tolist(),
-        altitude_grid_km=altitude_grid_km[::-1].tolist(),
+        altitude_grid_km=altitude_km[::-1].tolist(),
         n_legendre=optics.n_legendre,
     )
 
@@ -157,6 +130,8 @@ def build_scene(aerosol: CompositeAerosol) -> Scene:
             method=cfg["solver"]["method"],
             streams=cfg["solver"]["streams"],
             disort_intcor=cfg["solver"].get("disort_intcor"),
+            pseudospherical=cfg["solver"].get("pseudospherical", False),
+            deltam=cfg["solver"].get("deltam", False),
         )
         .set_surface(albedo=cfg["surface"]["albedo"])
         .set_output(
