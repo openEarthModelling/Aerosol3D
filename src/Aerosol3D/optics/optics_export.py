@@ -30,6 +30,7 @@ class AerosolOpticsData:
     P11: np.ndarray | None = None
 
     legendre_moments: np.ndarray | None = None
+    legendre_moments_beta: np.ndarray | None = None
     n_legendre: int = 32
 
     solver: str = ""
@@ -74,6 +75,12 @@ class AerosolOpticsData:
                 self.legendre_moments,
             )
 
+        if self.legendre_moments_beta is not None:
+            data_vars["legendre_moments_beta"] = (
+                ["wavelength", "legendre_order"],
+                self.legendre_moments_beta,
+            )
+
         if self.refractive_index_real is not None:
             data_vars["refractive_index_real"] = (
                 ["wavelength"],
@@ -99,6 +106,7 @@ class AerosolOpticsData:
         theta_rad = np.radians(ds["theta_deg"].values) if "theta_deg" in ds else None
         phi_rad = np.radians(ds["phi_deg"].values) if "phi_deg" in ds else None
         legendre_moments = ds["legendre_moments"].values if "legendre_moments" in ds else None
+        legendre_moments_beta = ds["legendre_moments_beta"].values if "legendre_moments_beta" in ds else None
         n_real = ds["refractive_index_real"].values if "refractive_index_real" in ds else None
         n_imag = ds["refractive_index_imag"].values if "refractive_index_imag" in ds else None
 
@@ -114,6 +122,7 @@ class AerosolOpticsData:
             phi_rad=phi_rad,
             P11=P11,
             legendre_moments=legendre_moments,
+            legendre_moments_beta=legendre_moments_beta,
             n_legendre=int(ds.attrs.get("n_legendre", 32)),
             solver=ds.attrs.get("solver", ""),
             material=ds.attrs.get("material", ""),
@@ -161,6 +170,7 @@ def from_optical_results(
     phi_rad = None
     P11 = None
     legendre_moments = None
+    legendre_moments_beta = None
 
     if has_pf:
         pf0 = results[0].phase_function
@@ -171,13 +181,16 @@ def from_optical_results(
         n_phi = len(phi_rad)
         P11 = np.zeros((n_wl, n_theta, n_phi))
         legendre_moments = np.zeros((n_wl, n_legendre))
+        legendre_moments_beta = np.zeros((n_wl, n_legendre))
 
+        l_vals = np.arange(n_legendre)
         for i, r in enumerate(results):
             pf = r.phase_function
             assert pf is not None
             P11[i, :, :] = pf.P11
             moments = compute_legendre_moments(pf, n_legendre=n_legendre)
             legendre_moments[i, :] = moments
+            legendre_moments_beta[i, :] = moments / (2 * l_vals + 1)
 
     return AerosolOpticsData(
         wavelength_nm=wavelength_nm,
@@ -191,6 +204,7 @@ def from_optical_results(
         phi_rad=phi_rad,
         P11=P11,
         legendre_moments=legendre_moments,
+        legendre_moments_beta=legendre_moments_beta,
         n_legendre=n_legendre,
         solver=results[0].solver,
         material=material_name,

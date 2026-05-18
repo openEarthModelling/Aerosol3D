@@ -66,6 +66,23 @@ class TestFromOpticalResults:
             expected = (2 * l + 1) * (0.7**l)
             assert data.legendre_moments[0, l] == pytest.approx(expected, rel=0.05)
 
+    def test_auto_computes_legendre_moments_beta(self):
+        from Aerosol3D.optics.optics_export import from_optical_results
+
+        results = [_make_result(550.0, g=0.7)]
+        data = from_optical_results(results, n_legendre=8)
+
+        assert data.legendre_moments is not None
+        assert data.legendre_moments_beta is not None
+        assert data.legendre_moments_beta.shape == (1, 8)
+        # beta_l = k_l / (2l+1)
+        l_vals = np.arange(8)
+        expected_beta = data.legendre_moments[0, :] / (2 * l_vals + 1)
+        assert np.allclose(data.legendre_moments_beta[0, :], expected_beta, atol=1e-10)
+        # beta_0 = 1.0, beta_1 ~ g = 0.7
+        assert data.legendre_moments_beta[0, 0] == pytest.approx(1.0, abs=1e-6)
+        assert data.legendre_moments_beta[0, 1] == pytest.approx(0.7, abs=0.05)
+
     def test_no_phase_function_gives_no_legendre(self):
         from Aerosol3D.optics.optics_export import from_optical_results
 
@@ -74,6 +91,7 @@ class TestFromOpticalResults:
 
         assert data.P11 is None
         assert data.legendre_moments is None
+        assert data.legendre_moments_beta is None
         assert data.theta_rad is None
         assert data.phi_rad is None
 
@@ -139,6 +157,28 @@ class TestNetCDFRoundTrip:
 
         assert loaded.P11 is None
         assert loaded.legendre_moments is None
+        assert loaded.legendre_moments_beta is None
         assert loaded.theta_rad is None
         assert loaded.phi_rad is None
         assert np.allclose(loaded.wavelength_nm, [550.0])
+
+    def test_round_trip_with_legendre_beta(self, tmp_path):
+        from Aerosol3D.optics.optics_export import (
+            AerosolOpticsData,
+            from_optical_results,
+        )
+
+        results = [_make_result(400.0), _make_result(550.0)]
+        original = from_optical_results(results, n_legendre=16)
+
+        path = tmp_path / "test_beta.nc"
+        original.to_netcdf(str(path))
+        loaded = AerosolOpticsData.from_netcdf(str(path))
+
+        assert loaded.legendre_moments is not None
+        assert loaded.legendre_moments_beta is not None
+        assert np.allclose(
+            loaded.legendre_moments_beta,
+            original.legendre_moments_beta,
+            atol=1e-10,
+        )
