@@ -10,8 +10,10 @@ Aerosol3D is a Python toolkit for modeling the 3D geometry and optical propertie
 
 - **3D Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM (Closed-Cell Model), and CAM (Coated-Aggregate Model) coatings
-- **Optical Computation** — Solve optical properties via DDA using a Julia-based backend with optional GPU acceleration
-- **Visualization** — Generate 3D screenshots and rotation videos using PyVista
+- **Optical Computation** — Solve optical properties via DDA (Julia backend, optional GPU) or Mie theory (PyMieScatt, near-instant for spheres)
+- **Optical Property Export** — Multi-wavelength `AerosolOpticsData` container with auto-computed Legendre moments and NetCDF I/O
+- **Optical Visualization** — Spectral properties, phase function comparison, Legendre convergence diagnostics, and comparison summary plots
+- **3D Visualization** — Generate screenshots and rotation videos using PyVista
 - **Material Database** — Built-in refractive index data for common aerosol materials
 - **Flexible I/O** — Export to VTP and voxel formats
 
@@ -56,13 +58,24 @@ particle.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot)
 # 3D visualization
 save_screenshot(particle, "sphere.png", colors={"core": "black"})
 
-# DDA optical computation
+# Optical computation (Mie or DDA)
 config = SimulationConfig(wavelength=550.0, source="solar")
-result = solve_optics(particle, config)
+result = solve_optics(particle, config, solver="MIE")
 print(f"Extinction efficiency: {result.qext}")
 ```
 
-See the [`examples/`](examples/) directory for complete workflows including fractal aggregates and coated particles.
+Export multi-wavelength results and visualize:
+
+```python
+from Aerosol3D.optics import from_optical_results
+
+results = [solve_optics(particle, SimulationConfig(wavelength=w), solver="MIE")
+           for w in [450, 550, 650]]
+data = from_optical_results(results, n_legendre=32)
+data.to_netcdf("optics.nc")
+```
+
+See the [`examples/`](examples/) directory for complete workflows including fractal aggregates, coated particles, and DDA-Mie comparison pipelines.
 
 ## Examples
 
@@ -70,6 +83,9 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 |---------|-------------|
 | [`black_carbon_sphere.py`](examples/black_carbon_sphere.py) | Bare BC sphere with DDA optics |
 | [`black_carbon_fractal.py`](examples/black_carbon_fractal.py) | Fractal aggregate via pyFracAggregate with full pipeline |
+| [`coated_fractal_aggregate.py`](examples/coated_fractal_aggregate.py) | Coated fractal aggregate with coating models |
+| [`validate_mie_vs_dda.py`](examples/validate_mie_vs_dda.py) | Mie vs DDA validation comparison |
+| [`dda_mie_pyradtran_pipeline/`](examples/dda_mie_pyradtran_pipeline/) | 3-stage DDA/Mie optics + DISORT radiative transfer pipeline |
 
 ## API Overview
 
@@ -95,8 +111,18 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 
 ### Optics
 
-- `solve_optics(particle, config)` — DDA optical solver
+- `solve_optics(particle, config, solver="DDA"|"MIE")` — Optical solver dispatch
 - `SimulationConfig(wavelength, source)` — Simulation parameters
+- `AerosolOpticsData` / `from_optical_results(results, n_legendre)` — Multi-wavelength optical property container
+- `compute_legendre_moments(phase_function, theta)` — Legendre expansion of scattering phase function
+
+### Optical Visualization
+
+- `plot_spectral_properties(data)` — Extinction/scattering/absorption spectra
+- `plot_phase_function(data)` — Phase function P11 vs scattering angle
+- `plot_optical_comparison(data1, data2)` — Side-by-side comparison of two datasets
+- `plot_phase_function_comparison(data1, data2)` — Phase function comparison with relative difference
+- `plot_legendre_convergence(data)` — Legendre moment convergence diagnostics
 
 ### I/O & Visualization
 

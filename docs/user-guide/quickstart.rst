@@ -43,3 +43,25 @@ Key Parameters
 - ``wavelength``: Incident light wavelength in nm
 - ``dipole_spacing``: DDA dipole spacing in nm (smaller = more accurate but slower)
 - ``compute_phase_func``: Whether to compute the phase function P11
+
+4. Export and Visualize Results
+-------------------------------
+
+.. code-block:: python
+
+    from Aerosol3D.optics import from_optical_results
+    from Aerosol3D.optics.visualization import plot_spectral_properties
+
+    # Collect results at multiple wavelengths
+    wavelengths = [450.0, 550.0, 650.0]
+    results = [
+        solve_optics(particle, SimulationConfig(wavelength=w), solver="MIE")
+        for w in wavelengths
+    ]
+
+    # Build export container with auto-computed Legendre moments
+    data = from_optical_results(results, n_legendre=32)
+    data.to_netcdf("optics.nc")
+
+    # Plot spectral properties
+    plot_spectral_properties(data)

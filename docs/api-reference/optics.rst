@@ -20,3 +20,18 @@ Optics Module
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: Aerosol3D.optics.legendre
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: Aerosol3D.optics.optics_export
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: Aerosol3D.optics.visualization
+   :members:
+   :undoc-members:
+   :show-inheritance:

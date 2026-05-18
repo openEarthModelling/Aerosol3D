@@ -11,8 +11,10 @@ Features
 
 - **Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates.
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM, and CAM coatings.
-- **Optical Computation** — Solve optical properties via DDA (Julia backend) or Mie theory.
-- **Visualization** — Generate 3D screenshots and rotation videos with PyVista.
+- **Optical Computation** — Solve optical properties via DDA (Julia backend) or Mie theory (PyMieScatt).
+- **Optical Property Export** — Multi-wavelength container with auto-computed Legendre moments and NetCDF I/O.
+- **Optical Visualization** — Spectral properties, phase function comparison, and Legendre convergence plots.
+- **3D Visualization** — Generate screenshots and rotation videos with PyVista.
 
 Quick Navigation
 ----------------

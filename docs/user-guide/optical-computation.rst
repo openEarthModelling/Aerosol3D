@@ -41,3 +41,66 @@ The phase function :math:`P_{11}(\theta, \phi)` describes the angular
 distribution of scattered light. It is normalized such that::
 
     \int P_{11}(\theta, \phi) \, d\Omega = 1
+
+Optical Data Export
+-------------------
+
+The ``AerosolOpticsData`` dataclass provides a unified container for
+multi-wavelength optical properties. It is built from a list of
+``OpticalResult`` objects via the ``from_optical_results()`` factory:
+
+.. code-block:: python
+
+    from Aerosol3D.optics import from_optical_results
+
+    data = from_optical_results(results, n_legendre=32)
+
+The container stores wavelength-dependent extinction, scattering,
+absorption cross-sections, asymmetry parameter, phase functions, and
+auto-computed Legendre moments.
+
+**NetCDF I/O** — Persist and reload optical data:
+
+.. code-block:: python
+
+    data.to_netcdf("optics.nc")
+    loaded = AerosolOpticsData.from_netcdf("optics.nc")
+
+Legendre Moments
+----------------
+
+The ``compute_legendre_moments()`` function expands the scattering phase
+function into Legendre polynomial coefficients:
+
+.. math::
+
+    k_l = (2l+1) \int_0^\pi P_{11}(\theta) P_l(\cos\theta) \sin\theta \, d\theta
+
+.. note::
+   ``compute_legendre_moments`` returns raw coefficients :math:`k_l`.
+   For DISORT/libRadtran PMOM input, convert to :math:`\beta_l = k_l / (2l+1)`.
+
+Optical Result Visualization
+----------------------------
+
+Aerosol3D provides plotting functions for analyzing and comparing optical
+properties:
+
+- ``plot_spectral_properties(data)`` — Extinction, scattering, and absorption
+  spectra vs wavelength
+- ``plot_phase_function(data)`` — Phase function P11 vs scattering angle
+- ``plot_optical_comparison(data1, data2)`` — Side-by-side comparison of two
+  datasets
+- ``plot_phase_function_comparison(data1, data2)`` — Phase function comparison
+  with relative difference
+- ``plot_legendre_convergence(data)`` — Legendre moment convergence diagnostics
+- ``plot_legendre_moments_spectrum(data)`` — Legendre moments as a function of
+  wavelength
+- ``generate_comparison_summary(data1, data2)`` — Full comparison summary with
+  plots
+
+.. code-block:: python
+
+    from Aerosol3D.optics.visualization import plot_spectral_properties
+
+    plot_spectral_properties(data)
