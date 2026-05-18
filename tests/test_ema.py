@@ -79,3 +79,51 @@ class TestMaxwellGarnett:
         expected = np.sqrt(m_h**2 * (1 + 2 * beta) / (1 - beta))
         assert abs(result - expected) < 1e-10
         assert result.imag == pytest.approx(0.0, abs=1e-12)
+
+
+class TestBruggeman:
+    def test_two_component_residual(self):
+        from Aerosol3D.core.ema import bruggeman
+
+        # BC (20%) + sulfate (80%)
+        volumes = [100.0, 400.0]
+        ri = [complex(1.95, 0.79), complex(1.53, 0.0)]
+        result = bruggeman(volumes, ri)
+
+        # Verify the Bruggeman equation is satisfied: residual ≈ 0
+        eps_eff = result**2
+        total = sum(volumes)
+        residual = sum(
+            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff)
+            for v, m in zip(volumes, ri)
+        )
+        assert abs(residual) < 1e-8
+
+    def test_single_component(self):
+        from Aerosol3D.core.ema import bruggeman
+
+        m = complex(1.95, 0.79)
+        result = bruggeman([100.0], [m])
+        assert abs(result - m) < 1e-10
+
+    def test_equal_materials(self):
+        from Aerosol3D.core.ema import bruggeman
+
+        m = complex(1.5, 0.0)
+        result = bruggeman([100.0, 200.0], [m, m])
+        assert abs(result - m) < 1e-10
+
+    def test_real_valued_residual(self):
+        from Aerosol3D.core.ema import bruggeman
+
+        volumes = [1.0, 3.0]
+        ri = [complex(2.0, 0.0), complex(1.5, 0.0)]
+        result = bruggeman(volumes, ri)
+        eps_eff = result**2
+        total = sum(volumes)
+        residual = sum(
+            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff)
+            for v, m in zip(volumes, ri)
+        )
+        assert abs(residual) < 1e-8
+        assert result.imag == pytest.approx(0.0, abs=1e-12)
