@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] - 2026-05-18
 
 ### Added
 - `AerosolOpticsData` dataclass — generic multi-wavelength optical property container with auto-computed Legendre moments (`optics_export.py`)
@@ -81,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Particle shape generation (sphere, spheroid, cube, coated sphere)
 - Core data structures for optical properties and simulation configuration
 
+[0.4.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.2.0...v0.3.0
-[Unreleased]: https://github.com/openEarthModelling/aerosol3d/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/openEarthModelling/aerosol3d/compare/v0.4.0...HEAD
 [0.2.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openEarthModelling/aerosol3d/releases/tag/v0.1.0
