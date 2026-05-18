@@ -48,13 +48,12 @@ SCENE_CONFIG = {
         "streams": 16,
         "disort_intcor": "moments",
         "pseudospherical": True,
-        "deltam": True,
     },
     "surface": {"albedo": 0.1},
     "output": {
         "quantities": ["lambda", "edir", "edn", "eup"],
         "quantity": "transmittance",
-        "format": "netcdf",
+        "format": "ascii",
     },
 }
 
