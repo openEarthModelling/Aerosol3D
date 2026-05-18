@@ -21,6 +21,17 @@
 - Convert k_l → beta_l (divide by 2l+1) before passing to DISORT PMOM — DISORT expects normalized moments, not raw coefficients
 - `plot_phase_function_comparison` handles datasets with different theta grid sizes via interpolation
 
+### Documentation
+- Updated README.md features, API overview, quick start, and examples table to reflect Mie solver, `AerosolOpticsData`, and optical visualization
+- Added `optics_export`, `visualization`, `legendre` modules to Sphinx API reference
+- Added optical data export, Legendre moments, and visualization sections to optical-computation user guide
+- Added step 4 (export and visualize) to quickstart guide
+- Added DDA-Mie-pyRadtran pipeline tutorial and coated fractal aggregate tutorial
+- Added optional dependencies section (matplotlib, xarray, netCDF4, pyRadtran) to installation guide
+- Expanded mie-vs-dda-validation tutorial with detailed explanations
+- Added documentation contribution guidelines to contributing guide
+- Synced CONTRIBUTING.md with Sphinx version
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
