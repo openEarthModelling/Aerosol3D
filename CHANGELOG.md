@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- `AerosolOpticsData` dataclass — generic multi-wavelength optical property container with auto-computed Legendre moments (`optics_export.py`)
+- `from_optical_results()` factory function builds `AerosolOpticsData` from `list[OpticalResult]`
+- `AerosolOpticsData.to_netcdf()` / `.from_netcdf()` for NetCDF persistence
+- Visualization functions: `plot_spectral_properties`, `plot_phase_function`, `plot_optical_comparison`, `plot_phase_function_comparison`, `plot_legendre_convergence`, `plot_legendre_moments_spectrum`, `generate_comparison_summary`
+- Smoke tests for all new visualization functions (`test_optics_vis_new.py`)
+- Unit tests for `AerosolOpticsData` construction, Legendre auto-computation, and NetCDF round-trip (`test_optics_export.py`)
+
+### Changed
+- Replaced `pyradtran_export.py` with format-agnostic `optics_export.py` — aerosol3d no longer produces pyRadtran-specific output
+- Simplified `compute_optics.py` example (-204 lines) — uses `from_optical_results()` and library visualization
+- Simplified `compare_results.py` example (-192 lines) — uses library comparison functions
+- `run_radiative_transfer.py` now loads `AerosolOpticsData.from_netcdf()` and passes Legendre moments to pyRadtran
+
+### Fixed
+- Legendre moments from phase functions are now auto-computed and passed through the RT pipeline (previously fell back to Henyey-Greenstein approximation)
+- Convert k_l → beta_l (divide by 2l+1) before passing to DISORT PMOM — DISORT expects normalized moments, not raw coefficients
+- `plot_phase_function_comparison` handles datasets with different theta grid sizes via interpolation
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
