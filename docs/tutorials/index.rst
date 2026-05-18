@@ -8,5 +8,7 @@ Step-by-step tutorials for common Aerosol3D workflows.
 
    black-carbon-sphere
    coated-particle
+   coated-fractal-aggregate
    fractal-aggregate
    mie-vs-dda-validation
+   dda-mie-pyradtran-pipeline

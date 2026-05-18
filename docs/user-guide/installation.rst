@@ -39,3 +39,14 @@ GPU Acceleration
 
 GPU-accelerated DDA requires CUDA and the Julia CUDA packages. See the
 CEMD.jl documentation for setup instructions.
+
+Additional Optional Dependencies
+---------------------------------
+
+- **Mie solver** — Requires ``PyMieScatt`` (included with Aerosol3D)
+- **Optical visualization** — Requires ``matplotlib`` and ``numpy``
+- **NetCDF I/O** — Requires ``xarray`` and ``netCDF4`` for
+  ``AerosolOpticsData.to_netcdf()`` / ``.from_netcdf()``
+- **Radiative transfer pipeline** — Requires ``pyRadtran`` and libRadtran
+  (see the :doc:`/tutorials/dda-mie-pyradtran-pipeline` tutorial).
+  Set ``PYRADTRAN_DATA_PATH`` to the libRadtran data directory.
