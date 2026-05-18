@@ -143,6 +143,43 @@ class AerosolParticle:
             ri_list.append(ri)
         return volumes, ri_list
 
+    @property
+    def coreshell_geometry(self) -> tuple[float, float, complex, complex]:
+        """Extract core-shell geometry from a two-block particle.
+
+        The block with smaller volume is treated as the core.
+        Returns (d_core, d_outer, m_core, m_shell).
+
+        Raises:
+            ValueError: If particle does not have exactly 2 blocks.
+        """
+        active = {k: v for k, v in self._blocks.items() if v is not None}
+        if len(active) != 2:
+            raise ValueError(f"Core-shell requires exactly 2 blocks, got {len(active)}.")
+        blocks = list(active.values())
+        v0, ri0 = (
+            self._block_volume(blocks[0]),
+            complex(
+                float(np.mean(blocks[0].cell_data["ri_n"])),
+                float(np.mean(blocks[0].cell_data["ri_k"])),
+            ),
+        )
+        v1, ri1 = (
+            self._block_volume(blocks[1]),
+            complex(
+                float(np.mean(blocks[1].cell_data["ri_n"])),
+                float(np.mean(blocks[1].cell_data["ri_k"])),
+            ),
+        )
+        if v0 <= v1:
+            v_core, m_core, v_shell_block, m_shell = v0, ri0, v1, ri1
+        else:
+            v_core, m_core, v_shell_block, m_shell = v1, ri1, v0, ri0
+
+        d_core = (6.0 * v_core / np.pi) ** (1.0 / 3.0)
+        d_outer = (6.0 * (v_core + v_shell_block) / np.pi) ** (1.0 / 3.0)
+        return d_core, d_outer, m_core, m_shell
+
     def __repr__(self) -> str:
         return (
             f"AerosolParticle(name={self.name!r}, "
