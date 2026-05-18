@@ -444,8 +444,8 @@ def solve_optics(
     verbose : bool, optional
         Print progress and timing. Default True.
     """
-    if solver not in ("DDA", "MIE"):
-        raise ValueError(f"solver must be 'DDA' or 'MIE', got {solver!r}")
+    if solver not in ("DDA", "MIE", "MIE_CORESHELL"):
+        raise ValueError(f"solver must be 'DDA', 'MIE', or 'MIE_CORESHELL', got {solver!r}")
 
     # MIE solver dispatch
     if solver == "MIE":
@@ -461,6 +461,29 @@ def solve_optics(
             wl_config = copy.copy(config)
             wl_config.wavelength = float(wl)
             result = solve_mie(
+                particle,
+                wl_config,
+                compute_phase_func=compute_phase_func,
+                verbose=verbose and len(wavelengths) == 1,
+            )
+            results.append(result)
+
+        return results[0] if len(results) == 1 else results
+
+    # MIE_CORESHELL solver dispatch
+    if solver == "MIE_CORESHELL":
+        from .mie_solver import solve_mie_coreshell
+
+        if isinstance(config.wavelength, list | tuple | np.ndarray):
+            wavelengths = list(config.wavelength)
+        else:
+            wavelengths = [float(config.wavelength)]
+
+        results = []
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
+            result = solve_mie_coreshell(
                 particle,
                 wl_config,
                 compute_phase_func=compute_phase_func,

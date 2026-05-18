@@ -35,12 +35,13 @@ def solve_mie(
     config: SimulationConfig,
     compute_phase_func: bool = False,
     n_theta: int = 181,
+    ema_method: str = "volume_weighted",
     verbose: bool = True,
 ) -> OpticalResult:
     """Solve optics using Mie theory (PyMieScatt)."""
     import PyMieScatt as pms  # noqa: N813
 
-    m = particle.effective_refractive_index() / config.n_host
+    m = particle.effective_refractive_index(method=ema_method) / config.n_host
     d = particle.equivalent_diameter
     wavelength = config.wavelength
 
