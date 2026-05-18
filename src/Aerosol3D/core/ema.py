@@ -16,9 +16,7 @@ def volume_weighted(volumes: list[float], refractive_indices: list[complex]) -> 
     return sum(v * m for v, m in zip(volumes, refractive_indices)) / total
 
 
-def maxwell_garnett(
-    volumes: list[float], refractive_indices: list[complex]
-) -> complex:
+def maxwell_garnett(volumes: list[float], refractive_indices: list[complex]) -> complex:
     """Maxwell-Garnett effective medium approximation.
 
     Host is the component with the largest volume. All other components
@@ -47,9 +45,7 @@ def maxwell_garnett(
     return np.sqrt(eps_eff)
 
 
-def bruggeman(
-    volumes: list[float], refractive_indices: list[complex]
-) -> complex:
+def bruggeman(volumes: list[float], refractive_indices: list[complex]) -> complex:
     """Bruggeman symmetric effective medium approximation.
 
     sum_i f_i * (eps_i - eps_eff) / (eps_i + 2*eps_eff) = 0
@@ -71,12 +67,8 @@ def bruggeman(
     eps_eff = sum(f * e for f, e in zip(fracs, eps_list))
 
     for _ in range(100):
-        f_val = sum(
-            f * (e - eps_eff) / (e + 2 * eps_eff) for f, e in zip(fracs, eps_list)
-        )
-        f_deriv = sum(
-            f * (-3 * e) / (e + 2 * eps_eff) ** 2 for f, e in zip(fracs, eps_list)
-        )
+        f_val = sum(f * (e - eps_eff) / (e + 2 * eps_eff) for f, e in zip(fracs, eps_list))
+        f_deriv = sum(f * (-3 * e) / (e + 2 * eps_eff) ** 2 for f, e in zip(fracs, eps_list))
         if abs(f_deriv) < 1e-30:
             break
         delta = f_val / f_deriv

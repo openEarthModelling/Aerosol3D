@@ -106,7 +106,9 @@ class AerosolOpticsData:
         theta_rad = np.radians(ds["theta_deg"].values) if "theta_deg" in ds else None
         phi_rad = np.radians(ds["phi_deg"].values) if "phi_deg" in ds else None
         legendre_moments = ds["legendre_moments"].values if "legendre_moments" in ds else None
-        legendre_moments_beta = ds["legendre_moments_beta"].values if "legendre_moments_beta" in ds else None
+        legendre_moments_beta = (
+            ds["legendre_moments_beta"].values if "legendre_moments_beta" in ds else None
+        )
         n_real = ds["refractive_index_real"].values if "refractive_index_real" in ds else None
         n_imag = ds["refractive_index_imag"].values if "refractive_index_imag" in ds else None
 

@@ -140,3 +140,76 @@ class TestSolveMieCoreShell:
         # Outer diameter of core-shell ≈ diameter of homogeneous sphere
         # (small tolerance due to voxelization-induced diameter differences)
         assert r_cs.cross_sections.Q_ext == pytest.approx(r_homo.cross_sections.Q_ext, rel=0.02)
+
+
+class TestIntegration:
+    def test_solve_optics_mie_coreshell(self, soot_material, sulfate_material):
+        """Full pipeline: particle -> solve_optics(solver='MIE_CORESHELL')."""
+        # Import mie_solver first to apply scipy.integrate.trapz patch
+        from Aerosol3D.optics.mie_solver import solve_mie_coreshell  # noqa: F401
+
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="bc_sulfate")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        result = solve_optics(p, config, solver="MIE_CORESHELL", verbose=False)
+        assert result.solver == "MIE_CORESHELL"
+        assert result.cross_sections.Q_ext > 0
+
+    def test_solve_optics_mie_with_ema_methods(self, soot_material, sulfate_material):
+        """Homogeneous Mie with different EMA methods."""
+        # Import mie_solver first to apply scipy.integrate.trapz patch
+        from Aerosol3D.optics.mie_solver import solve_mie
+
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+
+        p = AerosolParticle(name="bc_sulfate")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        r_vw = solve_mie(p, config, ema_method="volume_weighted", verbose=False)
+        r_mg = solve_mie(p, config, ema_method="maxwell_garnett", verbose=False)
+        r_bg = solve_mie(p, config, ema_method="bruggeman", verbose=False)
+
+        # All should produce valid results
+        for r in [r_vw, r_mg, r_bg]:
+            assert r.cross_sections.Q_ext > 0
+            assert r.solver == "MIE"
+
+        # Different EMA methods should give different results
+        # (because soot and sulfate have very different RIs)
+        assert r_vw.cross_sections.Q_ext != r_mg.cross_sections.Q_ext
+
+    def test_coreshell_vs_homogeneous_different(self, soot_material, sulfate_material):
+        """Core-shell should differ from homogeneous Mie for absorbing core."""
+        # Import mie_solver first to apply scipy.integrate.trapz patch
+        from Aerosol3D.optics.mie_solver import solve_mie_coreshell  # noqa: F401
+
+        pytest.importorskip("PyMieScatt")
+        from Aerosol3D.core.particle import AerosolParticle
+        from Aerosol3D.geometry.primitives import create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 30.0), soot_material)
+        p.add_mesh("shell", create_sphere((0, 0, 0), 50.0), sulfate_material)
+        config = SimulationConfig(wavelength=550.0)
+
+        r_cs = solve_optics(p, config, solver="MIE_CORESHELL", verbose=False)
+        r_homo = solve_optics(p, config, solver="MIE", verbose=False)
+
+        # Results should be physically different (core-shell ≠ homogeneous EMA)
+        assert r_cs.cross_sections.Q_abs != r_homo.cross_sections.Q_abs
+        assert r_cs.cross_sections.Q_ext != r_homo.cross_sections.Q_ext

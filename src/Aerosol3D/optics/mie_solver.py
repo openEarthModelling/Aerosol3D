@@ -99,11 +99,11 @@ def solve_mie(
 
 
 def _coreshell_phase_function(
-    mCore,
-    mShell,
+    mCore,  # noqa: N803
+    mShell,  # noqa: N803
     wavelength,
-    dCore,
-    dShell,
+    dCore,  # noqa: N803
+    dShell,  # noqa: N803
     n_theta=181,  # noqa: N803
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute core-shell phase function P11(theta)."""

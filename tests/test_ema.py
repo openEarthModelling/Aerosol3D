@@ -94,8 +94,7 @@ class TestBruggeman:
         eps_eff = result**2
         total = sum(volumes)
         residual = sum(
-            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff)
-            for v, m in zip(volumes, ri)
+            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff) for v, m in zip(volumes, ri)
         )
         assert abs(residual) < 1e-8
 
@@ -122,8 +121,7 @@ class TestBruggeman:
         eps_eff = result**2
         total = sum(volumes)
         residual = sum(
-            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff)
-            for v, m in zip(volumes, ri)
+            (v / total) * (m**2 - eps_eff) / (m**2 + 2 * eps_eff) for v, m in zip(volumes, ri)
         )
         assert abs(residual) < 1e-8
         assert result.imag == pytest.approx(0.0, abs=1e-12)
