@@ -11,6 +11,8 @@ Aerosol3D is a Python toolkit for modeling the 3D geometry and optical propertie
 - **3D Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM (Closed-Cell Model), and CAM (Coated-Aggregate Model) coatings
 - **Optical Computation** — Solve optical properties via DDA (Julia backend, optional GPU) or Mie theory (PyMieScatt, near-instant for spheres)
+- **Effective Medium Approximation** — Three EMA methods (volume-weighted, Maxwell-Garnett, Bruggeman) for computing effective refractive indices of mixed-composition particles
+- **Core-Shell Mie Solver** — Exact Mie solution for coated spheres using PyMieScatt's layered-sphere API
 - **Optical Property Export** — Multi-wavelength `AerosolOpticsData` container with auto-computed Legendre moments and NetCDF I/O
 - **Optical Visualization** — Spectral properties, phase function comparison, Legendre convergence diagnostics, and comparison summary plots
 - **3D Visualization** — Generate screenshots and rotation videos using PyVista
@@ -83,7 +85,7 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 |---------|-------------|
 | [`black_carbon_sphere.py`](examples/black_carbon_sphere.py) | Bare BC sphere with DDA optics |
 | [`black_carbon_fractal.py`](examples/black_carbon_fractal.py) | Fractal aggregate via pyFracAggregate with full pipeline |
-| [`coated_fractal_aggregate.py`](examples/coated_fractal_aggregate.py) | Coated fractal aggregate with coating models |
+| [`coated_fractal_aggregate.py`](examples/coated_fractal_aggregate.py) | Coated fractal aggregate comparing four Mie approximations (volume-weighted, MG, Bruggeman, core-shell) |
 | [`validate_mie_vs_dda.py`](examples/validate_mie_vs_dda.py) | Mie vs DDA validation comparison |
 | [`dda_mie_pyradtran_pipeline/`](examples/dda_mie_pyradtran_pipeline/) | 3-stage DDA/Mie optics + DISORT radiative transfer pipeline |
 
@@ -111,10 +113,21 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 
 ### Optics
 
-- `solve_optics(particle, config, solver="DDA"|"MIE")` — Optical solver dispatch
+- `solve_optics(particle, config, solver="DDA"|"MIE"|"MIE_CORESHELL")` — Optical solver dispatch
 - `SimulationConfig(wavelength, source)` — Simulation parameters
 - `AerosolOpticsData` / `from_optical_results(results, n_legendre)` — Multi-wavelength optical property container
 - `compute_legendre_moments(phase_function, theta)` — Legendre expansion of scattering phase function
+
+### Effective Medium Approximation
+
+- `volume_weighted(volumes, refractive_indices)` — Linear volume-weighted mixing
+- `maxwell_garnett(volumes, refractive_indices)` — Maxwell-Garnett mixing rule
+- `bruggeman(volumes, refractive_indices)` — Bruggeman symmetric mixing rule
+
+### Core-Shell Optics
+
+- `solve_mie_coreshell(particle, config)` — Core-shell Mie solver for coated spheres
+- `Particle.coreshell_geometry` — Compute core-shell geometry from particle composition
 
 ### Optical Visualization
 
