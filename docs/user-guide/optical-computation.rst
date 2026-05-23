@@ -27,6 +27,26 @@ For spherical particles, Aerosol3D can use Mie theory (via PyMieScatt) as an
 alternative to DDA. Mie theory is exact for spheres and much faster, making
 it ideal for validation and spherical particle studies.
 
+**EMA method selection.** When using the ``MIE`` solver with multi-component
+particles, the ``ema_method`` parameter selects how the effective refractive
+index is computed:
+
+.. code-block:: python
+
+    result = solve_optics(particle, config, solver="MIE", ema_method="maxwell_garnett")
+
+Options: ``volume_weighted`` (default), ``maxwell_garnett``, ``bruggeman``.
+See :doc:`ema-and-coreshell` for details.
+
+**Core-shell Mie.** For coated spheres, use ``solver="MIE_CORESHELL"`` to solve
+the exact layered-sphere Mie problem:
+
+.. code-block:: python
+
+    result = solve_optics(particle, config, solver="MIE_CORESHELL")
+
+See :doc:`ema-and-coreshell` for a full comparison of EMA and core-shell approaches.
+
 Orientational Averaging
 -----------------------
 
