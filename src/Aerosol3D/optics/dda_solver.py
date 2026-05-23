@@ -581,36 +581,53 @@ def solve_optics(
         propagations = _fibonacci_sphere(n_dirs)
 
     results = []
-    wl_iter = tqdm(
-        wavelengths,
-        desc="Wavelengths",
-        disable=not show_progress or len(wavelengths) <= 1,
-    )
-    for wl in wl_iter:
-        wl_config = copy.copy(config)
-        wl_config.wavelength = float(wl)
+    if propagations is not None:
+        # Flatten all (wavelength, orientation) pairs into a single task list
+        # so joblib can utilize all cores even when n_dirs < n_jobs.
+        n_wl = len(wavelengths)
+        n_prop = len(propagations)
+        wl_configs = []
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
+            wl_configs.append(wl_config)
 
-        if propagations is not None:
-            desc = f"Orientation avg (λ={wl:.0f}nm, {len(propagations)} dirs)"
-            dir_results = Parallel(n_jobs=n_jobs)(
-                delayed(_solve_single_orientation)(
-                    prop,
-                    positions,
-                    alpha_e,
-                    grid,
-                    material_map,
-                    wl_config,
-                    m_max,
-                    voxel_size,
-                    material_names,
-                    compute_near_field=compute_near_field,
-                    compute_phase_func=compute_phase_func,
-                )
-                for prop in tqdm(propagations, desc=desc, disable=not show_progress)
+        # Build flat list of (wl_config_index, propagation) tuples
+        tasks = [(wl_idx, prop) for wl_idx in range(n_wl) for prop in propagations]
+
+        total = len(tasks)
+        task_iter = tqdm(
+            tasks,
+            desc=f"DDA ({n_wl}λ × {n_prop} dirs, {total} tasks)",
+            disable=not show_progress,
+        )
+
+        flat_results = Parallel(n_jobs=n_jobs)(
+            delayed(_solve_single_orientation)(
+                prop,
+                positions,
+                alpha_e,
+                grid,
+                material_map,
+                wl_configs[wl_idx],
+                m_max,
+                voxel_size,
+                material_names,
+                compute_near_field=compute_near_field,
+                compute_phase_func=compute_phase_func,
             )
-            averaged_result = _orientational_average(dir_results)
-            results.append(averaged_result)
-        else:
+            for wl_idx, prop in task_iter
+        )
+
+        # Group results by wavelength and average orientations
+        for wl_idx in range(n_wl):
+            dir_results = flat_results[wl_idx * n_prop : (wl_idx + 1) * n_prop]
+            averaged = _orientational_average(dir_results)
+            results.append(averaged)
+    else:
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
             result = _solve_single_wl(
                 positions,
                 alpha_e,
