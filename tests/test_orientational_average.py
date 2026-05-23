@@ -36,6 +36,7 @@ class TestOrientationalAverage:
             config,
             voxel_size=10.0,
             propagations=propagations,
+            show_progress=False,
             verbose=False,
         )
 

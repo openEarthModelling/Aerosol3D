@@ -404,8 +404,8 @@ def _solve_single_orientation(
     """Solve DDA for a single propagation direction (one orientation).
 
     Designed as a top-level function so joblib can pickle it for
-    multi-process dispatch. Each worker calls bridge._ensure_julia()
-    to get its own Julia runtime.
+    multi-process dispatch. Each worker process initializes the Julia runtime independently
+    via bridge._ensure_julia().
     """
     from . import bridge
 
@@ -426,6 +426,48 @@ def _solve_single_orientation(
         compute_phase_func=compute_phase_func,
         verbose=False,
     )
+
+
+def _solve_single_orientation_safe(
+    propagation,
+    positions,
+    alpha_e,
+    grid,
+    material_map,
+    wl_config,
+    m_max,
+    voxel_size,
+    material_names,
+    *,
+    compute_near_field=True,
+    compute_phase_func=False,
+):
+    """Error-tolerant wrapper for parallel orientation averaging.
+
+    Returns None on failure instead of propagating the exception,
+    so one failed direction does not discard the entire batch.
+    """
+    try:
+        return _solve_single_orientation(
+            propagation,
+            positions,
+            alpha_e,
+            grid,
+            material_map,
+            wl_config,
+            m_max,
+            voxel_size,
+            material_names,
+            compute_near_field=compute_near_field,
+            compute_phase_func=compute_phase_func,
+        )
+    except Exception:
+        logger.exception(
+            "DDA solve failed for propagation direction %s at λ=%.0fnm",
+            tuple(propagation),
+            wl_config.wavelength,
+        )
+        return None
 
 
 def _fibonacci_sphere(n):
@@ -578,6 +620,12 @@ def solve_optics(
                 "n_dirs=%d is low. Consider >= 50 for reliable averaging.",
                 n_dirs,
             )
+        if compute_phase_func and n_dirs < 100:
+            logger.warning(
+                "compute_phase_func=True with n_dirs=%d. "
+                "Phase function convergence may require n_dirs >= 100.",
+                n_dirs,
+            )
         propagations = _fibonacci_sphere(n_dirs)
 
     results = []
@@ -602,8 +650,8 @@ def solve_optics(
             disable=not show_progress,
         )
 
-        flat_results = Parallel(n_jobs=n_jobs)(
-            delayed(_solve_single_orientation)(
+        flat_results = Parallel(n_jobs=n_jobs, backend="loky")(
+            delayed(_solve_single_orientation_safe)(
                 prop,
                 positions,
                 alpha_e,
@@ -613,15 +661,25 @@ def solve_optics(
                 m_max,
                 voxel_size,
                 material_names,
-                compute_near_field=compute_near_field,
+                compute_near_field=False,  # Near-field discarded in orientation averaging
                 compute_phase_func=compute_phase_func,
             )
             for wl_idx, prop in task_iter
         )
 
         # Group results by wavelength and average orientations
+        # Filter out None results from failed tasks
+        n_failed = sum(1 for r in flat_results if r is None)
+        if n_failed > 0:
+            logger.warning("%d of %d orientation tasks failed", n_failed, len(flat_results))
         for wl_idx in range(n_wl):
-            dir_results = flat_results[wl_idx * n_prop : (wl_idx + 1) * n_prop]
+            dir_results = [
+                r for r in flat_results[wl_idx * n_prop : (wl_idx + 1) * n_prop] if r is not None
+            ]
+            if not dir_results:
+                raise RuntimeError(
+                    f"All orientation tasks failed for λ={wavelengths[wl_idx]:.0f}nm"
+                )
             averaged = _orientational_average(dir_results)
             results.append(averaged)
     else:
