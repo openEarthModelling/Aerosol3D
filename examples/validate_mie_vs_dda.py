@@ -36,13 +36,14 @@ def main():
     print(f"Q_sca = {dda_result.cross_sections.Q_sca:.4f}")
     print(f"g     = {dda_result.cross_sections.g:.4f}")
 
-    print("\n--- DDA solve (orientational average, n_dirs=100) ---")
+    print("\n--- DDA solve (orientational average, n_dirs=50, n_jobs=32) ---")
     dda_avg_result = solve_optics(
         particle,
         config,
         solver="DDA",
         orientational_average=True,
-        n_dirs=100,
+        n_dirs=50,
+        n_jobs=32,
         compute_phase_func=True,
         verbose=False,
     )
