@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "Aerosol3D"
 copyright = "2026, Fan Zhang"
 author = "Fan Zhang"
-release = "0.2.0"
-version = "0.2.0"
+release = "0.5.0"
+version = "0.5.0"
 
 extensions = [
     "sphinx.ext.autodoc",
