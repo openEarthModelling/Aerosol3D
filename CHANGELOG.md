@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0] - 2026-05-23
+
+### Added
+- EMA (Effective Medium Approximation) module (`core/ema.py`) with three methods:
+  - `volume_weighted` — simple volume-weighted average of refractive indices
+  - `maxwell_garnett` — Maxwell-Garnett mixing rule for inclusion-in-host geometries
+  - `bruggeman` — Bruggeman symmetric mixing rule with Newton-iteration solver
+- `coreshell_geometry` property on `Particle` — computes core-shell geometry using volume-based core identification
+- `solve_mie_coreshell()` — Mie solver for coated spheres using PyMieScatt's core-shell API
+- `ema_method` parameter on `solve_mie()`, `solve_optics()`, and `MIE_CORESHELL` dispatcher
+- Integration tests for all EMA methods and core-shell solver (`test_ema_integration.py`)
+- `legendre_moments_beta` field on `AerosolOpticsData` — stores DISORT-ready normalized Legendre moments (β_l = k_l/(2l+1))
+- Updated `coated_fractal_aggregate` example — compares four Mie approximations with spectral plots
+
+### Changed
+- Refactored `Particle.effective_refractive_index` to delegate to EMA module (backward compatible)
+- Simplified pipeline example using `ParticleOptics.from_aerosol3d()`
+
+### Fixed
+- Removed unsupported `deltam` flag, reverted to ASCII output for libRadtran 2.0.6 compatibility
+
 ## [0.4.0] - 2026-05-18
 
 ### Added
@@ -83,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [0.4.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.2.0...v0.3.0
-[Unreleased]: https://github.com/openEarthModelling/aerosol3d/compare/v0.4.0...HEAD
+[0.5.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.4.0...v0.5.0
+[Unreleased]: https://github.com/openEarthModelling/aerosol3d/compare/v0.5.0...HEAD
 [0.2.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openEarthModelling/aerosol3d/releases/tag/v0.1.0
