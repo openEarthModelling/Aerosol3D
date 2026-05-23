@@ -15,3 +15,8 @@ Core Module
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: Aerosol3D.core.ema
+   :members:
+   :undoc-members:
+   :show-inheritance:
