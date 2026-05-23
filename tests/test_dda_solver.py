@@ -302,6 +302,7 @@ class TestSolverDispatch:
             voxel_size=10.0,
             orientational_average=True,
             n_dirs=5,
+            show_progress=False,
             verbose=False,
         )
 
@@ -324,8 +325,59 @@ class TestSolverDispatch:
             voxel_size=10.0,
             orientational_average=True,
             n_dirs=1,
+            show_progress=False,
             verbose=False,
         )
         # n_dirs=1 should give same result as single direction
-        single = solve_optics(p, config, solver="DDA", voxel_size=10.0, verbose=False)
+        single = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            show_progress=False,
+            verbose=False,
+        )
         assert result.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.01)
+
+    def test_parallel_orientation_matches_serial(self, julia_available, soot_material):
+        """Parallel (n_jobs=2) should match serial (n_jobs=1)."""
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        serial = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            orientational_average=True,
+            n_dirs=4,
+            n_jobs=1,
+            show_progress=False,
+            verbose=False,
+        )
+        parallel = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            orientational_average=True,
+            n_dirs=4,
+            n_jobs=2,
+            show_progress=False,
+            verbose=False,
+        )
+        np.testing.assert_allclose(
+            serial.cross_sections.C_ext,
+            parallel.cross_sections.C_ext,
+            rtol=1e-10,
+        )
+        np.testing.assert_allclose(
+            serial.cross_sections.g,
+            parallel.cross_sections.g,
+            rtol=1e-10,
+        )

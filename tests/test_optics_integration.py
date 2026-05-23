@@ -84,7 +84,9 @@ class TestFullOpticsPipeline:
             config,
             voxel_size=10.0,
             compute_phase_func=True,
-            n_dirs=1,  # Single direction for speed
+            orientational_average=True,
+            n_dirs=1,
+            show_progress=False,
         )
 
         assert result.phase_function is not None
