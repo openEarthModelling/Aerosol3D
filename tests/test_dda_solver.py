@@ -381,3 +381,40 @@ class TestSolverDispatch:
             parallel.cross_sections.g,
             rtol=1e-10,
         )
+
+    def test_multi_wavelength_orientation_parallel(self, julia_available, soot_material):
+        """Multi-wavelength + orientation averaging should work with flattened parallel."""
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import solve_optics
+
+        p = AerosolParticle(name="test")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+
+        wavelengths = [450.0, 550.0]
+        config = SimulationConfig(wavelength=wavelengths, dipole_spacing=10.0)
+
+        results = solve_optics(
+            p,
+            config,
+            solver="DDA",
+            voxel_size=10.0,
+            orientational_average=True,
+            n_dirs=3,
+            n_jobs=2,
+            show_progress=False,
+            verbose=False,
+        )
+
+        # Should return list of 2 results (one per wavelength)
+        assert isinstance(results, list)
+        assert len(results) == 2
+
+        # Each result should have valid cross-sections
+        for r in results:
+            assert r.cross_sections.C_ext > 0
+            assert r.cross_sections.C_sca > 0
+            assert 0 <= r.cross_sections.SSA <= 1
+
+        # Different wavelengths should give different results
+        assert results[0].cross_sections.C_ext != results[1].cross_sections.C_ext
