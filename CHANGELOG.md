@@ -1,22 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-- EMA (Effective Medium Approximation) module (`core/ema.py`) with three methods:
-  - `volume_weighted` — simple volume-weighted average of refractive indices
-  - `maxwell_garnett` — Maxwell-Garnett mixing rule for inclusion-in-host geometries
-  - `bruggeman` — Bruggeman symmetric mixing rule with Newton-iteration solver
-- `coreshell_geometry` property on `Particle` — computes core-shell geometry (core radius, shell thickness, core/shell materials) using volume-based core identification
-- `solve_mie_coreshell()` — Mie solver for coated spheres using PyMieScatt's core-shell API
-- `ema_method` parameter on `solve_mie()`, `solve_optics()`, and `MIE_CORESHELL` dispatcher — selects EMA method for homogeneous-sphere approximations
-- Integration tests for all EMA methods and core-shell solver (`test_ema_integration.py`)
-- Updated `coated_fractal_aggregate` example — compares four Mie approximations (volume-weighted, Maxwell-Garnett, Bruggeman, core-shell) with spectral plots
-
-### Changed
-- Refactored `Particle.effective_refractive_index` to delegate to EMA module (backward compatible)
-- `solve_mie` accepts `ema_method` parameter; `MIE_CORESHELL` dispatcher propagates it correctly
-
 ## [0.4.0] - 2026-05-18
 
 ### Added
