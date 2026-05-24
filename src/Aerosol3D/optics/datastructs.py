@@ -15,9 +15,10 @@ if TYPE_CHECKING:
 # Precision level targets: max allowed |m|*k*d for each level.
 # Lower |m|*k*d -> smaller dipole spacing -> more dipoles -> higher accuracy.
 _PRECISION_TARGETS = {
-    "low": 0.95,
-    "medium": 0.75,
-    "high": 0.5,
+    "low": 0.63,       # Draine "rule of thumb": 10 dipoles/wavelength in medium
+    "medium": 0.5,     # |m|<=2: few % accuracy with LDR
+    "high": 0.3,       # High accuracy for all |m|
+    "ultra": 0.15,     # Very high accuracy, large computational cost
 }
 
 
