@@ -618,8 +618,8 @@ def solve_optics(
     prep_config = copy.copy(config)
     prep_config.wavelength = effective_wl
 
-    # Steps 1-4, 7: Prepare DDA geometry once
-    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+    # Steps 1-4: Prepare DDA geometry once
+    positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
         particle, prep_config, voxel_size
     )
 
@@ -665,8 +665,6 @@ def solve_optics(
         flat_results = Parallel(n_jobs=n_jobs, backend="loky")(
             delayed(_solve_single_orientation_safe)(
                 prop,
-                positions,
-                alpha_e,
                 grid,
                 material_map,
                 wl_configs[wl_idx],
@@ -699,8 +697,6 @@ def solve_optics(
             wl_config = copy.copy(config)
             wl_config.wavelength = float(wl)
             result = _solve_single_wl(
-                positions,
-                alpha_e,
                 grid,
                 material_map,
                 wl_config,
