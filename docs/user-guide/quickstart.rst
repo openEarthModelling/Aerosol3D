@@ -43,6 +43,10 @@ Key Parameters
 - ``wavelength``: Incident light wavelength in nm
 - ``dipole_spacing``: DDA dipole spacing in nm (smaller = more accurate but slower)
 - ``compute_phase_func``: Whether to compute the phase function P11
+- ``orientational_average``: Average over ``n_dirs`` random orientations (DDA only)
+- ``n_dirs``: Number of orientations for averaging (default 50)
+- ``n_jobs``: Number of parallel workers for orientation averaging (default 32)
+- ``show_progress``: Display tqdm progress bars during averaging (default True)
 
 4. Export and Visualize Results
 -------------------------------
