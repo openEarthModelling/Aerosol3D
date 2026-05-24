@@ -19,6 +19,13 @@
 - Restored phase-function-specific warning when `compute_phase_func=True` with `n_dirs < 100`
 - Explicitly set `backend="loky"` to prevent unsafe threading with PyJulia
 
+### Documentation
+- Expanded orientational averaging section in optical computation guide with parallel execution, parameters, and code example
+- Updated Mie vs DDA validation tutorial to reflect `n_dirs=50` and `n_jobs=32`
+- Added `orientational_average`, `n_dirs`, `n_jobs`, `show_progress` to quickstart key parameters
+- Added Parallel Orientation Averaging to README features and updated `solve_optics` API signature
+- Documented `tqdm` and `joblib` as required dependencies in installation guide
+
 ## [0.5.0] - 2026-05-23
 
 ### Added
