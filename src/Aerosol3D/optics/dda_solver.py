@@ -249,6 +249,12 @@ def _solve_single_wl(
 
     positions = np.ascontiguousarray(positions, dtype=np.float64)
 
+    # Initialize variables set in branches below (for static analysis)
+    alpha_e = alpha_e_x = alpha_e_y = None
+    dda_result_x = dda_result_y = None
+    config_x = config_y = None
+    cs_x_raw = cs_y_raw = None
+
     # DDA solve (single or depolarized)
     if do_depolarized:
         config_x = copy.copy(config)
