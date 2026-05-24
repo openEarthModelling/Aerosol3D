@@ -5,6 +5,8 @@ import logging
 import time
 
 import numpy as np
+from joblib import Parallel, delayed
+from tqdm import tqdm
 
 from .datastructs import OpticalResult, PhaseFunction, SimulationConfig
 
@@ -385,6 +387,89 @@ def _orientational_average(results):
     )
 
 
+def _solve_single_orientation(
+    propagation,
+    positions,
+    alpha_e,
+    grid,
+    material_map,
+    wl_config,
+    m_max,
+    voxel_size,
+    material_names,
+    *,
+    compute_near_field=True,
+    compute_phase_func=False,
+):
+    """Solve DDA for a single propagation direction (one orientation).
+
+    Designed as a top-level function so joblib can pickle it for
+    multi-process dispatch. Each worker process initializes the Julia runtime independently
+    via bridge._ensure_julia().
+    """
+    from . import bridge
+
+    bridge._ensure_julia()
+
+    prop_config = copy.copy(wl_config)
+    prop_config.propagation = tuple(propagation)
+    return _solve_single_wl(
+        positions,
+        alpha_e,
+        grid,
+        material_map,
+        prop_config,
+        m_max,
+        voxel_size,
+        material_names,
+        compute_near_field=compute_near_field,
+        compute_phase_func=compute_phase_func,
+        verbose=False,
+    )
+
+
+def _solve_single_orientation_safe(
+    propagation,
+    positions,
+    alpha_e,
+    grid,
+    material_map,
+    wl_config,
+    m_max,
+    voxel_size,
+    material_names,
+    *,
+    compute_near_field=True,
+    compute_phase_func=False,
+):
+    """Error-tolerant wrapper for parallel orientation averaging.
+
+    Returns None on failure instead of propagating the exception,
+    so one failed direction does not discard the entire batch.
+    """
+    try:
+        return _solve_single_orientation(
+            propagation,
+            positions,
+            alpha_e,
+            grid,
+            material_map,
+            wl_config,
+            m_max,
+            voxel_size,
+            material_names,
+            compute_near_field=compute_near_field,
+            compute_phase_func=compute_phase_func,
+        )
+    except Exception:
+        logger.exception(
+            "DDA solve failed for propagation direction %s at λ=%.0fnm",
+            tuple(propagation),
+            wl_config.wavelength,
+        )
+        return None
+
+
 def _fibonacci_sphere(n):
     """Generate n approximately uniform points on the unit sphere."""
     if n <= 1:
@@ -411,8 +496,10 @@ def solve_optics(
     compute_near_field: bool = True,
     compute_phase_func: bool = False,
     orientational_average: bool = False,
-    n_dirs: int = 100,
+    n_dirs: int = 50,
     propagations: list | None = None,
+    n_jobs: int = 32,
+    show_progress: bool = True,
     verbose: bool = True,
 ) -> "OpticalResult | list[OpticalResult]":
     """Main entry: aerosol particle -> optical result(s).
@@ -443,11 +530,16 @@ def solve_optics(
         If True, average over ``n_dirs`` random orientations (DDA only).
         Ignored if ``propagations`` is provided. Default False.
     n_dirs : int, optional
-        Number of orientations for orientational averaging. Default 100.
+        Number of orientations for orientational averaging. Default 50.
     propagations : list, optional
         Explicit list of propagation directions for orientational averaging.
+    n_jobs : int, optional
+        Number of parallel workers for orientation averaging.
+        1 = serial. Default 32.
+    show_progress : bool, optional
+        Display tqdm progress bars. Default True.
     verbose : bool, optional
-        Print progress and timing. Default True.
+        Print per-solve configuration and timing. Default True.
     """
     if solver not in ("DDA", "MIE", "MIE_CORESHELL"):
         raise ValueError(f"solver must be 'DDA', 'MIE', or 'MIE_CORESHELL', got {solver!r}")
@@ -523,42 +615,77 @@ def solve_optics(
     if orientational_average and propagations is None:
         if n_dirs < 1:
             raise ValueError("n_dirs must be >= 1")
-        propagations = _fibonacci_sphere(n_dirs)
+        if n_dirs < 30:
+            logger.warning(
+                "n_dirs=%d is low. Consider >= 50 for reliable averaging.",
+                n_dirs,
+            )
         if compute_phase_func and n_dirs < 100:
             logger.warning(
                 "compute_phase_func=True with n_dirs=%d. "
-                "Phase function convergence may require n_dirs >= 100. "
-                "Consider increasing n_dirs.",
+                "Phase function convergence may require n_dirs >= 100.",
                 n_dirs,
             )
+        propagations = _fibonacci_sphere(n_dirs)
 
     results = []
-    for wl in wavelengths:
-        wl_config = copy.copy(config)
-        wl_config.wavelength = float(wl)
+    if propagations is not None:
+        # Flatten all (wavelength, orientation) pairs into a single task list
+        # so joblib can utilize all cores even when n_dirs < n_jobs.
+        n_wl = len(wavelengths)
+        n_prop = len(propagations)
+        wl_configs = []
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
+            wl_configs.append(wl_config)
 
-        if propagations is not None:
-            dir_results = []
-            for prop in propagations:
-                prop_config = copy.copy(wl_config)
-                prop_config.propagation = tuple(prop)
-                dir_result = _solve_single_wl(
-                    positions,
-                    alpha_e,
-                    grid,
-                    material_map,
-                    prop_config,
-                    m_max,
-                    voxel_size,
-                    material_names,
-                    compute_near_field=compute_near_field,
-                    compute_phase_func=compute_phase_func,
-                    verbose=verbose and len(wavelengths) == 1 and len(propagations) == 1,
+        # Build flat list of (wl_config_index, propagation) tuples
+        tasks = [(wl_idx, prop) for wl_idx in range(n_wl) for prop in propagations]
+
+        total = len(tasks)
+        task_iter = tqdm(
+            tasks,
+            desc=f"DDA ({n_wl}λ × {n_prop} dirs, {total} tasks)",
+            disable=not show_progress,
+        )
+
+        flat_results = Parallel(n_jobs=n_jobs, backend="loky")(
+            delayed(_solve_single_orientation_safe)(
+                prop,
+                positions,
+                alpha_e,
+                grid,
+                material_map,
+                wl_configs[wl_idx],
+                m_max,
+                voxel_size,
+                material_names,
+                compute_near_field=False,  # Near-field discarded in orientation averaging
+                compute_phase_func=compute_phase_func,
+            )
+            for wl_idx, prop in task_iter
+        )
+
+        # Group results by wavelength and average orientations
+        # Filter out None results from failed tasks
+        n_failed = sum(1 for r in flat_results if r is None)
+        if n_failed > 0:
+            logger.warning("%d of %d orientation tasks failed", n_failed, len(flat_results))
+        for wl_idx in range(n_wl):
+            dir_results = [
+                r for r in flat_results[wl_idx * n_prop : (wl_idx + 1) * n_prop] if r is not None
+            ]
+            if not dir_results:
+                raise RuntimeError(
+                    f"All orientation tasks failed for λ={wavelengths[wl_idx]:.0f}nm"
                 )
-                dir_results.append(dir_result)
-            averaged_result = _orientational_average(dir_results)
-            results.append(averaged_result)
-        else:
+            averaged = _orientational_average(dir_results)
+            results.append(averaged)
+    else:
+        for wl in wavelengths:
+            wl_config = copy.copy(config)
+            wl_config.wavelength = float(wl)
             result = _solve_single_wl(
                 positions,
                 alpha_e,
