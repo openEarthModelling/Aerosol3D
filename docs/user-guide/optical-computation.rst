@@ -54,6 +54,38 @@ Non-spherical particles have orientation-dependent optical properties.
 Aerosol3D can average over multiple incident directions using Fibonacci
 sphere sampling to obtain orientationally averaged cross-sections.
 
+**Parallel execution.**  When ``orientational_average=True``, the solver
+dispatches all (wavelength × orientation) tasks to a parallel worker pool
+via ``joblib.Parallel`` with the ``loky`` backend (safe for PyJulia).  Set
+``n_jobs`` to control the number of workers (default 32; set to 1 for
+serial execution):
+
+.. code-block:: python
+
+    result = solve_optics(
+        particle,
+        config,
+        solver="DDA",
+        orientational_average=True,
+        n_dirs=50,
+        n_jobs=32,
+        show_progress=True,
+    )
+
+**Key parameters:**
+
+- ``n_dirs`` — Number of orientations sampled via Fibonacci sphere (default 50).
+  A warning is issued when ``n_dirs < 30``.  For phase function convergence,
+  ``n_dirs >= 100`` is recommended.
+- ``n_jobs`` — Number of parallel workers.  Default 32.  Set to 1 for serial.
+- ``show_progress`` — Display tqdm progress bars during orientation averaging.
+  Default True.
+
+**Error tolerance.**  If individual orientation solves fail, they are logged
+and excluded from the average — the remaining successful orientations are used.
+Near-field computation is disabled in the parallel path since those results
+are not aggregated.
+
 Phase Function
 --------------
 

@@ -11,6 +11,7 @@ Aerosol3D is a Python toolkit for modeling the 3D geometry and optical propertie
 - **3D Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM (Closed-Cell Model), and CAM (Coated-Aggregate Model) coatings
 - **Optical Computation** — Solve optical properties via DDA (Julia backend, optional GPU) or Mie theory (PyMieScatt, near-instant for spheres)
+- **Parallel Orientation Averaging** — Distribute DDA orientation averaging across CPU cores via joblib, with tqdm progress bars and error-tolerant execution
 - **Effective Medium Approximation** — Three EMA methods (volume-weighted, Maxwell-Garnett, Bruggeman) for computing effective refractive indices of mixed-composition particles
 - **Core-Shell Mie Solver** — Exact Mie solution for coated spheres using PyMieScatt's layered-sphere API
 - **Optical Property Export** — Multi-wavelength `AerosolOpticsData` container with auto-computed Legendre moments and NetCDF I/O
@@ -113,7 +114,7 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 
 ### Optics
 
-- `solve_optics(particle, config, solver="DDA"|"MIE"|"MIE_CORESHELL")` — Optical solver dispatch
+- `solve_optics(particle, config, solver="DDA"|"MIE"|"MIE_CORESHELL", orientational_average=False, n_dirs=50, n_jobs=32, show_progress=True)` — Optical solver dispatch with optional parallel orientation averaging
 - `SimulationConfig(wavelength, source)` — Simulation parameters
 - `AerosolOpticsData` / `from_optical_results(results, n_legendre)` — Multi-wavelength optical property container
 - `compute_legendre_moments(phase_function, theta)` — Legendre expansion of scattering phase function

@@ -50,3 +50,6 @@ Additional Optional Dependencies
 - **Radiative transfer pipeline** — Requires ``pyRadtran`` and libRadtran
   (see the :doc:`/tutorials/dda-mie-pyradtran-pipeline` tutorial).
   Set ``PYRADTRAN_DATA_PATH`` to the libRadtran data directory.
+- **Parallel orientation averaging** — ``tqdm`` and ``joblib`` are installed
+  automatically with Aerosol3D.  They provide progress bars and multi-core
+  dispatch for DDA orientational averaging (``n_jobs > 1``).
