@@ -166,13 +166,11 @@ class TestPrepareDDA:
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
         config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
-        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config, voxel_size=10.0
         )
 
         assert positions.ndim == 2 and positions.shape[1] == 3
-        assert alpha_e.ndim == 1
-        assert positions.shape[0] == alpha_e.shape[0]
         assert positions.shape[0] > 0
         assert voxel_size == 10.0
         assert m_max > 0
@@ -180,7 +178,7 @@ class TestPrepareDDA:
 
 class TestSolveSingleWL:
     def test_solve_single_wl_matches_solve_optics(self, julia_available, soot_material):
-        """_solve_single_wl should produce same result as original solve_optics for single wavelength."""
+        """_solve_single_wl should produce same result as solve_optics for single wavelength."""
         from Aerosol3D import AerosolParticle, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
         from Aerosol3D.optics.dda_solver import _prepare_dda, _solve_single_wl, solve_optics
@@ -194,12 +192,10 @@ class TestSolveSingleWL:
         result_direct = solve_optics(p, config_direct, voxel_size=10.0, verbose=False)
 
         # Via _prepare_dda + _solve_single_wl
-        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config_extracted, voxel_size=10.0
         )
         result_extracted = _solve_single_wl(
-            positions,
-            alpha_e,
             grid,
             material_map,
             config_extracted,
