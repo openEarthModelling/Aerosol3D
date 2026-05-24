@@ -30,9 +30,11 @@ Step-by-Step Explanation
 3. **Run DDA solver** (approximate, grid-dependent)
 
    Two DDA runs are performed: a single-orientation solve and an orientational
-   average over 100 directions. DDA approximates the sphere as a dipole grid,
-   so accuracy depends on dipole spacing. The orientational average improves
-   agreement with Mie for non-symmetric dipole arrangements.
+   average over 50 directions using 32 parallel workers (``n_jobs=32``).
+   DDA approximates the sphere as a dipole grid, so accuracy depends on
+   dipole spacing.  The orientational average uses joblib parallel execution
+   to distribute orientations across CPU cores, with tqdm progress bars
+   tracking completion.
 
 4. **Compare and validate**
 
