@@ -13,33 +13,61 @@ from .datastructs import OpticalResult, PhaseFunction, SimulationConfig
 logger = logging.getLogger(__name__)
 
 
-def _apply_radiative_correction(alpha0, k):
-    """Apply radiative reaction correction and normalize for Julia convention."""
-    alpha0 = np.asarray(alpha0, dtype=np.complex128)
-    k3 = k**3
-    alpha_rad = alpha0 / (1.0 - 1j * k3 / (6.0 * np.pi) * alpha0)
-    return (k3 / (4.0 * np.pi)) * alpha_rad
+# Lattice Dispersion Relation (LDR) constants (Draine & Goodman 1993)
+_LDR_B1 = 1.8915316
+_LDR_B2 = -0.1648469
+_LDR_B3 = 0.7700004
 
 
-def _extract_dipoles(grid, config, material_map):
-    """Extract dipole positions and polarizabilities from voxelized grid."""
+def _ldr_s(propagation, polarization):
+    """Compute S = sum_mu (e_mu * a_mu)^2 for LDR polarizability."""
+    return sum((e * a) ** 2 for e, a in zip(polarization, propagation))
+
+
+def _compute_polarizability(grid, config, material_map):
+    """Compute LDR polarizabilities for all dipoles in the grid.
+
+    Uses the Lattice Dispersion Relation (Draine & Goodman 1993):
+        alpha_LDR = alpha_CM / {1 + correction}
+    where correction includes (kd)^2 and (kd)^3 order terms.
+
+    Returns alpha_e normalized by k^3/(4*pi) for the Julia convention.
+    """
     mask = grid.cell_data["material_id"] > 0
     mat_ids = grid.cell_data["material_id"][mask]
-    positions = grid.cell_centers().points[mask].copy()
+
     k = 2.0 * np.pi / config.wavelength
     d = config.dipole_spacing
     eps_h = config.n_host**2
-    alpha_e = np.zeros(len(positions), dtype=np.complex128)
+    kd = k * d
+    k3 = k**3
+    S = _ldr_s(config.propagation, config.polarization)
+
+    alpha_e = np.zeros(int(np.sum(mask)), dtype=np.complex128)
     for mat_id, mat in material_map.items():
         sel = mat_ids == mat_id
         if not np.any(sel):
             continue
+
         eps = mat.refractive_index**2
+        m_rel = mat.refractive_index / config.n_host
+        m_rel2 = m_rel**2
+
+        # Clausius-Mossotti polarizability (code convention: 4pi * alpha_CM_paper)
         a_cm = 3.0 * d**3 * (eps - eps_h) / (eps + 2.0 * eps_h)
-        alpha_e[sel] = _apply_radiative_correction(a_cm, k)
-    positions = np.ascontiguousarray(positions, dtype=np.float64)
-    alpha_e = np.ascontiguousarray(alpha_e, dtype=np.complex128)
-    return positions, alpha_e
+
+        # LDR correction: adds (kd)^2 order terms beyond radiative reaction
+        correction = (
+            (a_cm / (4.0 * np.pi * d**3))
+            * (_LDR_B1 + (_LDR_B2 + _LDR_B3 * S) * m_rel2)
+            * kd**2
+            - 1j * k3 / (6.0 * np.pi) * a_cm
+        )
+
+        alpha_ldr = a_cm / (1.0 + correction)
+        alpha_e[sel] = (k3 / (4.0 * np.pi)) * alpha_ldr
+
+    return np.ascontiguousarray(alpha_e, dtype=np.complex128)
 
 
 def _compute_near_field_intensity(grid, phi_inc):
@@ -51,14 +79,15 @@ def _compute_near_field_intensity(grid, phi_inc):
 
 
 def _prepare_dda(particle, config, voxel_size=None):
-    """Prepare DDA geometry: material map -> voxelize -> extract dipoles.
+    """Prepare DDA geometry: material map -> voxelize -> extract positions.
 
-    This is wavelength-independent (except for auto voxel_size which
-    uses config.wavelength).  Call once for multi-wavelength solves.
+    Polarizabilities are NOT computed here -- they depend on wavelength
+    and polarization direction, so they are computed per-solve in
+    _solve_single_wl via _compute_polarizability.
 
     Returns
     -------
-    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    positions, grid, material_map, voxel_size, m_max, material_names
     """
     # Step 1: Build material map from particle blocks
     material_map = {}
@@ -94,14 +123,13 @@ def _prepare_dda(particle, config, voxel_size=None):
 
     grid = voxelize_with_materials(particle, voxel_size)
 
-    # Step 4: Copy config and set dipole_spacing
-    config = copy.copy(config)
-    config.dipole_spacing = voxel_size
+    # Step 4: Extract positions from voxel grid
+    mask = grid.cell_data["material_id"] > 0
+    positions = np.ascontiguousarray(
+        grid.cell_centers().points[mask].copy(), dtype=np.float64
+    )
 
-    # Step 7: Extract dipoles
-    positions, alpha_e = _extract_dipoles(grid, config, material_map)
-
-    return positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    return positions, grid, material_map, voxel_size, m_max, material_names
 
 
 def _solve_single_wl(
