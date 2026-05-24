@@ -414,3 +414,48 @@ class TestSolverDispatch:
 
         # Different wavelengths should give different results
         assert results[0].cross_sections.C_ext != results[1].cross_sections.C_ext
+
+
+class TestLDRPolarizability:
+    def test_ldr_s_parameter(self):
+        """S should be 0 for transverse polarization along z, nonzero otherwise."""
+        from Aerosol3D.optics.dda_solver import _ldr_s
+
+        # Propagation along z, x-polarization: S = 0
+        assert _ldr_s((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)) == 0.0
+        assert _ldr_s((0.0, 0.0, 1.0), (0.0, 1.0, 0.0)) == 0.0
+        # Propagation along z, z-polarization: S = 1
+        assert _ldr_s((0.0, 0.0, 1.0), (0.0, 0.0, 1.0)) == 1.0
+        # Propagation along x, x-polarization: S = 1
+        assert _ldr_s((1.0, 0.0, 0.0), (1.0, 0.0, 0.0)) == 1.0
+
+    def test_ldr_polarizability_finite_and_complex(self, soot_material):
+        """LDR alpha_e should be finite complex array for a real particle."""
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import _compute_polarizability, _prepare_dda
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        _, grid, material_map, _, _, _ = _prepare_dda(p, config, voxel_size=10.0)
+        config.dipole_spacing = 10.0
+        config.polarization = (1.0, 0.0, 0.0)
+        alpha_e = _compute_polarizability(grid, config, material_map)
+
+        assert alpha_e.ndim == 1
+        assert len(alpha_e) > 0
+        assert np.all(np.isfinite(alpha_e))
+        assert alpha_e.dtype == np.complex128
+
+    def test_precision_ultra_accepted(self):
+        """The 'ultra' precision level should be accepted by auto_voxel_size."""
+        from Aerosol3D.optics.datastructs import auto_voxel_size
+
+        vs = auto_voxel_size(550.0, 2.0, "ultra")
+        assert vs > 0
+        # Verify |m|*k*d <= 0.15
+        k = 2.0 * np.pi / 550.0
+        mkd = 2.0 * k * vs
+        assert mkd <= 0.15
