@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Parallel DDA orientation averaging using `joblib.Parallel` with `loky` backend
+- Flattened (wavelength × orientation) task grid into single parallel dispatch for full CPU utilization
+- `n_jobs` parameter on `solve_optics()` — number of parallel workers (default 32)
+- `show_progress` parameter on `solve_optics()` — tqdm progress bars (default True)
+- Error-tolerant parallel execution — failed orientation tasks are logged and skipped, not discarded
+
+### Changed
+- `n_dirs` default changed from 100 to 50
+- Warning threshold for low direction count changed to `n_dirs < 30`
+- Near-field computation disabled in parallel orientation path (results are discarded)
+- Updated `validate_mie_vs_dda` example to use parallel orientation averaging
+
+### Fixed
+- Restored phase-function-specific warning when `compute_phase_func=True` with `n_dirs < 100`
+- Explicitly set `backend="loky"` to prevent unsafe threading with PyJulia
+
 ## [0.5.0] - 2026-05-23
 
 ### Added
