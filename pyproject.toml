@@ -99,3 +99,6 @@ convention = "google"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=Aerosol3D --cov-report=term-missing"
+markers = [
+    "slow: tests that call Julia DDA solver (slow, skip in CI with -m 'not slow')",
+]
