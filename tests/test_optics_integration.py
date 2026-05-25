@@ -63,7 +63,7 @@ class TestFullOpticsPipeline:
         """P11 must integrate to approximately 1 over the full sphere."""
         import numpy as np
 
-        _trapz = getattr(np, "trapezoid", np.trapz)
+        _trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 
         from Aerosol3D import (
             AerosolParticle,

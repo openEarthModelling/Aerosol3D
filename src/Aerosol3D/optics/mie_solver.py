@@ -8,7 +8,7 @@ from .datastructs import CrossSections, OpticalResult, PhaseFunction, Simulation
 if not hasattr(scipy.integrate, "trapz"):
     scipy.integrate.trapz = scipy.integrate.trapezoid
 
-_trapz = getattr(np, "trapezoid", np.trapz)
+_trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 
 
 def _mie_phase_function(m, d, wavelength, n_theta=181) -> tuple[np.ndarray, np.ndarray]:

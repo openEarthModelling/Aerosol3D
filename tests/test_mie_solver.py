@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-_trapz = getattr(np, "trapezoid", np.trapz)
+_trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 
 
 def test_optical_result_has_solver_field():
