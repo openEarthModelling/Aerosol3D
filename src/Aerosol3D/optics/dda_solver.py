@@ -13,33 +13,58 @@ from .datastructs import OpticalResult, PhaseFunction, SimulationConfig
 logger = logging.getLogger(__name__)
 
 
-def _apply_radiative_correction(alpha0, k):
-    """Apply radiative reaction correction and normalize for Julia convention."""
-    alpha0 = np.asarray(alpha0, dtype=np.complex128)
-    k3 = k**3
-    alpha_rad = alpha0 / (1.0 - 1j * k3 / (6.0 * np.pi) * alpha0)
-    return (k3 / (4.0 * np.pi)) * alpha_rad
+# Lattice Dispersion Relation (LDR) constants (Draine & Goodman 1993)
+_LDR_B1 = 1.8915316
+_LDR_B2 = -0.1648469
+_LDR_B3 = 0.7700004
 
 
-def _extract_dipoles(grid, config, material_map):
-    """Extract dipole positions and polarizabilities from voxelized grid."""
+def _ldr_s(propagation, polarization):
+    """Compute S = sum_mu (e_mu * a_mu)^2 for LDR polarizability."""
+    return sum((e * a) ** 2 for e, a in zip(polarization, propagation))
+
+
+def _compute_polarizability(grid, config, material_map):
+    """Compute LDR polarizabilities for all dipoles in the grid.
+
+    Uses the Lattice Dispersion Relation (Draine & Goodman 1993):
+        alpha_LDR = alpha_CM / {1 + correction}
+    where correction includes (kd)^2 and (kd)^3 order terms.
+
+    Returns alpha_e normalized by k^3/(4*pi) for the Julia convention.
+    """
     mask = grid.cell_data["material_id"] > 0
     mat_ids = grid.cell_data["material_id"][mask]
-    positions = grid.cell_centers().points[mask].copy()
+
     k = 2.0 * np.pi / config.wavelength
     d = config.dipole_spacing
     eps_h = config.n_host**2
-    alpha_e = np.zeros(len(positions), dtype=np.complex128)
+    kd = k * d
+    k3 = k**3
+    S = _ldr_s(config.propagation, config.polarization)
+
+    alpha_e = np.zeros(int(np.sum(mask)), dtype=np.complex128)
     for mat_id, mat in material_map.items():
         sel = mat_ids == mat_id
         if not np.any(sel):
             continue
+
         eps = mat.refractive_index**2
+        m_rel = mat.refractive_index / config.n_host
+        m_rel2 = m_rel**2
+
+        # Clausius-Mossotti polarizability (code convention: 4pi * alpha_CM_paper)
         a_cm = 3.0 * d**3 * (eps - eps_h) / (eps + 2.0 * eps_h)
-        alpha_e[sel] = _apply_radiative_correction(a_cm, k)
-    positions = np.ascontiguousarray(positions, dtype=np.float64)
-    alpha_e = np.ascontiguousarray(alpha_e, dtype=np.complex128)
-    return positions, alpha_e
+
+        # LDR correction: adds (kd)^2 order terms beyond radiative reaction
+        correction = (a_cm / (4.0 * np.pi * d**3)) * (
+            _LDR_B1 + (_LDR_B2 + _LDR_B3 * S) * m_rel2
+        ) * kd**2 - 1j * k3 / (6.0 * np.pi) * a_cm
+
+        alpha_ldr = a_cm / (1.0 + correction)
+        alpha_e[sel] = (k3 / (4.0 * np.pi)) * alpha_ldr
+
+    return np.ascontiguousarray(alpha_e, dtype=np.complex128)
 
 
 def _compute_near_field_intensity(grid, phi_inc):
@@ -51,14 +76,15 @@ def _compute_near_field_intensity(grid, phi_inc):
 
 
 def _prepare_dda(particle, config, voxel_size=None):
-    """Prepare DDA geometry: material map -> voxelize -> extract dipoles.
+    """Prepare DDA geometry: material map -> voxelize.
 
-    This is wavelength-independent (except for auto voxel_size which
-    uses config.wavelength).  Call once for multi-wavelength solves.
+    Polarizabilities are NOT computed here -- they depend on wavelength
+    and polarization direction, so they are computed per-solve in
+    _solve_single_wl via _compute_polarizability.
 
     Returns
     -------
-    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    grid, material_map, voxel_size, m_max, material_names
     """
     # Step 1: Build material map from particle blocks
     material_map = {}
@@ -94,19 +120,10 @@ def _prepare_dda(particle, config, voxel_size=None):
 
     grid = voxelize_with_materials(particle, voxel_size)
 
-    # Step 4: Copy config and set dipole_spacing
-    config = copy.copy(config)
-    config.dipole_spacing = voxel_size
-
-    # Step 7: Extract dipoles
-    positions, alpha_e = _extract_dipoles(grid, config, material_map)
-
-    return positions, alpha_e, grid, material_map, voxel_size, m_max, material_names
+    return grid, material_map, voxel_size, m_max, material_names
 
 
 def _solve_single_wl(
-    positions,
-    alpha_e,
     grid,
     material_map,
     config,
@@ -119,19 +136,17 @@ def _solve_single_wl(
 ):
     """Solve DDA for a single wavelength.
 
+    Computes LDR polarizabilities internally for the given wavelength
+    and polarization direction(s).
+
     Parameters
     ----------
-    positions : np.ndarray
-        Dipole positions, shape (N, 3).
-    alpha_e : np.ndarray
-        Dipole polarizabilities, shape (N,).
     grid : pyvista.UnstructuredGrid
         Voxel grid with material_id cell data.
     material_map : dict
         Mapping material_id -> material object with refractive_index attr.
     config : SimulationConfig
-        Simulation configuration. ``config.wavelength`` is guaranteed to be
-        a single ``float``.
+        Simulation configuration.
     m_max : float
         Maximum refractive index magnitude.
     voxel_size : float
@@ -154,7 +169,15 @@ def _solve_single_wl(
     from .bridge import compute_asymmetry_parameter, compute_cross_sections, solve_dda
     from .datastructs import CrossSections, OpticalResult
 
-    # Step 5: Handle polarization=None
+    # Ensure config has dipole_spacing set for polarizability computation
+    config = copy.copy(config)
+    config.dipole_spacing = voxel_size
+
+    # Extract positions from grid
+    mask = grid.cell_data["material_id"] > 0
+    positions = grid.cell_centers().points[mask].copy()
+
+    # Handle polarization=None
     do_depolarized = False
     if config.polarization is None:
         if config.source == "solar":
@@ -163,7 +186,7 @@ def _solve_single_wl(
         else:
             config.polarization = (1.0, 0.0, 0.0)
 
-    # Step 6: Validity check
+    # Validity check
     validity = config.validity_check(m_max, voxel_size)
     if not validity["valid"]:
         logger.warning(
@@ -171,10 +194,6 @@ def _solve_single_wl(
             "Results may be inaccurate.",
             validity["m_k_d"],
         )
-
-    # Ensure config has dipole_spacing set for downstream use
-    config = copy.copy(config)
-    config.dipole_spacing = voxel_size
 
     if verbose:
         print(f"{'=' * 52}")
@@ -189,7 +208,7 @@ def _solve_single_wl(
         print(f"  n_host         = {config.n_host}")
         print(f"  solver         = {config.solver}")
         print(f"  precision      = {config.precision}")
-        print(f"  dipole_spacing = {voxel_size:.2f} nm" + (" (auto)" if voxel_size is None else ""))
+        print(f"  dipole_spacing = {voxel_size:.2f} nm")
         print(f"  |m|_max        = {m_max:.4f}")
         print(f"  k              = {2.0 * np.pi / config.wavelength:.6f} nm^-1")
         mkd = m_max * (2.0 * np.pi / config.wavelength) * voxel_size
@@ -200,7 +219,7 @@ def _solve_single_wl(
         print(f"{'=' * 52}")
 
     if len(positions) == 0:
-        n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
+        n_filled = int(np.sum(mask))
         volume = n_filled * voxel_size**3
         r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0) if volume > 0 else 0.0
         cross_sections = CrossSections(
@@ -224,45 +243,60 @@ def _solve_single_wl(
             solve_time=time.time() - t_start,
         )
 
-    # Step 8: DDA solve (single or depolarized)
+    positions = np.ascontiguousarray(positions, dtype=np.float64)
+
+    # Initialize variables set in branches below (for static analysis)
+    alpha_e = alpha_e_x = alpha_e_y = None
+    dda_result_x = dda_result_y = None
+    config_x = config_y = None
+    cs_x_raw = cs_y_raw = None
+
+    # DDA solve (single or depolarized)
     if do_depolarized:
         config_x = copy.copy(config)
         config_x.polarization = (1.0, 0.0, 0.0)
-        dda_result_x = solve_dda(positions, alpha_e, config_x)
-        cs_x_raw = compute_cross_sections(positions, alpha_e, dda_result_x, config_x)
+        alpha_e_x = _compute_polarizability(grid, config_x, material_map)
+        dda_result_x = solve_dda(positions, alpha_e_x, config_x)
+        cs_x_raw = compute_cross_sections(positions, alpha_e_x, dda_result_x, config_x)
 
         config_y = copy.copy(config)
         config_y.polarization = (0.0, 1.0, 0.0)
-        dda_result_y = solve_dda(positions, alpha_e, config_y)
-        cs_y_raw = compute_cross_sections(positions, alpha_e, dda_result_y, config_y)
+        alpha_e_y = _compute_polarizability(grid, config_y, material_map)
+        dda_result_y = solve_dda(positions, alpha_e_y, config_y)
+        cs_y_raw = compute_cross_sections(positions, alpha_e_y, dda_result_y, config_y)
 
         C_ext = (float(cs_x_raw[0]) + float(cs_y_raw[0])) / 2
         C_abs = (float(cs_x_raw[1]) + float(cs_y_raw[1])) / 2
         C_sca = (float(cs_x_raw[2]) + float(cs_y_raw[2])) / 2
-        dda_result = dda_result_x  # representative for phase func / near field
+        dda_result = dda_result_x
     else:
+        alpha_e = _compute_polarizability(grid, config, material_map)
         dda_result = solve_dda(positions, alpha_e, config)
         cs_raw = compute_cross_sections(positions, alpha_e, dda_result, config)
         C_ext = float(cs_raw[0])
         C_abs = float(cs_raw[1])
         C_sca = float(cs_raw[2])
 
-    # Step 9: Equivalent volume sphere radius
-    n_filled = int(np.sum(grid.cell_data["material_id"] > 0))
+    # Equivalent volume sphere radius
+    n_filled = int(np.sum(mask))
     volume = n_filled * voxel_size**3
     r_eff = (3.0 * volume / (4.0 * np.pi)) ** (1.0 / 3.0)
     geo_cs = np.pi * r_eff**2
 
-    # Step 10: Efficiency factors
+    # Efficiency factors
     Q_ext = C_ext / geo_cs if geo_cs > 0 else 0.0
     Q_sca = C_sca / geo_cs if geo_cs > 0 else 0.0
     Q_abs = C_abs / geo_cs if geo_cs > 0 else 0.0
 
-    # Step 11: SSA
+    # SSA
     SSA = C_sca / C_ext if C_ext > 0 else 0.0
 
-    # Step 12: Asymmetry parameter g
-    g = compute_asymmetry_parameter(positions, alpha_e, dda_result, config, c_sca=C_sca)
+    # Asymmetry parameter g
+    if do_depolarized:
+        alpha_e_for_g = alpha_e_x
+    else:
+        alpha_e_for_g = alpha_e
+    g = compute_asymmetry_parameter(positions, alpha_e_for_g, dda_result, config, c_sca=C_sca)
 
     cross_sections = CrossSections(
         wavelength=config.wavelength,
@@ -277,25 +311,22 @@ def _solve_single_wl(
         r_eff=r_eff,
     )
 
-    # Step 13: Near-field (optional)
+    # Near-field (optional)
     if compute_near_field:
         _compute_near_field_intensity(grid, dda_result["phi_inc"])
 
-    # Step 14: Phase function (optional)
+    # Phase function (optional)
     phase_function = None
     if compute_phase_func:
         if do_depolarized:
             from .datastructs import PhaseFunction
 
-            # Compute P11 for each polarization and average for unpolarized result
             pf_x = _compute_phase_function(
-                positions, alpha_e, dda_result_x, config_x, c_sca=float(cs_x_raw[2])
+                positions, alpha_e_x, dda_result_x, config_x, c_sca=float(cs_x_raw[2])
             )
             pf_y = _compute_phase_function(
-                positions, alpha_e, dda_result_y, config_y, c_sca=float(cs_y_raw[2])
+                positions, alpha_e_y, dda_result_y, config_y, c_sca=float(cs_y_raw[2])
             )
-            # For unpolarized incident light, P11 is the average of the two
-            # orthogonal polarization responses.
             P11_avg = (pf_x.P11 + pf_y.P11) / 2.0
             phase_function = PhaseFunction(theta=pf_x.theta, phi=pf_x.phi, P11=P11_avg)
         else:
@@ -389,8 +420,6 @@ def _orientational_average(results):
 
 def _solve_single_orientation(
     propagation,
-    positions,
-    alpha_e,
     grid,
     material_map,
     wl_config,
@@ -401,12 +430,7 @@ def _solve_single_orientation(
     compute_near_field=True,
     compute_phase_func=False,
 ):
-    """Solve DDA for a single propagation direction (one orientation).
-
-    Designed as a top-level function so joblib can pickle it for
-    multi-process dispatch. Each worker process initializes the Julia runtime independently
-    via bridge._ensure_julia().
-    """
+    """Solve DDA for a single propagation direction (one orientation)."""
     from . import bridge
 
     bridge._ensure_julia()
@@ -414,8 +438,6 @@ def _solve_single_orientation(
     prop_config = copy.copy(wl_config)
     prop_config.propagation = tuple(propagation)
     return _solve_single_wl(
-        positions,
-        alpha_e,
         grid,
         material_map,
         prop_config,
@@ -430,8 +452,6 @@ def _solve_single_orientation(
 
 def _solve_single_orientation_safe(
     propagation,
-    positions,
-    alpha_e,
     grid,
     material_map,
     wl_config,
@@ -442,16 +462,10 @@ def _solve_single_orientation_safe(
     compute_near_field=True,
     compute_phase_func=False,
 ):
-    """Error-tolerant wrapper for parallel orientation averaging.
-
-    Returns None on failure instead of propagating the exception,
-    so one failed direction does not discard the entire batch.
-    """
+    """Error-tolerant wrapper for parallel orientation averaging."""
     try:
         return _solve_single_orientation(
             propagation,
-            positions,
-            alpha_e,
             grid,
             material_map,
             wl_config,
@@ -606,8 +620,8 @@ def solve_optics(
     prep_config = copy.copy(config)
     prep_config.wavelength = effective_wl
 
-    # Steps 1-4, 7: Prepare DDA geometry once
-    positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+    # Steps 1-4: Prepare DDA geometry once
+    grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
         particle, prep_config, voxel_size
     )
 
@@ -653,8 +667,6 @@ def solve_optics(
         flat_results = Parallel(n_jobs=n_jobs, backend="loky")(
             delayed(_solve_single_orientation_safe)(
                 prop,
-                positions,
-                alpha_e,
                 grid,
                 material_map,
                 wl_configs[wl_idx],
@@ -687,8 +699,6 @@ def solve_optics(
             wl_config = copy.copy(config)
             wl_config.wavelength = float(wl)
             result = _solve_single_wl(
-                positions,
-                alpha_e,
                 grid,
                 material_map,
                 wl_config,

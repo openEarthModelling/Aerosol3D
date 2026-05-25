@@ -34,7 +34,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
-    "numpy>=1.21,<2.0",
+    "numpy>=1.21",
     "pyvista>=0.44",
     "manifold3d>=2.0",
     "pint>=0.20",
@@ -99,3 +99,6 @@ convention = "google"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=Aerosol3D --cov-report=term-missing"
+markers = [
+    "slow: tests that call Julia DDA solver (slow, skip in CI with -m 'not slow')",
+]

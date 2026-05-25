@@ -125,24 +125,24 @@ class TestSimulationConfigWavelengthList:
 
 class TestPrecisionLevel:
     def test_auto_voxel_size_low(self):
-        """Low precision: |m|*k*d should be ~0.95."""
+        """Low precision: |m|*k*d should be ~0.63."""
         from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "low")
         k = 2.0 * np.pi / 550.0
         mkd = 2.08 * k * d
-        assert mkd <= 1.0
-        assert mkd > 0.8
+        assert mkd <= 0.65
+        assert mkd > 0.5
 
     def test_auto_voxel_size_high(self):
-        """High precision: |m|*k*d should be ~0.5."""
+        """High precision: |m|*k*d should be ~0.3."""
         from Aerosol3D.optics.datastructs import auto_voxel_size
 
         d = auto_voxel_size(550.0, 2.08, "high")
         k = 2.0 * np.pi / 550.0
         mkd = 2.08 * k * d
-        assert mkd <= 0.6
-        assert mkd > 0.3
+        assert mkd <= 0.35
+        assert mkd > 0.2
 
     def test_auto_voxel_size_medium(self):
         from Aerosol3D.optics.datastructs import auto_voxel_size
@@ -150,14 +150,22 @@ class TestPrecisionLevel:
         d = auto_voxel_size(550.0, 2.08, "medium")
         k = 2.0 * np.pi / 550.0
         mkd = 2.08 * k * d
-        assert mkd <= 0.8
-        assert mkd > 0.3
+        assert mkd <= 0.55
+        assert mkd > 0.4
+
+    def test_auto_voxel_size_ultra(self):
+        from Aerosol3D.optics.datastructs import auto_voxel_size
+
+        d = auto_voxel_size(550.0, 2.08, "ultra")
+        k = 2.0 * np.pi / 550.0
+        mkd = 2.08 * k * d
+        assert mkd <= 0.15
 
     def test_invalid_precision_raises(self):
         from Aerosol3D.optics.datastructs import auto_voxel_size
 
         with pytest.raises(ValueError, match="precision"):
-            auto_voxel_size(550.0, 1.5, "ultra")
+            auto_voxel_size(550.0, 1.5, "nonexistent")
 
     def test_default_config_new_fields(self):
         from Aerosol3D.optics.datastructs import SimulationConfig

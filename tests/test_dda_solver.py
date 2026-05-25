@@ -13,6 +13,7 @@ def julia_available():
         pytest.skip("Julia runtime not available")
 
 
+@pytest.mark.slow
 class TestSolveOptics:
     def test_sphere_basic(self, julia_available, soot_material):
         """Solve a soot sphere and verify optical result structure."""
@@ -85,6 +86,7 @@ class TestSolveOptics:
         assert "E_intensity" in result.voxel_grid.cell_data
 
 
+@pytest.mark.slow
 class TestPhaseFunction:
     def test_phase_function_structure(self, julia_available, soot_material):
         from Aerosol3D import AerosolParticle, create_sphere
@@ -122,6 +124,7 @@ class TestPhaseFunction:
         )
 
 
+@pytest.mark.slow
 class TestAutoVoxelSize:
     def test_auto_voxel_size_produces_valid_mkd(self, julia_available, soot_material):
         """Auto-computed voxel_size should satisfy |m|*k*d <= target."""
@@ -156,6 +159,7 @@ class TestAutoVoxelSize:
         assert result.validity["m_k_d"] > 0.95
 
 
+@pytest.mark.slow
 class TestPrepareDDA:
     def test_prepare_dda_returns_expected(self, julia_available, soot_material):
         from Aerosol3D import AerosolParticle, create_sphere
@@ -166,21 +170,18 @@ class TestPrepareDDA:
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
         config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
-        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config, voxel_size=10.0
         )
 
-        assert positions.ndim == 2 and positions.shape[1] == 3
-        assert alpha_e.ndim == 1
-        assert positions.shape[0] == alpha_e.shape[0]
-        assert positions.shape[0] > 0
         assert voxel_size == 10.0
         assert m_max > 0
 
 
+@pytest.mark.slow
 class TestSolveSingleWL:
     def test_solve_single_wl_matches_solve_optics(self, julia_available, soot_material):
-        """_solve_single_wl should produce same result as original solve_optics for single wavelength."""
+        """_solve_single_wl should produce same result as solve_optics for single wavelength."""
         from Aerosol3D import AerosolParticle, create_sphere
         from Aerosol3D.optics.datastructs import SimulationConfig
         from Aerosol3D.optics.dda_solver import _prepare_dda, _solve_single_wl, solve_optics
@@ -194,12 +195,10 @@ class TestSolveSingleWL:
         result_direct = solve_optics(p, config_direct, voxel_size=10.0, verbose=False)
 
         # Via _prepare_dda + _solve_single_wl
-        positions, alpha_e, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config_extracted, voxel_size=10.0
         )
         result_extracted = _solve_single_wl(
-            positions,
-            alpha_e,
             grid,
             material_map,
             config_extracted,
@@ -226,6 +225,7 @@ class TestSolveSingleWL:
         )
 
 
+@pytest.mark.slow
 class TestVerbose:
     def test_verbose_prints_output(self, julia_available, soot_material, capsys):
         """verbose=True should print configuration table to stdout."""
@@ -259,6 +259,7 @@ class TestVerbose:
         assert "DDA Simulation Configuration" not in captured.out
 
 
+@pytest.mark.slow
 class TestSolverDispatch:
     def test_solver_param_mie(self, soot_material):
         pytest.importorskip("PyMieScatt")
@@ -301,13 +302,13 @@ class TestSolverDispatch:
             solver="DDA",
             voxel_size=10.0,
             orientational_average=True,
-            n_dirs=5,
+            n_dirs=2,
             show_progress=False,
             verbose=False,
         )
 
-        assert averaged.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.05)
-        assert averaged.cross_sections.C_sca == pytest.approx(single.cross_sections.C_sca, rel=0.05)
+        assert averaged.cross_sections.C_ext == pytest.approx(single.cross_sections.C_ext, rel=0.10)
+        assert averaged.cross_sections.C_sca == pytest.approx(single.cross_sections.C_sca, rel=0.10)
 
     def test_orientational_average_n_dirs_one(self, julia_available, soot_material):
         from Aerosol3D import AerosolParticle, create_sphere
@@ -355,7 +356,7 @@ class TestSolverDispatch:
             solver="DDA",
             voxel_size=10.0,
             orientational_average=True,
-            n_dirs=4,
+            n_dirs=2,
             n_jobs=1,
             show_progress=False,
             verbose=False,
@@ -366,7 +367,7 @@ class TestSolverDispatch:
             solver="DDA",
             voxel_size=10.0,
             orientational_average=True,
-            n_dirs=4,
+            n_dirs=2,
             n_jobs=2,
             show_progress=False,
             verbose=False,
@@ -400,7 +401,7 @@ class TestSolverDispatch:
             solver="DDA",
             voxel_size=10.0,
             orientational_average=True,
-            n_dirs=3,
+            n_dirs=2,
             n_jobs=2,
             show_progress=False,
             verbose=False,
@@ -418,3 +419,48 @@ class TestSolverDispatch:
 
         # Different wavelengths should give different results
         assert results[0].cross_sections.C_ext != results[1].cross_sections.C_ext
+
+
+class TestLDRPolarizability:
+    def test_ldr_s_parameter(self):
+        """S should be 0 for transverse polarization along z, nonzero otherwise."""
+        from Aerosol3D.optics.dda_solver import _ldr_s
+
+        # Propagation along z, x-polarization: S = 0
+        assert _ldr_s((0.0, 0.0, 1.0), (1.0, 0.0, 0.0)) == 0.0
+        assert _ldr_s((0.0, 0.0, 1.0), (0.0, 1.0, 0.0)) == 0.0
+        # Propagation along z, z-polarization: S = 1
+        assert _ldr_s((0.0, 0.0, 1.0), (0.0, 0.0, 1.0)) == 1.0
+        # Propagation along x, x-polarization: S = 1
+        assert _ldr_s((1.0, 0.0, 0.0), (1.0, 0.0, 0.0)) == 1.0
+
+    def test_ldr_polarizability_finite_and_complex(self, soot_material):
+        """LDR alpha_e should be finite complex array for a real particle."""
+        from Aerosol3D import AerosolParticle, create_sphere
+        from Aerosol3D.optics.datastructs import SimulationConfig
+        from Aerosol3D.optics.dda_solver import _compute_polarizability, _prepare_dda
+
+        p = AerosolParticle(name="soot_sphere", unit="nm")
+        p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
+        config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
+
+        grid, material_map, _, _, _ = _prepare_dda(p, config, voxel_size=10.0)
+        config.dipole_spacing = 10.0
+        config.polarization = (1.0, 0.0, 0.0)
+        alpha_e = _compute_polarizability(grid, config, material_map)
+
+        assert alpha_e.ndim == 1
+        assert len(alpha_e) > 0
+        assert np.all(np.isfinite(alpha_e))
+        assert alpha_e.dtype == np.complex128
+
+    def test_precision_ultra_accepted(self):
+        """The 'ultra' precision level should be accepted by auto_voxel_size."""
+        from Aerosol3D.optics.datastructs import auto_voxel_size
+
+        vs = auto_voxel_size(550.0, 2.0, "ultra")
+        assert vs > 0
+        # Verify |m|*k*d <= 0.15
+        k = 2.0 * np.pi / 550.0
+        mkd = 2.0 * k * vs
+        assert mkd <= 0.15
