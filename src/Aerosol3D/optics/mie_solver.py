@@ -1,13 +1,14 @@
 """MIE optical solver using PyMieScatt."""
 
+import numpy as np
 import scipy.integrate
+
+from .datastructs import CrossSections, OpticalResult, PhaseFunction, SimulationConfig
 
 if not hasattr(scipy.integrate, "trapz"):
     scipy.integrate.trapz = scipy.integrate.trapezoid
 
-import numpy as np
-
-from .datastructs import CrossSections, OpticalResult, PhaseFunction, SimulationConfig
+_trapz = getattr(np, "trapezoid", np.trapz)
 
 
 def _mie_phase_function(m, d, wavelength, n_theta=181) -> tuple[np.ndarray, np.ndarray]:
@@ -25,7 +26,7 @@ def _mie_phase_function(m, d, wavelength, n_theta=181) -> tuple[np.ndarray, np.n
         angularResolution=angular_resolution,
     )
     sin_theta = np.sin(theta_rad)
-    norm = 2 * np.pi * np.trapezoid(SU * sin_theta, theta_rad)
+    norm = 2 * np.pi * _trapz(SU * sin_theta, theta_rad)
     P11 = SU / norm if norm > 0 else SU
     return theta_rad, P11
 
@@ -128,7 +129,7 @@ def _coreshell_phase_function(
         SU = np.interp(theta_uniform, theta_rad, SU)
         theta_rad = theta_uniform
     sin_theta = np.sin(theta_rad)
-    norm = 2 * np.pi * np.trapezoid(SU * sin_theta, theta_rad)
+    norm = 2 * np.pi * _trapz(SU * sin_theta, theta_rad)
     P11 = SU / norm if norm > 0 else SU
     return theta_rad, P11
 

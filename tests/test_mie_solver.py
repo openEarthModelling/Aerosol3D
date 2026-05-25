@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+_trapz = getattr(np, "trapezoid", np.trapz)
+
 
 def test_optical_result_has_solver_field():
     from Aerosol3D.optics.datastructs import CrossSections, OpticalResult, SimulationConfig
@@ -86,7 +88,7 @@ class TestMieSolver:
         assert result.phase_function.P11.shape[1] == 1
         theta = result.phase_function.theta
         P11 = result.phase_function.P11[:, 0]
-        integral = 2 * np.pi * np.trapezoid(P11 * np.sin(theta), theta)
+        integral = 2 * np.pi * _trapz(P11 * np.sin(theta), theta)
         assert integral == pytest.approx(1.0, abs=0.01)
 
     def test_solve_mie_ssa_consistency(self, soot_material):

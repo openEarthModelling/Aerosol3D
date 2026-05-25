@@ -170,12 +170,10 @@ class TestPrepareDDA:
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
         config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
-        positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config, voxel_size=10.0
         )
 
-        assert positions.ndim == 2 and positions.shape[1] == 3
-        assert positions.shape[0] > 0
         assert voxel_size == 10.0
         assert m_max > 0
 
@@ -197,7 +195,7 @@ class TestSolveSingleWL:
         result_direct = solve_optics(p, config_direct, voxel_size=10.0, verbose=False)
 
         # Via _prepare_dda + _solve_single_wl
-        positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+        grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
             p, config_extracted, voxel_size=10.0
         )
         result_extracted = _solve_single_wl(
@@ -446,7 +444,7 @@ class TestLDRPolarizability:
         p.add_mesh("core", create_sphere((0, 0, 0), 50.0), soot_material)
         config = SimulationConfig(wavelength=550.0, dipole_spacing=10.0)
 
-        _, grid, material_map, _, _, _ = _prepare_dda(p, config, voxel_size=10.0)
+        grid, material_map, _, _, _ = _prepare_dda(p, config, voxel_size=10.0)
         config.dipole_spacing = 10.0
         config.polarization = (1.0, 0.0, 0.0)
         alpha_e = _compute_polarizability(grid, config, material_map)

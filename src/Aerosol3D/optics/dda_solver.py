@@ -76,7 +76,7 @@ def _compute_near_field_intensity(grid, phi_inc):
 
 
 def _prepare_dda(particle, config, voxel_size=None):
-    """Prepare DDA geometry: material map -> voxelize -> extract positions.
+    """Prepare DDA geometry: material map -> voxelize.
 
     Polarizabilities are NOT computed here -- they depend on wavelength
     and polarization direction, so they are computed per-solve in
@@ -84,7 +84,7 @@ def _prepare_dda(particle, config, voxel_size=None):
 
     Returns
     -------
-    positions, grid, material_map, voxel_size, m_max, material_names
+    grid, material_map, voxel_size, m_max, material_names
     """
     # Step 1: Build material map from particle blocks
     material_map = {}
@@ -120,11 +120,7 @@ def _prepare_dda(particle, config, voxel_size=None):
 
     grid = voxelize_with_materials(particle, voxel_size)
 
-    # Step 4: Extract positions from voxel grid
-    mask = grid.cell_data["material_id"] > 0
-    positions = np.ascontiguousarray(grid.cell_centers().points[mask].copy(), dtype=np.float64)
-
-    return positions, grid, material_map, voxel_size, m_max, material_names
+    return grid, material_map, voxel_size, m_max, material_names
 
 
 def _solve_single_wl(
@@ -625,7 +621,7 @@ def solve_optics(
     prep_config.wavelength = effective_wl
 
     # Steps 1-4: Prepare DDA geometry once
-    positions, grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
+    grid, material_map, voxel_size, m_max, material_names = _prepare_dda(
         particle, prep_config, voxel_size
     )
 

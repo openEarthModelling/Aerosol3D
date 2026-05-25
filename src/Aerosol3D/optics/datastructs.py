@@ -28,7 +28,7 @@ def auto_voxel_size(wavelength: float, m_max: float, precision: str = "medium") 
     Args:
         wavelength: Wavelength in nm.
         m_max: Maximum ``|refractive_index|`` across all materials.
-        precision: One of "low", "medium", "high".
+        precision: One of "low", "medium", "high", "ultra".
 
     Returns:
         Maximum voxel_size in nm.
