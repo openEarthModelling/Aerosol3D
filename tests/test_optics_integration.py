@@ -99,7 +99,7 @@ class TestFullOpticsPipeline:
         # Average over phi first
         P11_theta = np.mean(P11, axis=1)
         integrand = P11_theta * sin_theta
-        integral = np.trapz(integrand, theta) * 2 * np.pi
+        integral = np.trapezoid(integrand, theta) * 2 * np.pi
 
         assert integral == pytest.approx(1.0, abs=0.05)
 
