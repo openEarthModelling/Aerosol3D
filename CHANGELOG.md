@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- LDR (Lattice Dispersion Relation) polarizability (Draine & Goodman 1993) replacing Radiative Reaction model — reduces DDA-Mie discrepancy from 10-30% to ~1% at medium precision
+- `_compute_polarizability()` function with per-solve LDR correction, supporting separate S parameters for x/y polarizations in depolarized mode
+- Fourth precision level `"ultra"` (|m|kd ≤ 0.15) for very high accuracy DDA
+- `test_extract_dipoles.py` rewritten with LDR unit tests: S parameter, single/multi material, LDR→CM convergence check
+- `TestLDRPolarizability` test class in `test_dda_solver.py`
+- `test_auto_voxel_size_ultra` precision test
+
+### Changed
+- Precision targets updated based on Yurkin & Hoekstra (2007): `low` (0.63), `medium` (0.5), `high` (0.3), `ultra` (0.15)
+- `_prepare_dda` no longer returns positions (5-tuple); positions extracted per-solve in `_solve_single_wl`
+- Removed `_apply_radiative_correction` and `_extract_dipoles` functions (superseded by `_compute_polarizability`)
+- `auto_voxel_size` docstring updated to document `"ultra"` precision
+- NumPy dependency upper bound `<2.0` removed
+
+### Fixed
+- NumPy 2.x compatibility: `_trapz` compat shim (`hasattr`-based) replaces bare `np.trapz`/`np.trapezoid` in `mie_solver.py` and test files
+- `test_datastructs.py` precision tests updated for new target values
+- Stale `test_extract_dipoles.py` that referenced deleted functions rewritten
+
+### Tests
+- All Julia-dependent tests marked `@pytest.mark.slow` — fast suite (`-m "not slow"`) runs in ~1s
+- Orientational averaging tests: `n_dirs` reduced to 2 for CI speed
+
 ## [0.6.0] - 2026-05-24
 
 ### Added
