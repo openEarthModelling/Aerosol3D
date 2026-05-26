@@ -10,7 +10,7 @@ Aerosol3D is a Python toolkit for modeling the 3D geometry and optical propertie
 
 - **3D Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM (Closed-Cell Model), and CAM (Coated-Aggregate Model) coatings
-- **Optical Computation** — Solve optical properties via DDA (Julia backend, optional GPU) or Mie theory (PyMieScatt, near-instant for spheres)
+- **Optical Computation** — Solve optical properties via DDA with LDR polarizability (Draine & Goodman 1993) and 4 precision levels, or Mie theory (PyMieScatt, near-instant for spheres)
 - **Parallel Orientation Averaging** — Distribute DDA orientation averaging across CPU cores via joblib, with tqdm progress bars and error-tolerant execution
 - **Effective Medium Approximation** — Three EMA methods (volume-weighted, Maxwell-Garnett, Bruggeman) for computing effective refractive indices of mixed-composition particles
 - **Core-Shell Mie Solver** — Exact Mie solution for coated spheres using PyMieScatt's layered-sphere API
@@ -87,7 +87,7 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 | [`black_carbon_sphere.py`](examples/black_carbon_sphere.py) | Bare BC sphere with DDA optics |
 | [`black_carbon_fractal.py`](examples/black_carbon_fractal.py) | Fractal aggregate via pyFracAggregate with full pipeline |
 | [`coated_fractal_aggregate.py`](examples/coated_fractal_aggregate.py) | Coated fractal aggregate comparing four Mie approximations (volume-weighted, MG, Bruggeman, core-shell) |
-| [`validate_mie_vs_dda.py`](examples/validate_mie_vs_dda.py) | Mie vs DDA validation comparison |
+| [`validate_mie_vs_dda.py`](examples/validate_mie_vs_dda.py) | Multi-precision DDA vs Mie validation with LDR convergence analysis |
 | [`dda_mie_pyradtran_pipeline/`](examples/dda_mie_pyradtran_pipeline/) | 3-stage DDA/Mie optics + DISORT radiative transfer pipeline |
 
 ## API Overview
@@ -114,8 +114,8 @@ See the [`examples/`](examples/) directory for complete workflows including frac
 
 ### Optics
 
-- `solve_optics(particle, config, solver="DDA"|"MIE"|"MIE_CORESHELL", orientational_average=False, n_dirs=50, n_jobs=32, show_progress=True)` — Optical solver dispatch with optional parallel orientation averaging
-- `SimulationConfig(wavelength, source)` — Simulation parameters
+- `solve_optics(particle, config, solver="DDA"|"MIE"|"MIE_CORESHELL", orientational_average=False, n_dirs=50, n_jobs=32, show_progress=True)` — Optical solver dispatch with LDR polarizability (DDA) and optional parallel orientation averaging
+- `SimulationConfig(wavelength, source, precision="medium")` — Simulation parameters; `precision` controls DDA dipole spacing (low/medium/high/ultra)
 - `AerosolOpticsData` / `from_optical_results(results, n_legendre)` — Multi-wavelength optical property container
 - `compute_legendre_moments(phase_function, theta)` — Legendre expansion of scattering phase function
 

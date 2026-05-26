@@ -2,8 +2,9 @@ Mie vs DDA Validation
 =====================
 
 This tutorial validates DDA results against exact Mie theory for a spherical
-particle. Mie theory provides an analytical solution for spheres, making it an
-ideal reference for verifying the DDA numerical solver.
+particle. The example compares DDA accuracy at multiple precision levels
+(low, medium, high) using **LDR polarizability** (Draine & Goodman 1993).
+Mie theory provides the analytical reference solution for spheres.
 
 Full Script
 -----------
@@ -18,33 +19,38 @@ Step-by-Step Explanation
 1. **Create a spherical particle**
 
    A 100 nm radius sphere with refractive index m = 1.5 + 0.01i is created.
-   The particle's equivalent diameter and effective refractive index are printed
-   for reference.
+   The equivalent diameter and refractive index parameters are printed.
 
-2. **Run Mie solver** (exact solution for spheres)
+2. **Run Mie solver** (exact reference)
 
    ``solve_optics(particle, config, solver="MIE")`` computes the exact Mie
-   solution, including Q_ext, Q_sca, g, and the full phase function P11. This
-   serves as the ground truth.
+   solution, providing Q_ext, Q_sca, g, and the full phase function P11 as
+   ground truth.
 
-3. **Run DDA solver** (approximate, grid-dependent)
+3. **Run DDA at multiple precision levels**
 
-   Two DDA runs are performed: a single-orientation solve and an orientational
-   average over 50 directions using 32 parallel workers (``n_jobs=32``).
-   DDA approximates the sphere as a dipole grid, so accuracy depends on
-   dipole spacing.  The orientational average uses joblib parallel execution
-   to distribute orientations across CPU cores, with tqdm progress bars
-   tracking completion.
+   DDA is run at three precision levels: ``"low"``, ``"medium"``, ``"high"``.
+   Each level controls the dipole spacing via the :math:`|m|kd` convergence
+   criterion. Lower values produce more dipoles and better accuracy.
 
-4. **Compare and validate**
+   .. code-block:: python
 
-   Cross-sections (Q_ext, Q_sca) and asymmetry parameter (g) are compared.
-   The g parameter must agree within 15% (single orientation) and 30%
-   (orientational average). The phase function P11 is checked via log-space
-   correlation (r > 0.90) after interpolating DDA results onto the Mie theta grid.
+       for prec in ["low", "medium", "high"]:
+           config = SimulationConfig(wavelength=550.0, precision=prec)
+           result = solve_optics(particle, config, solver="DDA")
 
-   If matplotlib is available, a semi-log phase function plot is saved as
-   ``mie_vs_dda_phase_function.png``.
+4. **Compare and visualize**
+
+   A formatted table prints Q_ext, Q_sca, g and their relative errors
+   against Mie for each precision level. Key metrics (n_dipoles, |m|kd)
+   show how precision controls accuracy.
+
+   If matplotlib is available, two plots are saved:
+
+   - **Phase function comparison** — semi-log P11 for Mie and each DDA
+     precision level
+   - **Convergence plot** — relative error vs. number of dipoles, showing
+     how DDA converges toward Mie as precision increases
 
 Further Analysis
 -----------------
