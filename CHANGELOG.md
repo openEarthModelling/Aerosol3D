@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-26
+
 ### Added
 - LDR (Lattice Dispersion Relation) polarizability (Draine & Goodman 1993) replacing Radiative Reaction model — reduces DDA-Mie discrepancy from 10-30% to ~1% at medium precision
 - `_compute_polarizability()` function with per-solve LDR correction, supporting separate S parameters for x/y polarizations in depolarized mode
@@ -161,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Particle shape generation (sphere, spheroid, cube, coated sphere)
 - Core data structures for optical properties and simulation configuration
 
+[0.7.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.3.0...v0.4.0
