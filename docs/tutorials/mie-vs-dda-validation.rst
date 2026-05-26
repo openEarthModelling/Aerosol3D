@@ -42,7 +42,7 @@ Step-by-Step Explanation
 4. **Compare and visualize**
 
    A formatted table prints Q_ext, Q_sca, g and their relative errors
-   against Mie for each precision level. Key metrics (n_dipoles, |m|kd)
+   against Mie for each precision level. Key metrics (n_dipoles, :math:`|m|kd`)
    show how precision controls accuracy.
 
    If matplotlib is available, two plots are saved:

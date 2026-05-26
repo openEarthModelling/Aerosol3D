@@ -47,7 +47,7 @@ Key Parameters
 - ``n_dirs``: Number of orientations for averaging (default 50)
 - ``n_jobs``: Number of parallel workers for orientation averaging (default 32)
 - ``show_progress``: Display tqdm progress bars during averaging (default True)
-- ``precision``: DDA dipole spacing precision — ``"low"``, ``"medium"`` (default), ``"high"``, or ``"ultra"`` — controls the |m|kd convergence criterion
+- ``precision``: DDA dipole spacing precision — ``"low"``, ``"medium"`` (default), ``"high"``, or ``"ultra"`` — controls the :math:`|m|kd` convergence criterion
 
 4. Export and Visualize Results
 -------------------------------
