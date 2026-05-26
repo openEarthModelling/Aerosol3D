@@ -22,6 +22,13 @@
 - `test_datastructs.py` precision tests updated for new target values
 - Stale `test_extract_dipoles.py` that referenced deleted functions rewritten
 
+### Documentation
+- LDR Polarizability section with Draine & Goodman 1993 formula and 4-tier precision level table added to optical computation guide
+- Mie vs DDA validation tutorial rewritten for multi-precision LDR convergence comparison
+- `precision` parameter added to quickstart key parameters
+- README updated with LDR polarizability, precision levels in features/API/example table
+- `validate_mie_vs_dda.py` example rewritten for multi-precision convergence analysis
+
 ### Tests
 - All Julia-dependent tests marked `@pytest.mark.slow` — fast suite (`-m "not slow"`) runs in ~1s
 - Orientational averaging tests: `n_dirs` reduced to 2 for CI speed
