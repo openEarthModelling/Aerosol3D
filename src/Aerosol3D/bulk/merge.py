@@ -64,8 +64,8 @@ def compute_bin_weights(radii_nm: np.ndarray, size_distribution: SizeDistributio
 
 
 def merge_method1(
-    C_ext: np.ndarray,
-    C_sca: np.ndarray,
+    C_ext: np.ndarray,  # noqa: N803
+    C_sca: np.ndarray,  # noqa: N803
     beta: np.ndarray,
     weights: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -134,12 +134,13 @@ def merge_method1(
 
 def merge_method2(
     radii_nm: np.ndarray,
-    C_ext: np.ndarray,
-    C_sca: np.ndarray,
+    C_ext: np.ndarray,  # noqa: N803
+    C_sca: np.ndarray,  # noqa: N803
     beta: np.ndarray,
     size_distribution: SizeDistribution,
     n_quad: int = 256,
     interpolation: str = "pchip",
+    integration: str = "quad",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Method 2: Continuous interpolation + integration.
 
@@ -154,14 +155,27 @@ def merge_method2(
         size_distribution: The ``SizeDistribution`` instance.
         n_quad: Number of quadrature points for integration.
         interpolation: Interpolation type (currently only ``"pchip"`` is supported).
+        integration: Integration method — ``"quad"`` for adaptive Gauss-Kronrod
+            (primary, spec-compliant) or ``"fixed_quad"`` for fixed Gauss-Legendre.
 
     Returns:
         ``(bulk_C_ext, bulk_C_sca, bulk_beta)``.
 
     Raises:
-        ValueError: If input shapes are inconsistent or interpolation type is unsupported.
+        ValueError: If input shapes are inconsistent or interpolation/integration
+            type is unsupported.
     """
-    if interpolation != "pchip":
+    import warnings
+
+    if interpolation == "cspline":
+        warnings.warn(
+            "cspline interpolation is not recommended for optical properties; "
+            "falling back to pchip (monotonic, no overshoot).",
+            UserWarning,
+            stacklevel=2,
+        )
+        interpolation = "pchip"
+    elif interpolation != "pchip":
         raise ValueError(f"unsupported interpolation: {interpolation!r}")
 
     radii = np.asarray(radii_nm, dtype=float)
@@ -187,7 +201,7 @@ def merge_method2(
     n_wavelength = C_ext.shape[1]
     n_legendre = beta.shape[2]
 
-    from Aerosol3D.bulk.integration import integrate_distribution_vectorized
+    from Aerosol3D.bulk.integration import integrate_distribution, integrate_distribution_vectorized
 
     bulk_C_ext = np.empty(n_wavelength, dtype=float)
     bulk_C_sca = np.empty(n_wavelength, dtype=float)
@@ -203,33 +217,66 @@ def merge_method2(
             for l in range(n_legendre)
         ]
 
-        # Integrate C_ext(r) * pdf(r) dr
-        def _integrand_C_ext(r: np.ndarray) -> np.ndarray:
-            return c_ext_interp(r)
+        if integration == "quad":
+            # Adaptive Gauss-Kronrod (primary, spec-compliant)
+            # Integrate C_ext(r) * pdf(r) dr
+            def _integrand_C_ext(r: np.ndarray) -> np.ndarray:  # noqa: N802
+                return c_ext_interp(r)
 
-        bulk_C_ext[j] = integrate_distribution_vectorized(
-            _integrand_C_ext, size_distribution, n_quad
-        )
-
-        # Integrate C_sca(r) * pdf(r) dr
-        def _integrand_C_sca(r: np.ndarray) -> np.ndarray:
-            return c_sca_interp(r)
-
-        bulk_C_sca[j] = integrate_distribution_vectorized(
-            _integrand_C_sca, size_distribution, n_quad
-        )
-
-        # Integrate beta_l(r) * C_sca(r) * pdf(r) dr for each l
-        for l in range(n_legendre):
-            def _make_integrand(beta_interp, c_sca_interp):
-                def _integrand(r: np.ndarray) -> np.ndarray:
-                    return beta_interp(r) * c_sca_interp(r)
-                return _integrand
-
-            integrand = _make_integrand(beta_interps[l], c_sca_interp)
-            bulk_M_l[j, l] = integrate_distribution_vectorized(
-                integrand, size_distribution, n_quad
+            bulk_C_ext[j] = integrate_distribution(
+                _integrand_C_ext, size_distribution, method="quad"
             )
+
+            # Integrate C_sca(r) * pdf(r) dr
+            def _integrand_C_sca(r: np.ndarray) -> np.ndarray:  # noqa: N802
+                return c_sca_interp(r)
+
+            bulk_C_sca[j] = integrate_distribution(
+                _integrand_C_sca, size_distribution, method="quad"
+            )
+
+            # Integrate beta_l(r) * C_sca(r) * pdf(r) dr for each l
+            for l in range(n_legendre):
+                def _make_integrand(beta_interp, c_sca_interp):
+                    def _integrand(r: np.ndarray) -> np.ndarray:
+                        return beta_interp(r) * c_sca_interp(r)
+                    return _integrand
+
+                integrand = _make_integrand(beta_interps[l], c_sca_interp)
+                bulk_M_l[j, l] = integrate_distribution(
+                    integrand, size_distribution, method="quad"
+                )
+        elif integration == "fixed_quad":
+            # Fixed Gauss-Legendre quadrature in log-space
+            # Integrate C_ext(r) * pdf(r) dr
+            def _integrand_C_ext(r: np.ndarray) -> np.ndarray:  # noqa: N802
+                return c_ext_interp(r)
+
+            bulk_C_ext[j] = integrate_distribution_vectorized(
+                _integrand_C_ext, size_distribution, n_quad
+            )
+
+            # Integrate C_sca(r) * pdf(r) dr
+            def _integrand_C_sca(r: np.ndarray) -> np.ndarray:  # noqa: N802
+                return c_sca_interp(r)
+
+            bulk_C_sca[j] = integrate_distribution_vectorized(
+                _integrand_C_sca, size_distribution, n_quad
+            )
+
+            # Integrate beta_l(r) * C_sca(r) * pdf(r) dr for each l
+            for l in range(n_legendre):
+                def _make_integrand(beta_interp, c_sca_interp):
+                    def _integrand(r: np.ndarray) -> np.ndarray:
+                        return beta_interp(r) * c_sca_interp(r)
+                    return _integrand
+
+                integrand = _make_integrand(beta_interps[l], c_sca_interp)
+                bulk_M_l[j, l] = integrate_distribution_vectorized(
+                    integrand, size_distribution, n_quad
+                )
+        else:
+            raise ValueError(f"unsupported integration: {integration!r}")
 
     # beta = M_l / C_sca
     bulk_beta = np.zeros_like(bulk_M_l)

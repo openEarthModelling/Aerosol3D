@@ -311,8 +311,8 @@ class TestMieMultisizeWorkflow:
         pass
 
     def test_full_mie_pipeline(self):
-        import tempfile
         import os
+        import tempfile
 
         from Aerosol3D import (
             AerosolParticle,
@@ -328,7 +328,7 @@ class TestMieMultisizeWorkflow:
 
         # Skip if PyMieScatt is not installed
         try:
-            import PyMieScatt as _pms  # noqa: F401
+            import PyMieScatt as _pms  # noqa: F401, N813
         except ImportError:
             pytest.skip("PyMieScatt not available")
 

@@ -202,7 +202,7 @@ def print_comparison(
     print(f"  {label}")
     print(f"{'=' * 80}")
 
-    headers = ["Wavelength", "Method", "C_ext", "C_sca", "SSA", "g", "beta_1"]
+
     print(f"  {'nm':>10} | {'Method':>18} | {'C_ext':>12} | {'C_sca':>12} | {'SSA':>8} | {'g':>8} | {'beta_1':>8}")
     print(f"  {'-' * 90}")
 
@@ -261,7 +261,7 @@ def plot_all(
 
     wl = WAVELENGTHS_NM
     wl_colors = {400.0: "#8e44ad", 550.0: "#2980b9", 700.0: "#27ae60"}
-    n_wl = len(wl)
+
 
     # ===================================================================
     # Figure 1: Size Distribution & Sampling
@@ -461,7 +461,7 @@ def plot_all(
     ax.set_xticks(range(len(weights)))
     ax.set_xticklabels(bin_labels, fontsize=8)
     ax.set_ylabel(r"Fractional Number Count $N_i$")
-    ax.set_title(rf"Step 2: Compute Weights $N_i = \int_{{bin_i}} n(r)dr$" + "\n" + rf"($\sum N_i$ = {np.sum(weights):.4f})")
+    ax.set_title(r"Step 2: Compute Weights $N_i = \int_{bin_i} n(r)dr$" + "\n" + rf"($\sum N_i$ = {np.sum(weights):.4f})")
     ax.grid(True, alpha=0.3, axis="y")
     for bar, w in zip(bars, weights):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005, f"{w:.3f}", ha="center", fontsize=9)

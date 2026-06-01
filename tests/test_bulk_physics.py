@@ -11,7 +11,6 @@ of the specific size distribution or optical properties:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from Aerosol3D.bulk.builder import BulkOpticsBuilder
 from Aerosol3D.bulk.datastructs import SizeDistribution
@@ -218,7 +217,7 @@ class TestEnergyConservation:
         bulk = builder.compute(n_quad=256)
         np.testing.assert_allclose(bulk.C_ext, bulk.C_sca + bulk.C_abs, atol=1e-12)
 
-    def test_energy_conservation__derived_C_abs_matches(self):
+    def test_energy_conservation__derived_C_abs_matches(self):  # noqa: N802
         """Explicitly verify that bulk.C_abs equals the difference."""
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
         radii = np.logspace(1, 3, 16)
@@ -236,7 +235,7 @@ class TestEnergyConservation:
 class TestMonodisperseLimit:
     """Single radius with very narrow distribution should approximate the single-particle result."""
 
-    def test_monodisperse_limit_C_ext(self):
+    def test_monodisperse_limit_C_ext(self):  # noqa: N802
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.01)
         radii = np.array([100.0])
         builder = BulkOpticsBuilder(size_distribution=sd, radii_nm=radii, n_legendre=32)
@@ -248,7 +247,7 @@ class TestMonodisperseLimit:
         bulk = builder.compute(n_quad=512)
         np.testing.assert_allclose(bulk.C_ext, optics.C_ext, rtol=1e-2)
 
-    def test_monodisperse_limit_C_sca(self):
+    def test_monodisperse_limit_C_sca(self):  # noqa: N802
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.01)
         radii = np.array([100.0])
         builder = BulkOpticsBuilder(size_distribution=sd, radii_nm=radii, n_legendre=32)
@@ -260,7 +259,7 @@ class TestMonodisperseLimit:
         bulk = builder.compute(n_quad=512)
         np.testing.assert_allclose(bulk.C_sca, optics.C_sca, rtol=1e-2)
 
-    def test_monodisperse_limit_SSA(self):
+    def test_monodisperse_limit_SSA(self):  # noqa: N802
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.01)
         radii = np.array([100.0])
         builder = BulkOpticsBuilder(size_distribution=sd, radii_nm=radii, n_legendre=32)

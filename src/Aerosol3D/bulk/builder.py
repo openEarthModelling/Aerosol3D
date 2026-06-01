@@ -104,8 +104,11 @@ class BulkOpticsBuilder:
 
         Args:
             interpolation: Interpolation type (currently only ``"pchip"``).
-            integration: Integration method label for metadata.
-            n_quad: Number of quadrature points for Method 2.
+            integration: Integration method — ``"quad"`` for adaptive
+                Gauss-Kronrod (primary, spec-compliant) or ``"fixed_quad"``
+                for fixed Gauss-Legendre quadrature.
+            n_quad: Number of quadrature points for Method 2 (used only when
+                ``integration="fixed_quad"``).
             check_mie_ripples: If ``True``, detect insufficient sampling for
                 Mie oscillations and fall back to Method 1.
             refractive_index: Complex refractive index used for ripple
@@ -126,6 +129,29 @@ class BulkOpticsBuilder:
 
         if not self._entries:
             raise ValueError("No entries have been added to the builder")
+
+        # Validate Mie ripple parameters
+        if check_mie_ripples and refractive_index is None:
+            # Attempt auto-extraction from first entry
+            first_optics = next(iter(self._entries.values()))
+            if (
+                first_optics.refractive_index_real is not None
+                and first_optics.refractive_index_imag is not None
+            ):
+                # Use the first wavelength's refractive index
+                n_real = float(first_optics.refractive_index_real[0])
+                n_imag = float(first_optics.refractive_index_imag[0])
+                refractive_index = complex(n_real, n_imag)
+                logger.debug(
+                    "Auto-extracted refractive index from first entry: %s",
+                    refractive_index,
+                )
+            else:
+                raise ValueError(
+                    "refractive_index is required when check_mie_ripples=True. "
+                    "Either pass it explicitly, or ensure the added optics entries "
+                    "have refractive_index_real and refractive_index_imag fields."
+                )
 
         # Build sorted radius list and arrays
         radii = np.asarray(self.radii_nm, dtype=float)
@@ -227,6 +253,7 @@ class BulkOpticsBuilder:
                     self.size_distribution,
                     n_quad=n_quad,
                     interpolation=interpolation,
+                    integration=integration,
                 )
                 bulk_C_ext[j] = m2_C_ext[0]
                 bulk_C_sca[j] = m2_C_sca[0]

@@ -250,8 +250,8 @@ class BulkAerosolOpticsData:
     radii_weights: np.ndarray | None = None  # (n_radii,) quadrature weights
 
     # Per-radius single-particle optical properties -------------------------
-    per_radius_C_ext: np.ndarray | None = None  # (n_radii, n_wavelength)
-    per_radius_C_sca: np.ndarray | None = None  # (n_radii, n_wavelength)
+    per_radius_C_ext: np.ndarray | None = None  # noqa: N815  # (n_radii, n_wavelength)
+    per_radius_C_sca: np.ndarray | None = None  # noqa: N815  # (n_radii, n_wavelength)
     per_radius_beta: np.ndarray | None = None  # (n_radii, n_wavelength, n_legendre)
 
     # Integration summary ---------------------------------------------------
@@ -268,3 +268,27 @@ class BulkAerosolOpticsData:
     tau_ref: float | None = None
     concentration_method: str | None = None
     concentration_kwargs: dict | None = None
+
+    def to_netcdf(self, path: str) -> None:
+        """Save bulk aerosol optical properties to a NetCDF file.
+
+        Args:
+            path: Output file path.
+        """
+        from Aerosol3D.bulk.io import bulk_to_netcdf
+
+        bulk_to_netcdf(self, path)
+
+    @classmethod
+    def from_netcdf(cls, path: str) -> BulkAerosolOpticsData:
+        """Load bulk aerosol optical properties from a NetCDF file.
+
+        Args:
+            path: Path to the NetCDF file.
+
+        Returns:
+            A ``BulkAerosolOpticsData`` instance.
+        """
+        from Aerosol3D.bulk.io import bulk_from_netcdf
+
+        return bulk_from_netcdf(path)

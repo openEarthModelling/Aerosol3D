@@ -94,7 +94,7 @@ class TestMergeMethod1:
     def test_weighted_sum_formula(self):
         from Aerosol3D.bulk.merge import merge_method1
 
-        n_radius, n_wavelength = 2, 1
+
         C_ext = np.array([[1.0], [3.0]])
         C_sca = np.array([[2.0], [4.0]])
         # beta shape: (n_radius, n_wavelength, n_legendre) = (2, 1, 2)
@@ -114,7 +114,7 @@ class TestMergeMethod1:
         # bulk_beta[0,1] = 1.15 / 3.5 = 0.32857...
         assert bulk_beta[0, 1] == pytest.approx(1.15 / 3.5, rel=1e-12)
 
-    def test_zero_C_sca_handled(self):
+    def test_zero_C_sca_handled(self):  # noqa: N802
         """If C_sca is all zero, beta should still have beta[:,0] = 1."""
         from Aerosol3D.bulk.merge import merge_method1
 
