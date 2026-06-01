@@ -211,3 +211,60 @@ class SizeDistribution:
             lambda r: self.pdf(np.array([r]))[0], r_left, r_right, limit=100
         )
         return float(val)
+
+
+@dataclass(frozen=True, slots=True)
+class BulkAerosolOpticsData:
+    """Bulk aerosol optical properties integrated over a size distribution.
+
+    All array fields are aligned along the first dimension by ``wavelength_nm``.
+    Per-radius fields capture the raw integration grid and single-particle
+    optical properties used to compute the bulk values.
+    """
+
+    # Wavelength axis -------------------------------------------------------
+    wavelength_nm: np.ndarray  # (n_wavelength,)
+
+    # Bulk optical cross-sections [nm^2 per particle] -----------------------
+    C_ext: np.ndarray  # (n_wavelength,)
+    C_sca: np.ndarray  # (n_wavelength,)
+    C_abs: np.ndarray  # (n_wavelength,)
+
+    # Bulk single-scattering properties -------------------------------------
+    SSA: np.ndarray  # (n_wavelength,)  derived, not interpolated
+    g: np.ndarray  # (n_wavelength,) asymmetry parameter = beta[:, 1] / 3.0
+
+    # Legendre expansion (vSmartMOM-style) ----------------------------------
+    # beta[l] = k_l / k_0, therefore beta[..., 0] == 1 by construction.
+    beta: np.ndarray  # (n_wavelength, n_legendre)
+    n_legendre: int
+
+    # Optional phase function grids -----------------------------------------
+    theta_rad: np.ndarray | None = None
+    phi_rad: np.ndarray | None = None
+    P11: np.ndarray | None = None
+
+    # Size-distribution metadata --------------------------------------------
+    size_distribution: SizeDistribution | None = None
+    radii_nm: np.ndarray | None = None  # (n_radii,) integration grid
+    radii_weights: np.ndarray | None = None  # (n_radii,) quadrature weights
+
+    # Per-radius single-particle optical properties -------------------------
+    per_radius_C_ext: np.ndarray | None = None  # (n_radii, n_wavelength)
+    per_radius_C_sca: np.ndarray | None = None  # (n_radii, n_wavelength)
+    per_radius_beta: np.ndarray | None = None  # (n_radii, n_wavelength, n_legendre)
+
+    # Integration summary ---------------------------------------------------
+    r_eff_nm: float | None = None
+    interpolation_method: str = ""
+    integration_method: str = ""
+    integration_n_points: int = 0
+
+    # Fallback tracking -----------------------------------------------------
+    fallback_used: bool = False
+    fallback_wavelengths: list[float] | None = None
+
+    # Concentration / column metadata ---------------------------------------
+    tau_ref: float | None = None
+    concentration_method: str | None = None
+    concentration_kwargs: dict | None = None
