@@ -300,6 +300,80 @@ class TestAddFromNetCDF:
         np.testing.assert_array_equal(builder._entries[100.0].wavelength_nm, wl)
 
 
+class TestMieMultisizeWorkflow:
+    """End-to-end test: Mie optics -> NetCDF -> BulkOpticsBuilder -> bulk data."""
+
+    @pytest.mark.skip(
+        reason="PyMieScatt not available",
+    )
+    def _skip_if_no_pymiescatt(self):
+        """Runtime skip helper — pytest will skip the test class if this is hit."""
+        pass
+
+    def test_full_mie_pipeline(self):
+        import tempfile
+        import os
+
+        from Aerosol3D import (
+            AerosolParticle,
+            MixingState,
+            SimulationConfig,
+            create_sphere,
+            preset_material,
+            solve_optics,
+        )
+        from Aerosol3D.bulk.builder import BulkOpticsBuilder
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.optics.optics_export import from_optical_results
+
+        # Skip if PyMieScatt is not installed
+        try:
+            import PyMieScatt as _pms  # noqa: F401
+        except ImportError:
+            pytest.skip("PyMieScatt not available")
+
+        radii_nm = np.array([50.0, 100.0])
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        builder = BulkOpticsBuilder(size_distribution=sd, radii_nm=radii_nm, n_legendre=8)
+
+        mat = preset_material("black_carbon")
+        config = SimulationConfig(wavelength=550.0, precision="low")
+
+        temp_paths = []
+        for r in radii_nm:
+            sphere = create_sphere(center=(0.0, 0.0, 0.0), radius=r)
+            particle = AerosolParticle(name="test", mixing_state=MixingState.INTERNAL)
+            particle.add_mesh("core", sphere, mat)
+
+            result = solve_optics(
+                particle,
+                config,
+                solver="MIE",
+                compute_phase_func=True,
+                verbose=False,
+            )
+            optics = from_optical_results([result], n_legendre=8)
+
+            with tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as f:
+                path = f.name
+            optics.to_netcdf(path)
+            temp_paths.append(path)
+
+            builder.add_from_netcdf(r, path)
+
+        try:
+            bulk = builder.compute()
+        finally:
+            for path in temp_paths:
+                os.unlink(path)
+
+        assert bulk.C_ext.shape == (1,)
+        assert bulk.beta.shape == (1, 8)
+        assert bulk.beta[0, 0] == pytest.approx(1.0, abs=1e-14)
+        assert 0.0 < bulk.SSA[0] < 1.0
+        assert bulk.r_eff_nm == pytest.approx(sd.effective_radius(), rel=1e-6)
+
+
 class TestImports:
     def test_bulk_module_imports(self):
         from Aerosol3D.bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
