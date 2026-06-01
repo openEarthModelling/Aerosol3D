@@ -298,3 +298,19 @@ class TestAddFromNetCDF:
         builder.add_from_netcdf(100.0, str(path))
         assert 100.0 in builder._entries
         np.testing.assert_array_equal(builder._entries[100.0].wavelength_nm, wl)
+
+
+class TestImports:
+    def test_bulk_module_imports(self):
+        from Aerosol3D.bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
+
+        assert BulkAerosolOpticsData is not None
+        assert BulkOpticsBuilder is not None
+        assert SizeDistribution is not None
+
+    def test_top_level_imports(self):
+        from Aerosol3D import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
+
+        assert BulkAerosolOpticsData is not None
+        assert BulkOpticsBuilder is not None
+        assert SizeDistribution is not None

@@ -15,6 +15,7 @@ from .modeling import (
     apply_potential_void_coating,
 )
 from .optics import SimulationConfig, solve_optics  # noqa: F401
+from .bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
 from .utils.plot import (
     plot_particle_as_voxels,
     save_particle_voxel_screenshot,
