@@ -148,12 +148,16 @@ class BulkOpticsBuilder:
             C_sca[i, :] = optics.C_sca
 
             if optics.legendre_moments_beta is not None:
-                beta[i, :, :] = optics.legendre_moments_beta
+                # Convert from Aerosol3D convention (g_l = k_l/(2l+1))
+                # to vSmartMOM convention (beta_l = k_l/k_0 = (2l+1)*g_l)
+                l_vals = np.arange(self.n_legendre)
+                beta[i, :, :] = optics.legendre_moments_beta * (2 * l_vals + 1)
             else:
-                # Reconstruct from g: beta_1 = g, rest = 0, beta_0 = 1
+                # Reconstruct beta in vSmartMOM convention: beta_l = (2l+1)*g_l
+                # beta_0 = 1*1 = 1, beta_1 = 3*g, beta_{l>1} = 0
                 beta[i, :, 0] = 1.0
                 if self.n_legendre > 1:
-                    beta[i, :, 1] = optics.g
+                    beta[i, :, 1] = optics.g * 3.0
                 if self.n_legendre > 2:
                     beta[i, :, 2:] = 0.0
 
@@ -237,7 +241,7 @@ class BulkOpticsBuilder:
 
         g = np.empty_like(bulk_C_ext)
         if self.n_legendre > 1:
-            g[:] = bulk_beta[:, 1]
+            g[:] = bulk_beta[:, 1] / 3.0
         else:
             g[:] = 0.0
 

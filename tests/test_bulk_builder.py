@@ -155,8 +155,8 @@ class TestBuilderCompute:
         np.testing.assert_allclose(bulk.C_abs, bulk.C_ext - bulk.C_sca, atol=1e-12)
         # SSA = C_sca / C_ext
         np.testing.assert_allclose(bulk.SSA, bulk.C_sca / bulk.C_ext, atol=1e-12)
-        # g = beta[:, 1] (beta_1 is the asymmetry parameter)
-        np.testing.assert_allclose(bulk.g, bulk.beta[:, 1], atol=1e-12)
+        # g = beta[:, 1] / 3.0 (vSmartMOM convention: beta includes (2l+1) factor)
+        np.testing.assert_allclose(bulk.g, bulk.beta[:, 1] / 3.0, atol=1e-12)
 
     def test_compute_sets_r_eff(self):
         from Aerosol3D.bulk.builder import BulkOpticsBuilder
@@ -204,8 +204,10 @@ class TestBuilderCompute:
             builder.add(r, optics)
 
         bulk = builder.compute(n_quad=256)
-        # beta[:, 1] should reflect g = 0.6 => beta_1 = 0.6
-        np.testing.assert_allclose(bulk.beta[:, 1], 0.6, atol=1e-12)
+        # beta[:, 1] should reflect g = 0.6 in vSmartMOM convention: beta_1 = 3*g = 1.8
+        np.testing.assert_allclose(bulk.beta[:, 1], 1.8, atol=1e-12)
+        # g should still equal the input g
+        np.testing.assert_allclose(bulk.g, 0.6, atol=1e-12)
 
 
 class TestMonodisperseLimit:
