@@ -139,3 +139,69 @@ class TestLinearPCHIPInterpolator:
         result = interp(r_test)
         assert isinstance(result, np.ndarray)
         assert result.shape == r_test.shape
+
+
+class TestIntegrateDistribution:
+    """Tests for Aerosol3D.bulk.integration quadrature engine."""
+
+    def test_integrates_constant(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import integrate_distribution
+
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        result = integrate_distribution(lambda r: np.ones_like(r), sd, method="quad")
+        assert result == pytest.approx(1.0, abs=1e-6)
+
+    def test_integrates_r_squared(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import integrate_distribution
+
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        result = integrate_distribution(lambda r: r**2, sd, method="quad")
+        expected = sd.moment(2.0)
+        assert result == pytest.approx(expected, rel=1e-5)
+
+    def test_fixed_quad_matches_quad(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import integrate_distribution
+
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        quad_result = integrate_distribution(
+            lambda r: r**2, sd, method="quad"
+        )
+        fixed_result = integrate_distribution(
+            lambda r: r**2, sd, n_quad=256, method="fixed_quad"
+        )
+        assert quad_result == pytest.approx(fixed_result, rel=1e-4)
+
+    def test_vectorized_matches_fixed_quad(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import (
+            integrate_distribution,
+            integrate_distribution_vectorized,
+        )
+
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        fixed_result = integrate_distribution(
+            lambda r: r**2, sd, n_quad=128, method="fixed_quad"
+        )
+        vec_result = integrate_distribution_vectorized(
+            lambda r: r**2, sd, n_quad=128
+        )
+        assert vec_result == pytest.approx(fixed_result, rel=1e-12)
+
+    def test_gamma_distribution_integration(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import integrate_distribution
+
+        sd = SizeDistribution.gamma(reff_nm=500.0, veff=0.1)
+        result = integrate_distribution(lambda r: np.ones_like(r), sd, method="quad")
+        assert result == pytest.approx(1.0, abs=1e-6)
+
+    def test_invalid_method_raises(self):
+        from Aerosol3D.bulk.datastructs import SizeDistribution
+        from Aerosol3D.bulk.integration import integrate_distribution
+
+        sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
+        with pytest.raises(ValueError, match="Unsupported integration method"):
+            integrate_distribution(lambda r: r, sd, method="trapezoid")
