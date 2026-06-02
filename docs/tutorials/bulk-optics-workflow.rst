@@ -39,7 +39,7 @@ Step 1: Define the Size Distribution
    print(f"Effective radius: {dist.effective_radius():.1f} nm")
 
 The effective radius :math:`r_{\text{eff}} = r_g \exp(5\sigma_{\ln}^2/2)`
-should be approximately 332 nm for these parameters.
+should be approximately 374 nm for these parameters.
 
 
 Step 2: Generate Single-Particle Optics
