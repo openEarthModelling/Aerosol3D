@@ -305,8 +305,13 @@ Enable detection and provide the refractive index:
        mie_ripple_min_points=3,
    )
 
-If ``refractive_index`` is not provided, ripple detection is skipped
-(assumes sufficient sampling).
+If ``refractive_index`` is not provided, the builder attempts to
+auto-extract it from the first added optics entry's
+``refractive_index_real`` and ``refractive_index_imag`` fields. Only
+the first wavelength's refractive index is used for the ripple period
+estimate, so dispersion (wavelength-dependent refractive index) is not
+accounted for. If these fields are not available, a ``ValueError`` is
+raised.
 
 
 NetCDF I/O Formats

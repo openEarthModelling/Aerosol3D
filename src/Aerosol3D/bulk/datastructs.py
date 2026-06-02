@@ -95,9 +95,7 @@ class SizeDistribution:
         # Compute normalization constant numerically over [0, inf)
         norm, _ = quad(lambda r: r**alpha * np.exp(-beta * r), 0.0, np.inf, limit=100)
         if norm <= 0.0 or not np.isfinite(norm):
-            raise ValueError(
-                f"Gamma normalization failed for reff={reff_nm}, veff={veff}"
-            )
+            raise ValueError(f"Gamma normalization failed for reff={reff_nm}, veff={veff}")
 
         def _pdf(r: np.ndarray) -> np.ndarray:
             r = np.asarray(r, dtype=float)
@@ -207,9 +205,7 @@ class SizeDistribution:
         Returns:
             Fraction of particles in the interval.
         """
-        val, _ = quad(
-            lambda r: self.pdf(np.array([r]))[0], r_left, r_right, limit=100
-        )
+        val, _ = quad(lambda r: self.pdf(np.array([r]))[0], r_left, r_right, limit=100)
         return float(val)
 
 

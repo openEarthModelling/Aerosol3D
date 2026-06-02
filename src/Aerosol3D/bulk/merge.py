@@ -54,9 +54,7 @@ def compute_bin_weights(radii_nm: np.ndarray, size_distribution: SizeDistributio
 
     weight_sum = float(np.sum(weights))
     if not np.isclose(weight_sum, 1.0, atol=1e-5):
-        raise RuntimeError(
-            f"weights do not sum to approximately 1.0 (got {weight_sum:.6e})"
-        )
+        raise RuntimeError(f"weights do not sum to approximately 1.0 (got {weight_sum:.6e})")
 
     # Renormalize to exactly 1.0
     weights = weights / weight_sum
@@ -212,10 +210,7 @@ def merge_method2(
         c_ext_interp = LogLogPCHIPInterpolator(radii, C_ext[:, j])
         c_sca_interp = LogLogPCHIPInterpolator(radii, C_sca[:, j])
 
-        beta_interps = [
-            LinearPCHIPInterpolator(radii, beta[:, j, l])
-            for l in range(n_legendre)
-        ]
+        beta_interps = [LinearPCHIPInterpolator(radii, beta[:, j, l]) for l in range(n_legendre)]
 
         if integration == "quad":
             # Adaptive Gauss-Kronrod (primary, spec-compliant)
@@ -237,15 +232,15 @@ def merge_method2(
 
             # Integrate beta_l(r) * C_sca(r) * pdf(r) dr for each l
             for l in range(n_legendre):
+
                 def _make_integrand(beta_interp, c_sca_interp):
                     def _integrand(r: np.ndarray) -> np.ndarray:
                         return beta_interp(r) * c_sca_interp(r)
+
                     return _integrand
 
                 integrand = _make_integrand(beta_interps[l], c_sca_interp)
-                bulk_M_l[j, l] = integrate_distribution(
-                    integrand, size_distribution, method="quad"
-                )
+                bulk_M_l[j, l] = integrate_distribution(integrand, size_distribution, method="quad")
         elif integration == "fixed_quad":
             # Fixed Gauss-Legendre quadrature in log-space
             # Integrate C_ext(r) * pdf(r) dr
@@ -266,9 +261,11 @@ def merge_method2(
 
             # Integrate beta_l(r) * C_sca(r) * pdf(r) dr for each l
             for l in range(n_legendre):
+
                 def _make_integrand(beta_interp, c_sca_interp):
                     def _integrand(r: np.ndarray) -> np.ndarray:
                         return beta_interp(r) * c_sca_interp(r)
+
                     return _integrand
 
                 integrand = _make_integrand(beta_interps[l], c_sca_interp)

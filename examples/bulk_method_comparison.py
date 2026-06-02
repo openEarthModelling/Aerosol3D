@@ -202,8 +202,9 @@ def print_comparison(
     print(f"  {label}")
     print(f"{'=' * 80}")
 
-
-    print(f"  {'nm':>10} | {'Method':>18} | {'C_ext':>12} | {'C_sca':>12} | {'SSA':>8} | {'g':>8} | {'beta_1':>8}")
+    print(
+        f"  {'nm':>10} | {'Method':>18} | {'C_ext':>12} | {'C_sca':>12} | {'SSA':>8} | {'g':>8} | {'beta_1':>8}"
+    )
     print(f"  {'-' * 90}")
 
     for j, wl in enumerate(WAVELENGTHS_NM):
@@ -221,10 +222,14 @@ def print_comparison(
         )
 
         # Difference
-        dC_ext = abs(m1['C_ext'][j] - m2['C_ext'][j]) / m1['C_ext'][j] * 100 if m1['C_ext'][j] > 0 else 0
-        dC_sca = abs(m1['C_sca'][j] - m2['C_sca'][j]) / m1['C_sca'][j] * 100 if m1['C_sca'][j] > 0 else 0
-        dSSA = abs(m1['SSA'][j] - m2['SSA'][j]) * 100
-        dg = abs(m1['g'][j] - m2['g'][j]) * 100
+        dC_ext = (
+            abs(m1["C_ext"][j] - m2["C_ext"][j]) / m1["C_ext"][j] * 100 if m1["C_ext"][j] > 0 else 0
+        )
+        dC_sca = (
+            abs(m1["C_sca"][j] - m2["C_sca"][j]) / m1["C_sca"][j] * 100 if m1["C_sca"][j] > 0 else 0
+        )
+        dSSA = abs(m1["SSA"][j] - m2["SSA"][j]) * 100
+        dg = abs(m1["g"][j] - m2["g"][j]) * 100
         print(
             f"  {'':>10} | {'Δ (%)':>18} | "
             f"{dC_ext:>11.2f}% | {dC_sca:>11.2f}% | {dSSA:>7.2f}% | {dg:>7.2f}% |"
@@ -232,7 +237,7 @@ def print_comparison(
         print(f"  {'-' * 90}")
 
         if ref is not None:
-            dref_C_ext = abs(m2['C_ext'][j] - ref['C_ext'][j]) / ref['C_ext'][j] * 100
+            dref_C_ext = abs(m2["C_ext"][j] - ref["C_ext"][j]) / ref["C_ext"][j] * 100
             print(f"  {'':>10} | {'vs Ref (%)':>18} | {dref_C_ext:>11.2f}% | ...")
 
 
@@ -262,7 +267,6 @@ def plot_all(
     wl = WAVELENGTHS_NM
     wl_colors = {400.0: "#8e44ad", 550.0: "#2980b9", 700.0: "#27ae60"}
 
-
     # ===================================================================
     # Figure 1: Size Distribution & Sampling
     # ===================================================================
@@ -278,7 +282,9 @@ def plot_all(
     ax.plot(r_fine, pdf_vals, "-", color="#2980b9", lw=2)
     # Mark sample points
     pdf_at_samples = DIST.pdf_values(sparse_radii)
-    ax.scatter(sparse_radii, pdf_at_samples, color="#e74c3c", s=100, zorder=5, label="Sparse samples (n=5)")
+    ax.scatter(
+        sparse_radii, pdf_at_samples, color="#e74c3c", s=100, zorder=5, label="Sparse samples (n=5)"
+    )
     # Mark bin edges
     edges = _get_bin_edges(sparse_radii)
     finite_edges = edges[edges < np.inf]
@@ -312,7 +318,9 @@ def plot_all(
     # Figure 2: Single-Size Optical Properties (Raw Data)
     # ===================================================================
     fig2, axes2 = plt.subplots(2, 2, figsize=(12, 10))
-    fig2.suptitle("Figure 2: Single-Size Optical Properties (Raw Data)", fontsize=14, fontweight="bold")
+    fig2.suptitle(
+        "Figure 2: Single-Size Optical Properties (Raw Data)", fontsize=14, fontweight="bold"
+    )
 
     # Prepare data matrices
     C_ext_raw = np.array([opt.C_ext for opt in sparse_optics])  # (n_r, n_wl)
@@ -323,10 +331,18 @@ def plot_all(
     for j, w in enumerate(wl):
         color = wl_colors[w]
         label = f"{w:.0f} nm"
-        axes2[0, 0].semilogx(sparse_radii, C_ext_raw[:, j], "o-", color=color, label=label, markersize=8)
-        axes2[0, 1].semilogx(sparse_radii, C_sca_raw[:, j], "o-", color=color, label=label, markersize=8)
-        axes2[1, 0].semilogx(sparse_radii, SSA_raw[:, j], "o-", color=color, label=label, markersize=8)
-        axes2[1, 1].semilogx(sparse_radii, g_raw[:, j], "o-", color=color, label=label, markersize=8)
+        axes2[0, 0].semilogx(
+            sparse_radii, C_ext_raw[:, j], "o-", color=color, label=label, markersize=8
+        )
+        axes2[0, 1].semilogx(
+            sparse_radii, C_sca_raw[:, j], "o-", color=color, label=label, markersize=8
+        )
+        axes2[1, 0].semilogx(
+            sparse_radii, SSA_raw[:, j], "o-", color=color, label=label, markersize=8
+        )
+        axes2[1, 1].semilogx(
+            sparse_radii, g_raw[:, j], "o-", color=color, label=label, markersize=8
+        )
 
     axes2[0, 0].set_ylabel(r"$C_{ext}$ (nm²)")
     axes2[0, 0].set_title("Extinction Cross-Section")
@@ -361,7 +377,8 @@ def plot_all(
     fig3.suptitle(
         "Figure 3: Method 2 — Continuous Interpolation + Integration\n"
         "(Log-Log PCHIP for C, Linear PCHIP for β)",
-        fontsize=13, fontweight="bold",
+        fontsize=13,
+        fontweight="bold",
     )
 
     r_interp = np.logspace(np.log10(30), np.log10(1000), 200)
@@ -373,7 +390,9 @@ def plot_all(
 
         # C_ext: log-log PCHIP
         log_C_ext = np.log(C_ext_raw[:, j])
-        pchip_C_ext = PchipInterpolator(np.log(np.sort(sparse_radii)), log_C_ext[np.argsort(sparse_radii)])
+        pchip_C_ext = PchipInterpolator(
+            np.log(np.sort(sparse_radii)), log_C_ext[np.argsort(sparse_radii)]
+        )
         C_ext_smooth = np.exp(pchip_C_ext(np.log(r_interp)))
 
         ax = axes3[0, 0]
@@ -386,7 +405,9 @@ def plot_all(
 
         # C_sca: log-log PCHIP
         log_C_sca = np.log(C_sca_raw[:, j])
-        pchip_C_sca = PchipInterpolator(np.log(np.sort(sparse_radii)), log_C_sca[np.argsort(sparse_radii)])
+        pchip_C_sca = PchipInterpolator(
+            np.log(np.sort(sparse_radii)), log_C_sca[np.argsort(sparse_radii)]
+        )
         C_sca_smooth = np.exp(pchip_C_sca(np.log(r_interp)))
 
         ax = axes3[0, 1]
@@ -398,7 +419,14 @@ def plot_all(
         ax.grid(True, alpha=0.3)
 
         # beta_1: linear PCHIP
-        beta_1_raw = np.array([opt.legendre_moments_beta[j, 1] * 3.0 if opt.legendre_moments_beta is not None else opt.g[j] * 3.0 for opt in sparse_optics])
+        beta_1_raw = np.array(
+            [
+                opt.legendre_moments_beta[j, 1] * 3.0
+                if opt.legendre_moments_beta is not None
+                else opt.g[j] * 3.0
+                for opt in sparse_optics
+            ]
+        )
         pchip_beta = PchipInterpolator(np.sort(sparse_radii), beta_1_raw[np.argsort(sparse_radii)])
         beta_1_smooth = pchip_beta(r_interp)
 
@@ -442,11 +470,26 @@ def plot_all(
     ax.plot(r_fine, DIST.pdf_values(r_fine), "-", color="#2980b9", lw=2, label="PDF")
     for i, e in enumerate(finite_edges):
         ax.axvline(e, color="#e67e22", linestyle="--", alpha=0.8, lw=1.5)
-    ax.scatter(sparse_radii, DIST.pdf_values(sparse_radii), color="#e74c3c", s=80, zorder=5, label="Sample points")
+    ax.scatter(
+        sparse_radii,
+        DIST.pdf_values(sparse_radii),
+        color="#e74c3c",
+        s=80,
+        zorder=5,
+        label="Sample points",
+    )
     # Annotate bin numbers
     for i in range(len(sparse_radii)):
         mid = (edges[i] + edges[i + 1]) / 2 if edges[i + 1] < np.inf else sparse_radii[i] * 1.3
-        ax.text(mid, DIST.pdf_values(mid) * 1.15, f"Bin {i+1}", ha="center", fontsize=9, color="#e67e22", fontweight="bold")
+        ax.text(
+            mid,
+            DIST.pdf_values(mid) * 1.15,
+            f"Bin {i + 1}",
+            ha="center",
+            fontsize=9,
+            color="#e67e22",
+            fontweight="bold",
+        )
     ax.set_xlim(0, 1000)
     ax.set_xlabel("Radius r (nm)")
     ax.set_ylabel("n(r) / N_total (nm⁻¹)")
@@ -456,29 +499,51 @@ def plot_all(
 
     # Panel 4b: Bin Weights
     ax = axes4[1]
-    bin_labels = [f"Bin {i+1}\n{r:.0f}nm" for i, r in enumerate(np.sort(sparse_radii))]
+    bin_labels = [f"Bin {i + 1}\n{r:.0f}nm" for i, r in enumerate(np.sort(sparse_radii))]
     bars = ax.bar(range(len(weights)), weights, color="#3498db", edgecolor="#2980b9", alpha=0.8)
     ax.set_xticks(range(len(weights)))
     ax.set_xticklabels(bin_labels, fontsize=8)
     ax.set_ylabel(r"Fractional Number Count $N_i$")
-    ax.set_title(r"Step 2: Compute Weights $N_i = \int_{bin_i} n(r)dr$" + "\n" + rf"($\sum N_i$ = {np.sum(weights):.4f})")
+    ax.set_title(
+        r"Step 2: Compute Weights $N_i = \int_{bin_i} n(r)dr$"
+        + "\n"
+        + rf"($\sum N_i$ = {np.sum(weights):.4f})"
+    )
     ax.grid(True, alpha=0.3, axis="y")
     for bar, w in zip(bars, weights):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005, f"{w:.3f}", ha="center", fontsize=9)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.005,
+            f"{w:.3f}",
+            ha="center",
+            fontsize=9,
+        )
 
     # Panel 4c: Weighted Contributions
     ax = axes4[2]
     # Use 550 nm as example
     j_mid = 1
     contributions = C_ext_raw[:, j_mid] * weights
-    bars = ax.bar(range(len(contributions)), contributions, color="#e74c3c", edgecolor="#c0392b", alpha=0.8)
+    bars = ax.bar(
+        range(len(contributions)), contributions, color="#e74c3c", edgecolor="#c0392b", alpha=0.8
+    )
     ax.set_xticks(range(len(contributions)))
     ax.set_xticklabels(bin_labels, fontsize=8)
     ax.set_ylabel(r"$C_{ext,i} \cdot N_i$ (nm²)")
-    ax.set_title(rf"Step 3: Weighted Contribution (λ={wl[j_mid]:.0f}nm)" + "\n" + rf"$\bar{{C}}_{{ext}}$ = {sparse_m1['C_ext'][j_mid]:.1f} nm²")
+    ax.set_title(
+        rf"Step 3: Weighted Contribution (λ={wl[j_mid]:.0f}nm)"
+        + "\n"
+        + rf"$\bar{{C}}_{{ext}}$ = {sparse_m1['C_ext'][j_mid]:.1f} nm²"
+    )
     ax.grid(True, alpha=0.3, axis="y")
     for bar, c in zip(bars, contributions):
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + max(contributions)*0.01, f"{c:.0f}", ha="center", fontsize=9)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(contributions) * 0.01,
+            f"{c:.0f}",
+            ha="center",
+            fontsize=9,
+        )
 
     plt.tight_layout()
     fig4.savefig(output_dir / "fig4_method1_bin_weights.png", dpi=150, bbox_inches="tight")
@@ -488,22 +553,60 @@ def plot_all(
     # Figure 5: Final Results Comparison
     # ===================================================================
     fig5, axes5 = plt.subplots(2, 2, figsize=(12, 10))
-    fig5.suptitle("Figure 5: Final Bulk Results — Method 1 vs Method 2", fontsize=14, fontweight="bold")
+    fig5.suptitle(
+        "Figure 5: Final Bulk Results — Method 1 vs Method 2", fontsize=14, fontweight="bold"
+    )
 
     colors = {"M1": "#e74c3c", "M2_sparse": "#3498db", "M2_dense": "#2ecc71"}
-    labels = {"M1": "Method 1 (Bin)", "M2_sparse": "Method 2 (Sparse)", "M2_dense": "Method 2 (Dense, Ref)"}
+    labels = {
+        "M1": "Method 1 (Bin)",
+        "M2_sparse": "Method 2 (Sparse)",
+        "M2_dense": "Method 2 (Dense, Ref)",
+    }
 
     # C_ext
     ax = axes5[0, 0]
-    ax.plot(wl, sparse_m1["C_ext"], "o-", color=colors["M1"], label=labels["M1"], markersize=10, lw=2)
-    ax.plot(wl, sparse_m2["C_ext"], "s-", color=colors["M2_sparse"], label=labels["M2_sparse"], markersize=10, lw=2)
-    ax.plot(wl, dense_m2["C_ext"], "^-", color=colors["M2_dense"], label=labels["M2_dense"], markersize=8, lw=2)
+    ax.plot(
+        wl, sparse_m1["C_ext"], "o-", color=colors["M1"], label=labels["M1"], markersize=10, lw=2
+    )
+    ax.plot(
+        wl,
+        sparse_m2["C_ext"],
+        "s-",
+        color=colors["M2_sparse"],
+        label=labels["M2_sparse"],
+        markersize=10,
+        lw=2,
+    )
+    ax.plot(
+        wl,
+        dense_m2["C_ext"],
+        "^-",
+        color=colors["M2_dense"],
+        label=labels["M2_dense"],
+        markersize=8,
+        lw=2,
+    )
     # Add error annotations
     for j, w in enumerate(wl):
-        err_m1 = abs(sparse_m1['C_ext'][j] - dense_m2['C_ext'][j]) / dense_m2['C_ext'][j] * 100
-        err_m2 = abs(sparse_m2['C_ext'][j] - dense_m2['C_ext'][j]) / dense_m2['C_ext'][j] * 100
-        ax.annotate(f"M1 err: {err_m1:.1f}%", xy=(w, sparse_m1['C_ext'][j]), xytext=(10, 15), textcoords="offset points", fontsize=8, color=colors["M1"])
-        ax.annotate(f"M2 err: {err_m2:.1f}%", xy=(w, sparse_m2['C_ext'][j]), xytext=(10, -20), textcoords="offset points", fontsize=8, color=colors["M2_sparse"])
+        err_m1 = abs(sparse_m1["C_ext"][j] - dense_m2["C_ext"][j]) / dense_m2["C_ext"][j] * 100
+        err_m2 = abs(sparse_m2["C_ext"][j] - dense_m2["C_ext"][j]) / dense_m2["C_ext"][j] * 100
+        ax.annotate(
+            f"M1 err: {err_m1:.1f}%",
+            xy=(w, sparse_m1["C_ext"][j]),
+            xytext=(10, 15),
+            textcoords="offset points",
+            fontsize=8,
+            color=colors["M1"],
+        )
+        ax.annotate(
+            f"M2 err: {err_m2:.1f}%",
+            xy=(w, sparse_m2["C_ext"][j]),
+            xytext=(10, -20),
+            textcoords="offset points",
+            fontsize=8,
+            color=colors["M2_sparse"],
+        )
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel(r"$\bar{C}_{ext}$ (nm²)")
     ax.set_title("Bulk Extinction Cross-Section")
@@ -513,8 +616,24 @@ def plot_all(
     # SSA
     ax = axes5[0, 1]
     ax.plot(wl, sparse_m1["SSA"], "o-", color=colors["M1"], label=labels["M1"], markersize=10, lw=2)
-    ax.plot(wl, sparse_m2["SSA"], "s-", color=colors["M2_sparse"], label=labels["M2_sparse"], markersize=10, lw=2)
-    ax.plot(wl, dense_m2["SSA"], "^-", color=colors["M2_dense"], label=labels["M2_dense"], markersize=8, lw=2)
+    ax.plot(
+        wl,
+        sparse_m2["SSA"],
+        "s-",
+        color=colors["M2_sparse"],
+        label=labels["M2_sparse"],
+        markersize=10,
+        lw=2,
+    )
+    ax.plot(
+        wl,
+        dense_m2["SSA"],
+        "^-",
+        color=colors["M2_dense"],
+        label=labels["M2_dense"],
+        markersize=8,
+        lw=2,
+    )
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel("SSA")
     ax.set_title("Bulk Single Scattering Albedo")
@@ -524,8 +643,24 @@ def plot_all(
     # g
     ax = axes5[1, 0]
     ax.plot(wl, sparse_m1["g"], "o-", color=colors["M1"], label=labels["M1"], markersize=10, lw=2)
-    ax.plot(wl, sparse_m2["g"], "s-", color=colors["M2_sparse"], label=labels["M2_sparse"], markersize=10, lw=2)
-    ax.plot(wl, dense_m2["g"], "^-", color=colors["M2_dense"], label=labels["M2_dense"], markersize=8, lw=2)
+    ax.plot(
+        wl,
+        sparse_m2["g"],
+        "s-",
+        color=colors["M2_sparse"],
+        label=labels["M2_sparse"],
+        markersize=10,
+        lw=2,
+    )
+    ax.plot(
+        wl,
+        dense_m2["g"],
+        "^-",
+        color=colors["M2_dense"],
+        label=labels["M2_dense"],
+        markersize=8,
+        lw=2,
+    )
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel("g")
     ax.set_title("Bulk Asymmetry Parameter")
@@ -534,9 +669,33 @@ def plot_all(
 
     # beta_1
     ax = axes5[1, 1]
-    ax.plot(wl, sparse_m1["beta"][:, 1], "o-", color=colors["M1"], label=labels["M1"], markersize=10, lw=2)
-    ax.plot(wl, sparse_m2["beta"][:, 1], "s-", color=colors["M2_sparse"], label=labels["M2_sparse"], markersize=10, lw=2)
-    ax.plot(wl, dense_m2["beta"][:, 1], "^-", color=colors["M2_dense"], label=labels["M2_dense"], markersize=8, lw=2)
+    ax.plot(
+        wl,
+        sparse_m1["beta"][:, 1],
+        "o-",
+        color=colors["M1"],
+        label=labels["M1"],
+        markersize=10,
+        lw=2,
+    )
+    ax.plot(
+        wl,
+        sparse_m2["beta"][:, 1],
+        "s-",
+        color=colors["M2_sparse"],
+        label=labels["M2_sparse"],
+        markersize=10,
+        lw=2,
+    )
+    ax.plot(
+        wl,
+        dense_m2["beta"][:, 1],
+        "^-",
+        color=colors["M2_dense"],
+        label=labels["M2_dense"],
+        markersize=8,
+        lw=2,
+    )
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel(r"$\beta_1$")
     ax.set_title("Bulk First Legendre Coefficient")
@@ -555,9 +714,13 @@ def main():
     logger.info("=" * 70)
     logger.info("Bulk Aerosol Optics: Method 1 vs Method 2 Comparison")
     logger.info("=" * 70)
-    logger.info(f"Size Distribution: Lognormal(rg={DIST.params['rg_nm']:.0f}nm, σ={DIST.params['sigma_ln']})")
+    logger.info(
+        f"Size Distribution: Lognormal(rg={DIST.params['rg_nm']:.0f}nm, σ={DIST.params['sigma_ln']})"
+    )
     logger.info(f"Sparse Radii: {SPARSE_RADII_NM}")
-    logger.info(f"Dense Radii: {len(DENSE_RADII_NM)} points from {DENSE_RADII_NM.min():.0f} to {DENSE_RADII_NM.max():.0f} nm")
+    logger.info(
+        f"Dense Radii: {len(DENSE_RADII_NM)} points from {DENSE_RADII_NM.min():.0f} to {DENSE_RADII_NM.max():.0f} nm"
+    )
     logger.info(f"Wavelengths: {WAVELENGTHS_NM} nm")
     logger.info(f"Legendre Order: {N_LEGENDRE}")
 
@@ -604,9 +767,11 @@ def main():
     print("  Builder API Consistency Check")
     print(f"{'=' * 80}")
     for j, wl in enumerate(WAVELENGTHS_NM):
-        dC = abs(builder_result['C_ext'][j] - sparse_m2['C_ext'][j]) / sparse_m2['C_ext'][j] * 100
-        dg = abs(builder_result['g'][j] - sparse_m2['g'][j]) * 100
-        print(f"  {wl:.0f}nm: ΔC_ext={dC:.4f}%, Δg={dg:.4f}% → {'PASS' if dC < 0.01 and dg < 0.01 else 'FAIL'}")
+        dC = abs(builder_result["C_ext"][j] - sparse_m2["C_ext"][j]) / sparse_m2["C_ext"][j] * 100
+        dg = abs(builder_result["g"][j] - sparse_m2["g"][j]) * 100
+        print(
+            f"  {wl:.0f}nm: ΔC_ext={dC:.4f}%, Δg={dg:.4f}% → {'PASS' if dC < 0.01 and dg < 0.01 else 'FAIL'}"
+        )
 
     # -----------------------------------------------------------------------
     # Compare with reference
@@ -617,8 +782,8 @@ def main():
     print(f"  {'Wavelength':>12} | {'M1 vs Ref (%)':>15} | {'M2 vs Ref (%)':>15} | {'Winner':>10}")
     print(f"  {'-' * 60}")
     for j, wl in enumerate(WAVELENGTHS_NM):
-        err_m1 = abs(sparse_m1['C_ext'][j] - dense_m2['C_ext'][j]) / dense_m2['C_ext'][j] * 100
-        err_m2 = abs(sparse_m2['C_ext'][j] - dense_m2['C_ext'][j]) / dense_m2['C_ext'][j] * 100
+        err_m1 = abs(sparse_m1["C_ext"][j] - dense_m2["C_ext"][j]) / dense_m2["C_ext"][j] * 100
+        err_m2 = abs(sparse_m2["C_ext"][j] - dense_m2["C_ext"][j]) / dense_m2["C_ext"][j] * 100
         winner = "M2" if err_m2 < err_m1 else "M1"
         print(f"  {wl:>12.0f} | {err_m1:>14.2f}% | {err_m2:>14.2f}% | {winner:>10}")
 

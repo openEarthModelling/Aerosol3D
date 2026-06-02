@@ -129,19 +129,9 @@ def bulk_from_netcdf(path: str) -> BulkAerosolOpticsData:
     # Parse optional fields
     radii_nm = ds["radii_nm"].values if "radii_nm" in ds else None
     radii_weights = ds["radii_weights"].values if "radii_weights" in ds else None
-    per_radius_C_ext = (
-        ds["per_radius_C_ext_nm2"].values
-        if "per_radius_C_ext_nm2" in ds
-        else None
-    )
-    per_radius_C_sca = (
-        ds["per_radius_C_sca_nm2"].values
-        if "per_radius_C_sca_nm2" in ds
-        else None
-    )
-    per_radius_beta = (
-        ds["per_radius_beta"].values if "per_radius_beta" in ds else None
-    )
+    per_radius_C_ext = ds["per_radius_C_ext_nm2"].values if "per_radius_C_ext_nm2" in ds else None
+    per_radius_C_sca = ds["per_radius_C_sca_nm2"].values if "per_radius_C_sca_nm2" in ds else None
+    per_radius_beta = ds["per_radius_beta"].values if "per_radius_beta" in ds else None
 
     theta_rad = np.radians(ds["theta_deg"].values) if "theta_deg" in ds else None
     phi_rad = np.radians(ds["phi_deg"].values) if "phi_deg" in ds else None
@@ -157,9 +147,7 @@ def bulk_from_netcdf(path: str) -> BulkAerosolOpticsData:
     concentration_method = ds.attrs.get("concentration_method")
     concentration_kwargs_raw = ds.attrs.get("concentration_kwargs")
     concentration_kwargs = (
-        ast.literal_eval(concentration_kwargs_raw)
-        if concentration_kwargs_raw is not None
-        else None
+        ast.literal_eval(concentration_kwargs_raw) if concentration_kwargs_raw is not None else None
     )
 
     r_eff_raw = ds.attrs.get("r_eff_nm", None)
@@ -197,9 +185,7 @@ def bulk_from_netcdf(path: str) -> BulkAerosolOpticsData:
     return obj
 
 
-def bulk_to_vsmartmom_netcdf(
-    bulk: BulkAerosolOpticsData, path: str, tau_ref: float = 0.5
-) -> None:
+def bulk_to_vsmartmom_netcdf(bulk: BulkAerosolOpticsData, path: str, tau_ref: float = 0.5) -> None:
     """Export bulk aerosol optics to a minimal vSmartMOM-compatible NetCDF.
 
     Args:
