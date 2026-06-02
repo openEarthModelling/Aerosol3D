@@ -91,10 +91,10 @@ Step 2: Compute g via Path A
    theta_rad = singles[0].theta_rad  # same angles for all
    C_sca_per_r = np.array([s.C_sca[0] for s in singles])  # first wavelength
 
-   # Compute g(r) for each radius
+   # Compute g(r) for each radius (first wavelength only)
    g_per_r = []
    for s in singles:
-       P11_theta = np.mean(s.P11[0, :, :], axis=1)  # azimuthal average
+       P11_theta = np.mean(s.P11[0, :, :], axis=1)  # azimuthal average, first wavelength
        g_per_r.append(g_from_phase_function(theta_rad, P11_theta))
    g_per_r = np.array(g_per_r)
 
@@ -139,6 +139,10 @@ Step 4: Compare and Validate
    print(f"Path B (Legendre):   g = {g_path_B:.8f}")
    print(f"|Δg| = {delta_g:.2e}")
    print("PASS" if delta_g < tol else "FAIL")
+
+As a sanity check, ``bulk.g[0]`` (the asymmetry parameter computed by
+``BulkOpticsBuilder`` for the first wavelength) should also agree with
+both paths within numerical precision.
 
 If :math:`|g_A / g_B| \approx 3` or :math:`\approx 1/3`, check whether
 the :math:`\beta_1` convention is correct (with or without the
