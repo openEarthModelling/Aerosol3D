@@ -11,3 +11,4 @@ Complete API documentation auto-generated from source code docstrings.
    modeling
    optics
    io
+   bulk
