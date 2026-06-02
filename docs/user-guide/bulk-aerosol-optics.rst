@@ -18,6 +18,7 @@ The workflow is:
 4. Export to NetCDF (standard or vSmartMOM-compatible format).
 
 For single-particle optical computation, see :doc:`optical-computation`.
+For a hands-on tutorial, see :doc:`../tutorials/bulk-optics-workflow`.
 
 
 Size Distributions
