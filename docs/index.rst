@@ -12,6 +12,9 @@ Features
 - **Geometry Modeling** — Build spheres, ellipsoids, cubes, and import fractal aggregates.
 - **Coating Algorithms** — Apply distance-based, potential-based, CCM, and CAM coatings.
 - **Optical Computation** — Solve optical properties via DDA (Julia backend) or Mie theory (PyMieScatt).
+- **Bulk Aerosol Optics** — Aggregate single-particle results into size-distribution-weighted
+  bulk properties with physics-safe interpolation, quadrature integration, and NetCDF export
+  (standard + vSmartMOM formats).
 - **Optical Property Export** — Multi-wavelength container with auto-computed Legendre moments and NetCDF I/O.
 - **Optical Visualization** — Spectral properties, phase function comparison, and Legendre convergence plots.
 - **3D Visualization** — Generate screenshots and rotation videos with PyVista.
