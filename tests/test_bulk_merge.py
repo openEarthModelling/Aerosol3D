@@ -94,14 +94,15 @@ class TestMergeMethod1:
     def test_weighted_sum_formula(self):
         from Aerosol3D.bulk.merge import merge_method1
 
-
         C_ext = np.array([[1.0], [3.0]])
         C_sca = np.array([[2.0], [4.0]])
         # beta shape: (n_radius, n_wavelength, n_legendre) = (2, 1, 2)
-        beta = np.array([
-            [[1.0, 0.5]],   # radius 0
-            [[1.0, 0.3]],   # radius 1
-        ])
+        beta = np.array(
+            [
+                [[1.0, 0.5]],  # radius 0
+                [[1.0, 0.3]],  # radius 1
+            ]
+        )
         weights = np.array([0.25, 0.75])
 
         bulk_C_ext, bulk_C_sca, bulk_beta = merge_method1(C_ext, C_sca, beta, weights)
@@ -157,10 +158,13 @@ class TestMergeMethod2:
         radii = np.logspace(1, 3, 64)  # 10 to 1000 nm
 
         # Synthetic optical properties: power-law-like
-        C_ext = np.stack([
-            10.0 * (radii / 100.0) ** 1.5,
-            5.0 * (radii / 100.0) ** 2.0,
-        ], axis=1)  # (64, 2)
+        C_ext = np.stack(
+            [
+                10.0 * (radii / 100.0) ** 1.5,
+                5.0 * (radii / 100.0) ** 2.0,
+            ],
+            axis=1,
+        )  # (64, 2)
         C_sca = 0.8 * C_ext
 
         # Synthetic beta: slightly varying with radius

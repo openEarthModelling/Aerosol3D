@@ -166,12 +166,8 @@ class TestIntegrateDistribution:
         from Aerosol3D.bulk.integration import integrate_distribution
 
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
-        quad_result = integrate_distribution(
-            lambda r: r**2, sd, method="quad"
-        )
-        fixed_result = integrate_distribution(
-            lambda r: r**2, sd, n_quad=256, method="fixed_quad"
-        )
+        quad_result = integrate_distribution(lambda r: r**2, sd, method="quad")
+        fixed_result = integrate_distribution(lambda r: r**2, sd, n_quad=256, method="fixed_quad")
         assert quad_result == pytest.approx(fixed_result, rel=1e-4)
 
     def test_vectorized_matches_fixed_quad(self):
@@ -182,12 +178,8 @@ class TestIntegrateDistribution:
         )
 
         sd = SizeDistribution.lognormal(rg_nm=100.0, sigma_ln=0.5)
-        fixed_result = integrate_distribution(
-            lambda r: r**2, sd, n_quad=128, method="fixed_quad"
-        )
-        vec_result = integrate_distribution_vectorized(
-            lambda r: r**2, sd, n_quad=128
-        )
+        fixed_result = integrate_distribution(lambda r: r**2, sd, n_quad=128, method="fixed_quad")
+        vec_result = integrate_distribution_vectorized(lambda r: r**2, sd, n_quad=128)
         assert vec_result == pytest.approx(fixed_result, rel=1e-12)
 
     def test_gamma_distribution_integration(self):
