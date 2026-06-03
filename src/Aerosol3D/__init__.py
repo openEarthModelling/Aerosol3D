@@ -2,6 +2,7 @@ from importlib.metadata import version
 
 __version__ = version("Aerosol3D")
 
+from .bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
 from .core import AerosolParticle, FractalAggregate, Material, MixingState
 from .factory import from_file, from_fractal
 from .geometry import create_cube, create_ellipsoid, create_sphere

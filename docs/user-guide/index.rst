@@ -12,4 +12,5 @@ to understand the physical models and make informed choices.
    particle-geometry
    coating-models
    optical-computation
+   bulk-aerosol-optics
    ema-and-coreshell
