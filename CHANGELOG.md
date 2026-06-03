@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-03
+
 ### Added
 - Bulk aerosol optics computation module (`Aerosol3D.bulk`) with two merge methods:
   - Method 1 (bin weights): discrete radius-bin weighted averaging
@@ -193,6 +195,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Particle shape generation (sphere, spheroid, cube, coated sphere)
 - Core data structures for optical properties and simulation configuration
 
+[0.8.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/openEarthModelling/aerosol3d/compare/v0.4.0...v0.5.0
