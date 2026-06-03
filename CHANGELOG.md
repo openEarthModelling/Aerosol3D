@@ -2,6 +2,36 @@
 
 ## [Unreleased]
 
+### Added
+- Bulk aerosol optics computation module (`Aerosol3D.bulk`) with two merge methods:
+  - Method 1 (bin weights): discrete radius-bin weighted averaging
+  - Method 2 (continuous quadrature): adaptive Gauss-Kronrod and fixed-quadrature integration over continuous size distributions
+- `BulkOpticsBuilder` — builder pattern for constructing bulk optical properties with validation, Mie ripple detection, and automatic fallback to Method 1
+- `SizeDistribution` dataclass with lognormal and gamma distribution factories
+- `BulkAerosolOpticsData` frozen dataclass for bulk optical property storage
+- Physics-safe interpolation kernels (log-log and linear PCHIP) for cross-wavelength and cross-radius data
+- NetCDF I/O for bulk aerosol optics: standard format (full provenance) and vSmartMOM-compatible format
+- `BulkAerosolOpticsData.to_netcdf()` / `.from_netcdf()` convenience methods
+- Top-level exports: `BulkOpticsBuilder`, `SizeDistribution`, `BulkAerosolOpticsData` from `Aerosol3D`
+- Cross-validation example script (`bulk_method_comparison.py`) for dual-path asymmetry factor consistency check
+- Bulk cross-validation tutorial demonstrating validation methodology
+- Bulk optics workflow tutorial demonstrating step-by-step Method 1 usage
+- Bulk aerosol optics API reference and user guide with mathematical derivations
+
+### Changed
+- `merge_method2` now supports both `"quad"` (adaptive Gauss-Kronrod, default) and `"fixed_quad"` integration methods
+- `BulkOpticsBuilder.compute()` auto-extracts refractive index from `AerosolOpticsData` fields when `check_mie_ripples=True` and no explicit refractive index is provided
+- `cspline` interpolation triggers a `UserWarning` with automatic fallback to `pchip`
+
+### Fixed
+- Beta convention: correctly convert Aerosol3D `g_l` to vSmartMOM `beta_l = (2l+1)g_l` in `BulkOpticsBuilder`
+- `beta_0 = 1.0` normalization enforced exactly in both `merge_method1` and `merge_method2`
+
+### Tests
+- Physical validation tests for bulk optics: SSA bounds, `beta_0 = 1`, energy conservation, monodisperse limit
+- End-to-end Mie multisize to bulk integration test
+- Cross-validation example for dual-path `g` consistency check
+
 ## [0.7.0] - 2026-05-26
 
 ### Added
