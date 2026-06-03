@@ -2,6 +2,7 @@ from importlib.metadata import version
 
 __version__ = version("Aerosol3D")
 
+from .bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
 from .core import AerosolParticle, FractalAggregate, Material, MixingState
 from .factory import from_file, from_fractal
 from .geometry import create_cube, create_ellipsoid, create_sphere
@@ -15,7 +16,6 @@ from .modeling import (
     apply_potential_void_coating,
 )
 from .optics import SimulationConfig, solve_optics  # noqa: F401
-from .bulk import BulkAerosolOpticsData, BulkOpticsBuilder, SizeDistribution
 from .utils.plot import (
     plot_particle_as_voxels,
     save_particle_voxel_screenshot,
