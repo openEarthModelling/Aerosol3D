@@ -6,21 +6,41 @@ Light scattering simulations for aerosol particles using DDA (Discrete Dipole Ap
 
 ```bash
 python -m pytest tests/ -v                    # Run tests
+python -m pytest -m "not slow" -v             # Skip slow DDA tests (~1-10 min each)
+python -m pytest --cov=Aerosol3D              # Run with coverage (CI command)
 python -m ruff check src/                     # Lint
 python -m ruff format src/ tests/             # Format
 pip install -e ".[dev]"                       # Dev install
+pip install -e ".[docs]"                      # Docs dependencies
+cd docs && make html                          # Build documentation
+pre-commit run --all-files                    # Run pre-commit hooks manually
 ```
 
 DDA solver requires Julia with CoupledElectricMagneticDipoles.jl installed.
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `SKIP_JULIA_TESTS=1` | Skip Julia DDA tests (used in CI) |
+| `PYVISTA_OFF_SCREEN=true` | Enable headless PyVista rendering (CI/remote) |
+| `PYRADTRAN_DATA_PATH` | Path to libRadtran data directory (for RT examples) |
 
 ## Architecture
 
 ```
 src/Aerosol3D/
+  bulk/           # Bulk aerosol optics (size distribution, binning, merging)
+    builder.py      # BulkOpticsBuilder — construct from size distributions
+    datastructs.py  # BulkAerosolOpticsData, SizeDistribution
+    merge.py        # merge_method1, merge_method2, compute_bin_weights
+    io.py           # NetCDF I/O for bulk optics
   core/           # Particle, Material, Aggregate dataclasses
+    ema.py          # Effective Medium Approximation mixing rules
   factory/        # Mesh creation (from_file, from_fractal)
   geometry/       # Primitives (sphere, cube, ellipsoid), boolean ops, voxelization
   io/             # Voxel/VTP export
+  materials.py    # Preset material database (soot, sulfate, dust, etc.)
   modeling/       # Coating models (CAM, CCM, distance, potential-edge, potential-void)
   optics/         # Optical property computation
     datastructs.py    # OpticalResult, CrossSections, PhaseFunction, SimulationConfig
@@ -40,6 +60,8 @@ src/Aerosol3D/
 - `from_optical_results(results, n_legendre=32)` builds `AerosolOpticsData` with auto-computed Legendre moments
 - `AerosolOpticsData.to_netcdf()` / `.from_netcdf()` for persistence
 - `OpticalResult` = single wavelength; `AerosolOpticsData` = multi-wavelength export container
+- `BulkOpticsBuilder` = construct bulk optics from `SizeDistribution` + per-particle optics
+- `preset_material(name)` = lookup refractive index data for common aerosol species
 
 ## Gotchas
 
