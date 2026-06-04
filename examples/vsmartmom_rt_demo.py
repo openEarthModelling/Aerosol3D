@@ -245,19 +245,14 @@ def main() -> int:
     parser.add_argument(
         "--julia-project",
         type=str,
-        default="",
-        help="Path to Julia project with vSmartMOM installed (required for RT)",
+        default=None,
+        help="Path to Julia project with vSmartMOM installed. If omitted, uses the Julia default environment.",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
         default=str(Path(__file__).parent / "output"),
         help="Directory for output figures (default: examples/output/)",
-    )
-    parser.add_argument(
-        "--skip-rt",
-        action="store_true",
-        help="Skip radiative transfer, only show input setup",
     )
     args = parser.parse_args()
 
@@ -274,10 +269,6 @@ def main() -> int:
     # Step 2: Print setup
     # ------------------------------------------------------------------
     _print_setup(bulk)
-
-    if args.skip_rt:
-        logger.info("--skip-rt flag set. Skipping radiative transfer.")
-        return 0
 
     # ------------------------------------------------------------------
     # Step 3: Check Julia availability
@@ -299,24 +290,20 @@ def main() -> int:
         print("\n  The input data above is ready for RT computation.")
         return 0
 
-    if not args.julia_project:
-        print("\n" + "!" * 70)
-        print("  Julia is available, but --julia-project was not specified.")
-        print("  Please provide the path to a Julia project with vSmartMOM.jl:")
-        print()
-        print("    python examples/vsmartmom_rt_demo.py --julia-project /path/to/project")
-        print("!" * 70)
-        return 0
-
-    julia_project = Path(args.julia_project)
-    if not julia_project.exists():
-        logger.error(f"Julia project path does not exist: {julia_project}")
-        return 1
+    julia_project: Path | None = None
+    if args.julia_project:
+        julia_project = Path(args.julia_project)
+        if not julia_project.exists():
+            logger.error(f"Julia project path does not exist: {julia_project}")
+            return 1
 
     # ------------------------------------------------------------------
     # Step 4: Run radiative transfer
     # ------------------------------------------------------------------
-    logger.info(f"Running vSmartMOM RT (Julia project: {julia_project})...")
+    if julia_project is not None:
+        logger.info(f"Running vSmartMOM RT (Julia project: {julia_project})...")
+    else:
+        logger.info("Running vSmartMOM RT (Julia default environment)...")
     runner = VSmartMOMRunner(
         julia_project=julia_project,
         cleanup_temp=True,

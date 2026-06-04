@@ -31,13 +31,14 @@ class VSmartMOMRunner:
             the run. Defaults to ``True``.
     """
 
-    julia_project: str | Path
+    julia_project: str | Path | None
     julia_executable: str = "julia"
     cleanup_temp: bool = True
 
     def __post_init__(self) -> None:
-        """Normalize julia_project to a Path object."""
-        self.julia_project = Path(self.julia_project)
+        """Normalize julia_project to a Path object when provided."""
+        if self.julia_project is not None:
+            self.julia_project = Path(self.julia_project)
 
     def _check_julia(self) -> None:
         """Verify the Julia executable exists on the system PATH.
@@ -190,13 +191,10 @@ class VSmartMOMRunner:
 
             # 6. Run Julia subprocess
             script_path = Path(__file__).parent / "scripts" / "run_rt.jl"
-            cmd = [
-                self.julia_executable,
-                f"--project={self.julia_project}",
-                str(script_path),
-                str(input_path),
-                str(output_path),
-            ]
+            cmd = [self.julia_executable]
+            if self.julia_project is not None:
+                cmd.append(f"--project={self.julia_project}")
+            cmd.extend([str(script_path), str(input_path), str(output_path)])
 
             result = subprocess.run(cmd, capture_output=True)  # noqa: S603
 

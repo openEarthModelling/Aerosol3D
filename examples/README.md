@@ -92,14 +92,11 @@ as input.  Demonstrates:
 **Dependencies:** Aerosol3D, Julia + vSmartMOM.jl, matplotlib  
 **Runtime:** ~30 s (Julia startup dominates)
 
-If Julia is unavailable, the script falls back to showing the input setup and
-expected workflow:
-
 ```bash
-# Preview without Julia
-python examples/vsmartmom_rt_demo.py --skip-rt
+# Run with Julia default environment
+python examples/vsmartmom_rt_demo.py
 
-# Full run (requires --julia-project)
+# Run with a specific Julia project
 python examples/vsmartmom_rt_demo.py --julia-project /path/to/vsmartmom-project
 ```
 
