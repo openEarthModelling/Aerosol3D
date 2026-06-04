@@ -13,7 +13,7 @@ import numpy as np
 class VSmartMOMResult:
     """Result container for vSmartMOM radiative transfer simulations.
 
-    Attributes:
+    Args:
         R: TOA reflectance, shape [n_stokes, n_vza, n_wl].
         T: BOA transmittance, shape [n_stokes, n_vza, n_wl].
         wavelengths: Wavelengths in nm, shape [n_wl].

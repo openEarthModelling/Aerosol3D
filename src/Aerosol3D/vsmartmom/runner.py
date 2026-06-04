@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 class VSmartMOMRunner:
     """Orchestrate vSmartMOM radiative transfer simulations.
 
-    Attributes:
+    Args:
         julia_project: Path to the Julia project (environment) containing
             vSmartMOM and its dependencies.
         julia_executable: Name or path of the Julia executable. Defaults to

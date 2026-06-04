@@ -1,11 +1,6 @@
 vSmartMOM Integration
 =====================
 
-.. automodule:: Aerosol3D.vsmartmom
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 VSmartMOMRunner
 ---------------
 
@@ -13,6 +8,7 @@ VSmartMOMRunner
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: __init__
 
 VSmartMOMResult
 ---------------
@@ -21,6 +17,7 @@ VSmartMOMResult
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: __init__
 
 Serialization
 -------------
