@@ -1,116 +1,42 @@
 # Aerosol3D Examples
 
-This directory contains standalone example scripts demonstrating the main
-workflows of Aerosol3D.  Each script can be run directly after installing the
-package (`pip install -e .`).
-
-## Quick Start
-
-```bash
-# Install Aerosol3D
-pip install -e ".[dev]"
-
-# Run an example
-python examples/black_carbon_sphere.py
-```
-
-Some examples require additional system dependencies (Julia, libRadtran).  See
-the per-example notes below.
-
----
-
-## Single-Particle Optics
+## Core Examples
 
 ### `black_carbon_sphere.py`
-Uncoated black carbon sphere — 3D visualization and DDA optical computation.
-
-**Dependencies:** Aerosol3D, matplotlib, PyVista  
-**Runtime:** ~1 min (mostly PyVista initialization)
+Basic DDA computation for a spherical soot particle.
 
 ### `black_carbon_fractal.py`
-Black carbon fractal aggregate — full pipeline from geometry to optical
-properties (DDA).
+Fractal aggregate generation and optical properties.
 
-**Dependencies:** Aerosol3D, Julia + CoupledElectricMagneticDipoles.jl  
-**Runtime:** ~5–10 min per wavelength
+### `coated_particle.py`
+Apply coating models to a spherical core-shell particle.
 
 ### `coated_fractal_aggregate.py`
-Coated black carbon fractal aggregate — compare four Mie scattering
-approximations for the coated particle.
-
-**Dependencies:** Aerosol3D, matplotlib  
-**Runtime:** ~30 s
+Coating algorithms on fractal aggregates with Mie comparison.
 
 ### `validate_mie_vs_dda.py`
-Validate DDA against Mie theory for a spherical particle.
+Validate DDA against Mie theory for spherical particles.
 
-**Dependencies:** Aerosol3D, Julia + CoupledElectricMagneticDipoles.jl  
-**Runtime:** ~2 min
-
----
-
-## Bulk Aerosol Optics
+## Bulk Optics Examples
 
 ### `bulk_method_comparison.py`
-Compare bulk optical properties computed by **Method 1** (bin weights) versus
-**Method 2** (continuous interpolation).  Uses synthetic Henyey–Greenstein data.
-
-**Dependencies:** Aerosol3D, matplotlib  
-**Runtime:** ~10 s
+Cross-validation of Method 1 vs Method 2 for bulk asymmetry factor.
 
 ### `bulk_cross_validation.py`
-Cross-validation of the asymmetry parameter `g` via a dual-path consistency
-check: quadrature from `P11(theta)` vs. analytic `g` from Mie/DDA.
+Comprehensive validation suite for bulk optics computation.
 
-**Dependencies:** Aerosol3D  
-**Runtime:** ~5 s
-
----
-
-## Radiative Transfer
+## Pipeline Examples
 
 ### `dda_mie_pyradtran_pipeline/`
-Three-stage pipeline: DDA/Mie optical computation → DISORT radiative transfer
-(via pyRadtran) → result comparison.
+Three-stage pipeline (DDA/Mie → pyRadtran DISORT RT → comparison).
 
-**Dependencies:** Aerosol3D, Julia, libRadtran (with `PYRADTRAN_DATA_PATH`
-environment variable), matplotlib  
-**Runtime:** ~10 min total
-
-See [`dda_mie_pyradtran_pipeline/README.md`](dda_mie_pyradtran_pipeline/README.md)
-for detailed instructions.
+## vSmartMOM Radiative Transfer
 
 ### `vsmartmom_rt_demo.py`
-Run column radiative transfer with **vSmartMOM** using `BulkAerosolOpticsData`
-as input.  Demonstrates:
+Run column radiative transfer using vSmartMOM.jl from Aerosol3D bulk optics.
 
-1. Create synthetic bulk aerosol optics (multi-wavelength)
-2. Define a vertical number-concentration profile
-3. Run RT via `VSmartMOMRunner` (Julia subprocess)
-4. Plot TOA reflectance, BOA transmittance, and optical-depth profile
-
-**Dependencies:** Aerosol3D, Julia + vSmartMOM.jl, matplotlib  
-**Runtime:** ~30 s (Julia startup dominates)
+Requires Julia with vSmartMOM.jl installed. Optionally specify a Julia project:
 
 ```bash
-# Run with Julia default environment
-python examples/vsmartmom_rt_demo.py
-
-# Run with a specific Julia project
-python examples/vsmartmom_rt_demo.py --julia-project /path/to/vsmartmom-project
+python vsmartmom_rt_demo.py --julia-project /path/to/vSmartMOM-env
 ```
-
----
-
-## Summary Table
-
-| Example | What it demonstrates | Needs Julia | Needs libRadtran |
-|---------|----------------------|-------------|------------------|
-| `black_carbon_sphere.py` | DDA + 3D viz | ✅ | ❌ |
-| `black_carbon_fractal.py` | Fractal geometry → DDA | ✅ | ❌ |
-| `coated_fractal_aggregate.py` | Coating + Mie approx | ❌ | ❌ |
-| `validate_mie_vs_dda.py` | DDA validation against Mie | ✅ | ❌ |
-| `bulk_method_comparison.py` | Bulk optics methods 1 vs 2 | ❌ | ❌ |
-| `bulk_cross_validation.py` | Asymmetry parameter check | ❌ | ❌ |
-| `dda_mie_pyradtran_pipeline/` | Full micro→macro RT pipeline | ✅ | ✅ |
-| `vsmartmom_rt_demo.py` | vSmartMOM column RT | ✅ | ❌ |

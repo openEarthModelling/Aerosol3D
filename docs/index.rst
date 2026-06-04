@@ -15,6 +15,9 @@ Features
 - **Bulk Aerosol Optics** — Aggregate single-particle results into size-distribution-weighted
   bulk properties with physics-safe interpolation, quadrature integration, and NetCDF export
   (standard + vSmartMOM formats).
+- **vSmartMOM Column RT** — Run radiative transfer directly from
+  `BulkAerosolOpticsData` via vSmartMOM.jl (Julia backend),
+  with customizable vertical profiles and viewing geometry.
 - **Optical Property Export** — Multi-wavelength container with auto-computed Legendre moments and NetCDF I/O.
 - **Optical Visualization** — Spectral properties, phase function comparison, and Legendre convergence plots.
 - **3D Visualization** — Generate screenshots and rotation videos with PyVista.
