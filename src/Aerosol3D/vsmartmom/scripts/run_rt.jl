@@ -37,9 +37,11 @@ function run_rt(input_path::String, output_path::String)
     ds_in = NCDataset(input_path, "r")
     wavelengths = ds_in["wavelength_nm"][:]
     wavenumbers = ds_in["wavenumber_cm"][:]
-    tau = ds_in["tau"][:, :]         # [wavelength, layer]
+    # NCDatasets returns arrays in Julia column-major order,
+    # which transposes C-order NetCDF arrays
+    tau = permutedims(ds_in["tau"][:, :], (2, 1))   # [wavelength, layer]
     SSA = ds_in["SSA"][:]
-    beta = ds_in["beta"][:, :]       # [wavelength, legendre_order]
+    beta = permutedims(ds_in["beta"][:, :], (2, 1)) # [wavelength, legendre_order]
     sza = ds_in["sza"][]
     vza = ds_in["vza"][:]
     vaz = ds_in["vaz"][:]
@@ -68,6 +70,12 @@ function run_rt(input_path::String, output_path::String)
     model = model_from_parameters(params)
     n_layers = length(model.profile.p_full)
 
+    # Replicate BRDF for each band (default_parameters creates only 1)
+    n_bands = length(model.params.spec_bands)
+    while length(model.params.brdf) < n_bands
+        push!(model.params.brdf, deepcopy(model.params.brdf[1]))
+    end
+
     println("=== Aerosol3D → vSmartMOM RT ===")
     println("  Wavelengths: ", round.(wavelengths, digits=1), " nm")
     println("  Layers: ", n_layers)
@@ -84,7 +92,8 @@ function run_rt(input_path::String, output_path::String)
         model.τ_aer[band][1, 1:n_tau_layers] .= tau[i_wl, 1:n_tau_layers]
 
         # Overwrite aerosol optics (uniform across layers)
-        β = beta[i_wl, :]
+        β_raw = beta[i_wl, :]
+        β = Float64.(replace(β_raw, missing => 0.0))
         greek = GreekCoefs(
             zeros(n_legendre),   # α
             β,                   # β
@@ -107,32 +116,54 @@ function run_rt(input_path::String, output_path::String)
     end
 
     # ------------------------------------------------------------------
-    # 4. Run RT
+    # 4. Run RT per band
     # ------------------------------------------------------------------
     println("\n  Running RT...")
-    R, T = rt_run(model)
-    println("  RT complete. R shape: ", size(R), ", T shape: ", size(T))
+    R_all = []
+    T_all = []
+    for i_band in 1:n_wl
+        R_b, T_b = rt_run(model, i_band = i_band)
+        println("  Band ", i_band, " R shape: ", size(R_b), ", T shape: ", size(T_b))
+        push!(R_all, Array(R_b))
+        push!(T_all, Array(T_b))
+    end
+
+    # vSmartMOM returns (vza, stokes, n_internal) per band;
+    # take the center spectral point and concatenate
+    R = cat([R_all[i][:, :, 2] for i in 1:n_wl]..., dims = 3)  # (vza, stokes, n_wl)
+    T = cat([T_all[i][:, :, 2] for i in 1:n_wl]..., dims = 3)  # (vza, stokes, n_wl)
+    R = permutedims(R, (2, 1, 3))  # (stokes, vza, wavelength)
+    T = permutedims(T, (2, 1, 3))  # (stokes, vza, wavelength)
+    println("  Combined R shape: ", size(R), ", T shape: ", size(T))
+
+    n_stokes = size(R, 1)
 
     # ------------------------------------------------------------------
     # 5. Write output NetCDF
     # ------------------------------------------------------------------
     ds_out = NCDataset(output_path, "c")
-    defDim(ds_out, "stokes", size(R, 1))
+    defDim(ds_out, "stokes", n_stokes)
     defDim(ds_out, "vza", n_vza)
     defDim(ds_out, "wavelength", n_wl)
-    defDim(ds_out, "layer", n_layers)
 
     defVar(ds_out, "R", R, ("stokes", "vza", "wavelength"))
     defVar(ds_out, "T", T, ("stokes", "vza", "wavelength"))
-    defVar(ds_out, "wavelength_nm", wavelengths, ("wavelength",))
-    defVar(ds_out, "wavenumber_cm", wavenumbers, ("wavelength",))
-    defVar(ds_out, "vza_deg", vza, ("vza",))
-    defVar(ds_out, "vaz_deg", vaz, ("vza",))
-    defVar(ds_out, "sza_deg", sza, ())
-    defVar(ds_out, "tau_per_layer", tau[:, 1:n_layers], ("wavelength", "layer"))
+    defVar(ds_out, "wavelength", wavelengths, ("wavelength",))
+    defVar(ds_out, "wavenumber", wavenumbers, ("wavelength",))
+    defVar(ds_out, "vza", vza, ("vza",))
+    defVar(ds_out, "vaz", vaz, ("vza",))
+    ds_out.attrib["sza"] = sza
+    # Clean tau (may contain Missing from NetCDF fill values)
+    tau_clean = Float64.(replace(tau, missing => 0.0))
+
+    # Only output the input layers (not vSmartMOM's internal layers)
+    n_tau_layers = size(tau_clean, 2)
+    defDim(ds_out, "input_layer", n_tau_layers)
+    defVar(ds_out, "tau_per_layer", tau_clean, ("wavelength", "input_layer"))
 
     ds_out.attrib["source"] = "Aerosol3D-vSmartMOM"
     ds_out.attrib["n_layers"] = n_layers
+    ds_out.attrib["n_input_layers"] = n_tau_layers
     ds_out.attrib["n_legendre"] = n_legendre
 
     close(ds_out)

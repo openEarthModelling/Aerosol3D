@@ -15,8 +15,8 @@ import numpy as np
 
 def compute_tau_profile(
     C_ext: np.ndarray,  # noqa: N803
-    heights: Sequence[float],
-    number_conc: Sequence[float],
+    heights: Sequence[float] | np.ndarray,
+    number_conc: Sequence[float] | np.ndarray,
 ) -> np.ndarray:
     """Compute per-layer optical depth profile.
 
@@ -39,9 +39,22 @@ def compute_tau_profile(
         Optical depth per layer. Shape ``(n_wl, n_layer)``.  If ``C_ext`` is
         one-dimensional, the returned array has shape ``(1, n_layer)``.
     """
-    C_ext_arr = np.atleast_2d(np.asarray(C_ext, dtype=float))
+    C_ext_arr = np.asarray(C_ext, dtype=float)
     heights_arr = np.asarray(heights, dtype=float)
     number_conc_arr = np.asarray(number_conc, dtype=float)
+
+    if C_ext_arr.ndim == 0:
+        # Scalar: single wavelength, single layer
+        C_ext_arr = C_ext_arr[np.newaxis, np.newaxis]
+    elif C_ext_arr.ndim == 1:
+        if len(C_ext_arr) == len(number_conc_arr):
+            # Per-layer extinction for a single wavelength
+            C_ext_arr = C_ext_arr[np.newaxis, :]
+        else:
+            # Per-wavelength extinction (uniform across layers)
+            C_ext_arr = C_ext_arr[:, np.newaxis]
+    elif C_ext_arr.ndim != 2:
+        raise ValueError(f"C_ext must be 0D, 1D or 2D, got {C_ext_arr.ndim}D")
 
     dz = np.diff(heights_arr)
     # tau = N * C_ext * dz * 1e-6
@@ -89,7 +102,7 @@ def serialize_input(
     import xarray as xr
 
     wavelengths_nm_arr = np.asarray(wavelengths_nm, dtype=float)
-    C_ext_arr = np.atleast_2d(np.asarray(C_ext, dtype=float))
+    C_ext_arr = np.asarray(C_ext, dtype=float)
     SSA_arr = np.asarray(SSA, dtype=float)
     beta_arr = np.asarray(beta, dtype=float)
     heights_arr = np.asarray(heights, dtype=float)

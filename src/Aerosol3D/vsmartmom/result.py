@@ -78,16 +78,53 @@ class VSmartMOMResult:
 
         model_info = json.loads(ds.attrs.get("model_info_json", "{}"))
 
+        R = _reorder_rt_array(ds["R"].values, ds["R"].dims)
+        T = _reorder_rt_array(ds["T"].values, ds["T"].dims)
+        tau = ds["tau_per_layer"].values
+        _tau_dims = ds["tau_per_layer"].dims
+        if _tau_dims in (("layer", "wavelength"), ("input_layer", "wavelength")):
+            tau = tau.transpose(1, 0)
+
         obj = cls(
-            R=ds["R"].values,
-            T=ds["T"].values,
+            R=R,
+            T=T,
             wavelengths=ds["wavelength"].values,
             wavenumbers=ds["wavenumber"].values,
             vza=ds["vza"].values,
             vaz=ds["vaz"].values,
             sza=float(ds.attrs["sza"]),
-            tau_per_layer=ds["tau_per_layer"].values,
+            tau_per_layer=tau,
             model_info=model_info,
         )
         ds.close()
         return obj
+
+
+def _reorder_rt_array(arr: np.ndarray, dims: tuple[Any, ...]) -> np.ndarray:
+    """Reorder RT array from NetCDF dims to (stokes, vza, wavelength).
+
+    NCDatasets.jl (Julia) writes column-major arrays to NetCDF C-order,
+    which can reverse dimension order.  This helper detects the actual
+    order and permutes back to our convention.
+    """
+    if dims == ("stokes", "vza", "wavelength"):
+        return arr
+    if dims == ("wavelength", "vza", "stokes"):
+        return arr.transpose(2, 1, 0)
+    if dims == ("vza", "stokes", "wavelength"):
+        return arr.transpose(1, 0, 2)
+    if dims == ("wavelength", "stokes", "vza"):
+        return arr.transpose(1, 2, 0)
+    if dims == ("stokes", "wavelength", "vza"):
+        return arr.transpose(0, 2, 1)
+    if dims == ("vza", "wavelength", "stokes"):
+        return arr.transpose(2, 0, 1)
+    # Fallback: infer by typical sizes (n_stokes <= 4)
+    s = arr.shape
+    if s[0] <= 4 and s[1] > 4:
+        return arr  # likely (stokes, vza, wavelength)
+    if s[2] <= 4 and s[1] > 4:
+        return arr.transpose(2, 1, 0)  # (wl, vza, stokes)
+    if s[1] <= 4 and s[0] > 4:
+        return arr.transpose(1, 0, 2)  # (vza, stokes, wl)
+    return arr
