@@ -37,7 +37,7 @@ from a bulk optics computation:
    bulk = BulkAerosolOpticsData.from_netcdf("soot_bulk.nc")
 
    print(f"Wavelengths: {bulk.wavelength_nm} nm")
-   print(f"SSA at 550 nm: {bulk.SSA[0]:.4f}")
+   print(f"SSA at {bulk.wavelength_nm[0]:.0f} nm: {bulk.SSA[0]:.4f}")
 
 Step 2 — Define Vertical Profile
 --------------------------------
@@ -134,6 +134,7 @@ Complete Script
    # Step 2 — Define profile
    heights = [0, 500, 1000, 2000, 5000, 10000]
    number_conc = [1200, 900, 600, 300, 100]
+   n_layers = len(number_conc)
 
    # Step 3 — Viewing geometry
    sza = 30.0
