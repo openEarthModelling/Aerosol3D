@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-05
+
 ### Added
 - vSmartMOM.jl column radiative transfer integration (`Aerosol3D.vsmartmom`):
   - `VSmartMOMResult` dataclass with NetCDF I/O and Julia→Python dimension reordering
