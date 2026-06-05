@@ -13,4 +13,5 @@ to understand the physical models and make informed choices.
    coating-models
    optical-computation
    bulk-aerosol-optics
+   vsmartmom-integration
    ema-and-coreshell

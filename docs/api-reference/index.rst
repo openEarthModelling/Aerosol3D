@@ -12,3 +12,4 @@ Complete API documentation auto-generated from source code docstrings.
    optics
    io
    bulk
+   vsmartmom

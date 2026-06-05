@@ -14,3 +14,4 @@ Step-by-step tutorials for common Aerosol3D workflows.
    dda-mie-pyradtran-pipeline
    bulk-optics-workflow
    bulk-cross-validation
+   vsmartmom-rt-workflow
