@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+- vSmartMOM.jl column radiative transfer integration (`Aerosol3D.vsmartmom`):
+  - `VSmartMOMResult` dataclass with NetCDF I/O and Julia→Python dimension reordering
+  - `VSmartMOMRunner` — validation, Julia detection, subprocess orchestration
+  - `serialize_input()` / `compute_tau_profile()` — writes vSmartMOM-compatible NetCDF temp input
+  - Julia entrypoint script (`run_rt.jl`): reads NetCDF → builds model → runs `rt_run()` → writes result
+  - Optional `--julia-project` support (defaults to system Julia environment)
+- `examples/vsmartmom_rt_demo.py` — synthetic bulk optics → profile → RT → result pipeline
+- vSmartMOM API reference, user guide (architecture, math, error table, limitations), and 6-step tutorial
+- vSmartMOM listed in features and examples README
+
+### Fixed
+- Julia↔Python NetCDF dimension ordering mismatches in bridge (serialize.py, result.py, run_rt.jl)
+- `beta_0 = 1.0` normalization in bulk optics with correct vSmartMOM convention (`beta_l = (2l+1)g_l`)
+- Dataclass docstrings (`Attributes` → `Args`) for clean Sphinx builds
+
+### Tests
+- 20 vSmartMOM unit tests covering serialization, tau profile, runner validation, and result I/O
+
 ## [0.8.0] - 2026-06-03
 
 ### Added
